@@ -1,0 +1,10 @@
+{
+ "TextOptions": {
+  "LOADING": true,
+  "TIME": true,
+  "TEXT": true,
+  "MEM": true,
+  "ActiveWindow": true
+ },
+ "LOGS": true
+}
