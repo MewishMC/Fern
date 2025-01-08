@@ -44,16 +44,17 @@ func updateLeaveLogs() {
 		defer conn.Close()
 		var sentLogsN int
 		for {
+			time.Sleep(time.Second)
 			leaveLogs := modules.GetLeaveLogs()
 			leaveLogsN := len(leaveLogs)
 			if sentLogsN == leaveLogsN {
 				continue
 			}
+			sentLogsN = min(sentLogsN, leaveLogsN)
 			if err := conn.WriteJSON(strings.Join(leaveLogs[sentLogsN:], "<br>")); err != nil {
 				return
 			}
 			sentLogsN = leaveLogsN
-			time.Sleep(time.Second)
 		}
 	})
 }
@@ -63,16 +64,17 @@ func updateJoinLogs() {
 		defer conn.Close()
 		var sentLogsN int
 		for {
+			time.Sleep(time.Second)
 			joinLogs := modules.GetJoinLogs()
 			joinLogsN := len(joinLogs)
 			if sentLogsN == joinLogsN {
 				continue
 			}
+			sentLogsN = min(sentLogsN, joinLogsN)
 			if err := conn.WriteJSON(strings.Join(joinLogs[sentLogsN:], "<br>")); err != nil {
 				return
 			}
 			sentLogsN = joinLogsN
-			time.Sleep(time.Second)
 		}
 	})
 }

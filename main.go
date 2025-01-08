@@ -26,6 +26,6 @@ func main() {
 		msg.Arguments[0] = modules.TextBox()
 		msg.Arguments[0] = msg.Arguments[0].(string)[:min(len(msg.Arguments[0].(string)), 142)] + "\x03\xFE"
 		_ = client.Send(msg)
-		time.Sleep(2 * time.Second)
+		time.Sleep(2750 * time.Millisecond)
 	}
 }

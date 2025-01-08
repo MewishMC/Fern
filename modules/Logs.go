@@ -10,6 +10,7 @@ import (
 
 const ignorePreLogged = true     // ignore all logs before the application was launched
 const readSize = 1024 * 1024 * 2 // 2MB
+
 var logFile *os.File
 var logFilePath string
 var preLoggedEnd int64 = 0
@@ -45,12 +46,10 @@ func ReadLastLogs() []string {
 		return nil
 	}
 	size := max(min(readSize, stat.Size()-preLoggedEnd), 0)
-	offset := max(stat.Size()-size-1, 0)
-	if _, err := logFile.Seek(offset, 0); err != nil {
-		fmt.Printf("Error seeking to %d in %s: %s\n", offset, logFilePath, err.Error())
+	if _, err := logFile.Seek(-size, 2); err != nil {
+		fmt.Printf("Error seeking to %d in %s: %s\n", -size, logFilePath, err.Error())
 		return nil
 	}
-	fmt.Println("Reading last", size, "bytes from", logFilePath)
 	buf := make([]byte, size)
 	_, err = logFile.Read(buf)
 	if err != nil {
