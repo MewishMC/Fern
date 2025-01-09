@@ -19,7 +19,8 @@ func TextBox() string {
 		{Config.TextOptions.TIME, time.Now().Format("3:04 PM")}, //Time
 		{Config.TextOptions.TEXT, text},                         //Random Text
 		{Config.TextOptions.MEM, GetMem()},                      //Memory Usage
-		{Config.TextOptions.ActiveWindow, GetActiveWindow()},    //Active Window
+		{Config.TextOptions.CPU, GetCpuInfo(true, true)},
+		{Config.TextOptions.ActiveWindow, GetActiveWindow()}, //Active Window
 		{Config.LOGS, GetJoinAndLeaveLogs()},
 	}
 

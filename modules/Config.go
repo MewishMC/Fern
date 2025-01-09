@@ -17,6 +17,7 @@ type config struct {
 		TEXT         bool
 		MEM          bool
 		ActiveWindow bool
+		CPU          bool
 	}
 	LOGS bool
 }
@@ -56,7 +57,9 @@ var defaultConfig = config{
 		TEXT         bool
 		MEM          bool
 		ActiveWindow bool
+		CPU          bool
 	}{
+		true,
 		true,
 		true,
 		true,
