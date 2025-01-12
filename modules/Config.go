@@ -14,12 +14,13 @@ type config struct {
 	TextOptions struct {
 		LOADING      bool
 		TIME         bool
+		AFK          bool
 		TEXT         bool
 		MEM          bool
 		ActiveWindow bool
 		CPU          bool
+		LOGS         bool
 	}
-	LOGS bool
 }
 
 func init() {
@@ -54,10 +55,12 @@ var defaultConfig = config{
 	TextOptions: struct {
 		LOADING      bool
 		TIME         bool
+		AFK          bool
 		TEXT         bool
 		MEM          bool
 		ActiveWindow bool
 		CPU          bool
+		LOGS         bool
 	}{
 		true,
 		true,
@@ -65,8 +68,9 @@ var defaultConfig = config{
 		true,
 		true,
 		true,
+		true,
+		true,
 	},
-	LOGS: true,
 }
 
 func loadConfig() error {

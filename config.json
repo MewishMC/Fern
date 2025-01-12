@@ -2,10 +2,11 @@
  "TextOptions": {
   "LOADING": true,
   "TIME": true,
+  "AFK": true,
   "TEXT": true,
-  "MEM": true,
+  "MEM": false,
   "ActiveWindow": true,
-  "CPU": true
- },
- "LOGS": true
+  "CPU": false,
+  "LOGS": false
+ }
 }

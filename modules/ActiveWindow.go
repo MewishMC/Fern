@@ -32,8 +32,10 @@ func GetActiveWindow() string {
 	title, _ := GetWindowText(hwnd)
 
 	switch {
-	case strings.Contains(title, "Mozilla Firefox"):
+	case strings.Contains(title, "FireFox"):
 		title = "FireFox"
+	case strings.Contains(title, "c:\\"):
+		title = "Explorer"
 	case strings.Contains(title, "Google Chrome"):
 		title = "Chrome"
 	case strings.Contains(title, "Discord"):
@@ -44,8 +46,6 @@ func GetActiveWindow() string {
 		title = "Brave"
 	case strings.Contains(title, "Microsoft Edge"):
 		title = "I use edge PLS MAKE FUN OF ME"
-	case strings.Contains(title, "C:"):
-		title = "File Explorer"
 	}
 
 	return title
