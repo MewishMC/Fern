@@ -1,8 +1,8 @@
 package main
 
 import (
-	"VrChatBox/Ui"
-	"VrChatBox/modules"
+	"Fern/UI"
+	"Fern/modules"
 	"fmt"
 	"github.com/hypebeast/go-osc/osc"
 	"time"
@@ -20,12 +20,12 @@ var msg = osc.NewMessage("/chatbox/input", "", true)
 
 func main() {
 	fmt.Println("Starting up!")
-	go UI.DisplayUI()
+	go UI.StartWebview()
 	for {
 		modules.MessageN += 1
 		msg.Arguments[0] = modules.TextBox()
 		msg.Arguments[0] = msg.Arguments[0].(string)[:min(len(msg.Arguments[0].(string)), 142)] + "\x03\xFE"
 		_ = client.Send(msg)
-		time.Sleep(1800 * time.Millisecond)
+		time.Sleep(time.Millisecond * time.Duration(modules.Config.TimeoutMS))
 	}
 }

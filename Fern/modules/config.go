@@ -11,16 +11,17 @@ import (
 var Config config
 
 type config struct {
-	TextOptions struct {
-		LOADING      bool
-		TIME         bool
-		AFK          bool
-		TEXT         bool
-		MEM          bool
-		ActiveWindow bool
-		CPU          bool
-		LOGS         bool
-	}
+	DisplayOptions struct {
+		Loading      bool `json:"loading,omitempty"`
+		Time         bool `json:"time,omitempty"`
+		Afk          bool `json:"afk,omitempty"`
+		Text         bool `json:"text,omitempty"`
+		Memory       bool `json:"memory,omitempty"`
+		ActiveWindow bool `json:"active_window,omitempty"`
+		CPU          bool `json:"cpu,omitempty"`
+		VRChatLogs   bool `json:"vr_chat_logs,omitempty"`
+	} `json:"display_options"`
+	TimeoutMS int64 `json:"timeout_ms,omitempty"`
 }
 
 func init() {
@@ -52,25 +53,26 @@ func init() {
 
 var startStat = time.Now()
 var defaultConfig = config{
-	TextOptions: struct {
-		LOADING      bool
-		TIME         bool
-		AFK          bool
-		TEXT         bool
-		MEM          bool
-		ActiveWindow bool
-		CPU          bool
-		LOGS         bool
+	DisplayOptions: struct {
+		Loading      bool `json:"loading,omitempty"`
+		Time         bool `json:"time,omitempty"`
+		Afk          bool `json:"afk,omitempty"`
+		Text         bool `json:"text,omitempty"`
+		Memory       bool `json:"memory,omitempty"`
+		ActiveWindow bool `json:"active_window,omitempty"`
+		CPU          bool `json:"cpu,omitempty"`
+		VRChatLogs   bool `json:"vr_chat_logs,omitempty"`
 	}{
-		true,
-		true,
-		true,
-		true,
-		true,
-		true,
-		true,
-		true,
+		Loading:      true,
+		Time:         true,
+		Afk:          true,
+		Text:         true,
+		Memory:       true,
+		ActiveWindow: true,
+		CPU:          true,
+		VRChatLogs:   true,
 	},
+	TimeoutMS: 2500,
 }
 
 func loadConfig() error {

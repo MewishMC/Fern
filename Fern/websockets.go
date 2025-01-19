@@ -1,7 +1,7 @@
 package main
 
 import (
-	"VrChatBox/modules"
+	"Fern/modules"
 	"github.com/gorilla/websocket"
 	"net/http"
 	"strings"

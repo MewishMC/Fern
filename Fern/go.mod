@@ -1,11 +1,10 @@
-module VrChatBox
+module Fern
 
-go 1.23.2
+go 1.23.4
 
 require (
 	github.com/gorilla/websocket v1.5.3
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5
-	github.com/mackerelio/go-osstat v0.2.5
 	github.com/shirou/gopsutil v3.21.11+incompatible
 	github.com/webview/webview_go v0.0.0-20240831120633-6173450d4dd6
 )

@@ -46,7 +46,7 @@ func ReadLastLogs() []string {
 		return nil
 	}
 	size := max(min(readSize, stat.Size()-preLoggedEnd), 0)
-	if _, err := logFile.Seek(-size, 2); err != nil {
+	if _, err := logFile.Seek(-(size + 1), 2); err != nil {
 		fmt.Printf("Error seeking to %d in %s: %s\n", -size, logFilePath, err.Error())
 		return nil
 	}

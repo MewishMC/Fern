@@ -1,2 +1,2 @@
-# VrChatBox
- A simple OSC client that sents messages to the VRChat client.
+# Fern
+Fern is a simple lightweight and fast OSC (Open Sound Control) client designed for VRChat, our goal is to provide a simple and intuitive interface for sending personalized OSC messages.
