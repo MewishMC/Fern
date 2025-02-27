@@ -9,6 +9,7 @@ import (
 )
 
 var Config config
+var backupConfig config
 
 type config struct {
 	DisplayOptions struct {
@@ -21,27 +22,45 @@ type config struct {
 		CPU          bool `json:"cpu,omitempty"`
 		VRChatLogs   bool `json:"vr_chat_logs,omitempty"`
 	} `json:"display_options"`
+
+	TextMessages  map[string]string
+	WindowOptions struct {
+		Simplified bool `json:"simplified,omitempty"`
+	}
+	TextOptions struct {
+		Cycle bool `json:"cycle"`
+		Speed int  `json:"speed"`
+	} `json:"TextOptions"`
+
+	AfkOptions struct {
+		Bypass     bool    `json:"bypass,omitempty"`
+		AutoDetect bool    `json:"auto_detect,omitempty"`
+		Poopyafk   bool    `json:"poopyafk,omitempty"`
+		AFKTime    float64 `json:"afk_time,omitempty"`
+		AFKMessage string  `json:"afk_message,omitempty"`
+	}
 	TimeoutMS int64 `json:"timeout_ms,omitempty"`
 }
 
 func init() {
+	backupConfig = Config
+
 	go func() {
 		if err := loadConfig(); err != nil {
 			if err.Error() == "unexpected end of JSON input" {
 				_ = os.Remove("./config.json")
-				Config = defaultConfig
-			} else {
-				panic(err)
 			}
+			Config = backupConfig
+			fmt.Println("Config reset to backup due to error:", err)
 		}
 		for {
 			if err := saveConfig(); err != nil {
 				if err.Error() == "config updated" {
 					fmt.Println("config updated")
 					if err := loadConfig(); err != nil {
-						panic(err)
+						Config = backupConfig
+						fmt.Println("Config reset to backup due to error:", err)
 					}
-
 					continue
 				}
 				panic(err)
@@ -67,10 +86,36 @@ var defaultConfig = config{
 		Time:         true,
 		Afk:          true,
 		Text:         true,
-		Memory:       true,
-		ActiveWindow: true,
-		CPU:          true,
-		VRChatLogs:   true,
+		Memory:       false,
+		ActiveWindow: false,
+		CPU:          false,
+		VRChatLogs:   false,
+	},
+
+	WindowOptions: struct {
+		Simplified bool `json:"simplified,omitempty"`
+	}{
+		Simplified: true,
+	},
+	TextMessages: make(map[string]string),
+	TextOptions: struct {
+		Cycle bool `json:"cycle"`
+		Speed int  `json:"speed"`
+	}{
+		Cycle: true,
+		Speed: 2500,
+	},
+	AfkOptions: struct {
+		Bypass     bool    `json:"bypass,omitempty"`
+		AutoDetect bool    `json:"auto_detect,omitempty"`
+		Poopyafk   bool    `json:"poopyafk,omitempty"`
+		AFKTime    float64 `json:"afk_time,omitempty"`
+		AFKMessage string  `json:"afk_message,omitempty"`
+	}{
+		Bypass:     false,
+		AutoDetect: true,
+		AFKTime:    10,
+		AFKMessage: "AFK",
 	},
 	TimeoutMS: 2500,
 }
@@ -89,6 +134,7 @@ func loadConfig() error {
 		return err
 	}
 	startStat = fileInfo.ModTime()
+	backupConfig = Config
 	return json.Unmarshal(bytesV, &Config)
 }
 
@@ -109,5 +155,6 @@ func saveConfig() error {
 		return err
 	}
 	startStat = stat.ModTime()
+	backupConfig = Config
 	return nil
 }

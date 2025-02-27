@@ -8,25 +8,19 @@ import (
 var MessageN int
 var text string
 
-func init() {
-	//add a button to the UI to start the timer
-	//StartAfkTimer()
-}
-
 func TextBox() string {
 	text = getMessage(MessageN)
-
 	meow := []struct {
 		flag bool
 		text string
 	}{
-		{Config.DisplayOptions.Afk, GetAfkTime("AFK ")},            //GetAfktime
-		{Config.DisplayOptions.Loading, Loading()},                 //The loading
-		{Config.DisplayOptions.Time, time.Now().Format("3:04 PM")}, //Time
-		{Config.DisplayOptions.Text, text},                         //Random Text/
-		{Config.DisplayOptions.Memory, GetMem()},                   //Memory Usage
+		{Config.DisplayOptions.Afk, GetAfkTime(Config.AfkOptions.AFKMessage)},
+		{Config.DisplayOptions.Loading, Loading()},
+		{Config.DisplayOptions.Time, time.Now().Format("3:04 PM")},
+		{Config.DisplayOptions.Text, text},
+		{Config.DisplayOptions.Memory, GetMem()},
 		{Config.DisplayOptions.CPU, GetCpuInfo(true, true)},
-		{Config.DisplayOptions.ActiveWindow, GetActiveWindow()}, //Active Window
+		{Config.DisplayOptions.ActiveWindow, GetActiveWindow()},
 		{Config.DisplayOptions.VRChatLogs, GetJoinAndLeaveLogs()},
 	}
 	var result []string
@@ -34,8 +28,12 @@ func TextBox() string {
 		if !condition.flag {
 			continue
 		}
+		trimmedText := strings.TrimSpace(condition.text)
+		if trimmedText == "" {
+			continue
+		}
 
-		result = append(result, condition.text)
+		result = append(result, trimmedText)
 	}
 
 	return strings.Join(result, "\n")

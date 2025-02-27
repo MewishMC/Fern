@@ -30,23 +30,23 @@ func Getforgroundwindow() (uintptr, error) {
 func GetActiveWindow() string {
 	hwnd, _ := Getforgroundwindow()
 	title, _ := GetWindowText(hwnd)
-
-	switch {
-	case strings.Contains(title, "FireFox"):
-		title = "FireFox"
-	case strings.Contains(title, "c:\\"):
-		title = "Explorer"
-	case strings.Contains(title, "Google Chrome"):
-		title = "Chrome"
-	case strings.Contains(title, "Discord"):
-		title = "Discord"
-	case strings.Contains(title, "Opera"):
-		title = "Opera"
-	case strings.Contains(title, "Brave"):
-		title = "Brave"
-	case strings.Contains(title, "Microsoft Edge"):
-		title = "I use edge PLS MAKE FUN OF ME"
+	if Config.WindowOptions.Simplified {
+		switch {
+		case strings.Contains(title, "FireFox"):
+			title = "FireFox"
+		case strings.Contains(title, "c:\\"):
+			title = "Explorer"
+		case strings.Contains(title, "Google Chrome"):
+			title = "Chrome"
+		case strings.Contains(title, "Discord"):
+			title = "Discord"
+		case strings.Contains(title, "Opera"):
+			title = "Opera"
+		case strings.Contains(title, "Brave"):
+			title = "Brave"
+		case strings.Contains(title, "Microsoft Edge"):
+			title = "I use edge PLS MAKE FUN OF ME"
+		}
 	}
-
 	return title
 }

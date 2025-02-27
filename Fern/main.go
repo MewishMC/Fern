@@ -9,6 +9,7 @@ import (
 )
 
 //media to show what's playing
+//Get the prosses id of spotify and just display the windowname
 
 // ideas, add commands if possible (by typing in the ui)
 //make it so you can send messages to the chatbox (by typing in the ui)
@@ -21,6 +22,7 @@ var msg = osc.NewMessage("/chatbox/input", "", true)
 func main() {
 	fmt.Println("Starting up!")
 	go UI.StartWebview()
+
 	for {
 		modules.MessageN += 1
 		msg.Arguments[0] = modules.TextBox()
