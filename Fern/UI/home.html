@@ -125,6 +125,7 @@
 
 <body>
 <div>
+
     <div class="flex flex-1">
         <aside class="w-1/4 bg-[#1a1a1a] p-5 flex flex-col" style="overflow-y: scroll; padding-right: 0; width: 275px;">
             <h3 class="text-[#7751a2] p-2 text-xl mb-6 font-bold text-center bg-[#262626] rounded-lg"
@@ -134,10 +135,10 @@
 
             <div class="preview-box mt-2" style="overflow: visible;">
                 <h4 class="flex justify-between items-center">
-                        <a href="https://github.com/KyarottoOwO" target="_blank">
-                            <i class="fab fa-github text-[#7751a2]"
-                               style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6); width: 52px;"></i>
-                        </a>
+                    <a href="https://github.com/KyarottoOwO" target="_blank">
+                        <i class="fab fa-github text-[#7751a2]"
+                           style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6); width: 52px;"></i>
+                    </a>
                     <span class="text-[#7751a2] font-bold text-center"
                           style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Preview</span>
                     <span class="text-[#7751a2] text-sm" id="DisplayC" style="width: 52px; text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
@@ -152,14 +153,10 @@
 
         <main class="flex-1 p-5" id="mainContent">
             <div class="bg-[#1e1e1e] p-4 rounded-lg shadow-md">
-                Welcome to the Fern Panel! Select a menu item to get started.
+                Ha how did you get here?
             </div>
         </main>
     </div>
-
-    <footer class="bg-[#1e1e1e] text-center p-2 text-sm" style="bottom: 0; position: fixed; width: 100vw;">
-        © 2024 Fern ｢フェルン｣ | All rights reserved
-    </footer>
 </div>
 
 <script>
@@ -167,71 +164,153 @@
         {
             "Dashboard": [
                 {
-                    text: 'Dashboard Home',
+                    text: 'Display',
                     href: '#',
                     active: true,
                     content: `
-                        <h2 class="text-2xl font-semibold mb-4">Dashboard Home</h2>
-                        <p>Welcome to the Dashboard! Here you can see an overview of your system.</p>
-                        <div class="mt-4">
-                            <i class="fas fa-tachometer-alt fa-3x text-[#7751a2]"></i>
-                        </div>
-                        `
+    <div class="menu-container bg-[#1e1e1e] p-5 rounded-lg shadow-lg">
+        <h2 class="text-2xl font-semibold mb-4 text-[#7751a2]">Display Settings</h2>
+        <p class="text-[#c2c1c1] mb-4">Customize how the ChatBox displays information.</p>
+
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">Display</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="ShowSwitch" class="sr-only peer"  onclick="SetDisplay('ChangeShowOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">Media</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="mediaSwitch" class="sr-only peer" onclick="SetDisplay('ChangeMediaOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">Loading</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="LoadingSwitch" class="sr-only peer" onclick="SetDisplay('ChangeLoadingOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">Time</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="TimeSwitch" class="sr-only peer" onclick="SetDisplay('ChangeTimeOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">Afk</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="AfkSwitch" class="sr-only peer" onclick="SetDisplay('ChangeAfkOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">Text</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="TextSwitch" class="sr-only peer" onclick="SetDisplay('ChangeTextOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">Memory</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="MemorySwitch" class="sr-only peer" onclick="SetDisplay('ChangeMemoryOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">ActiveWindow</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="ActiveWindowSwitch" class="sr-only peer" onclick="SetDisplay('ChangeActiveWindowOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">CPU</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="CPUSwitch" class="sr-only peer" onclick="SetDisplay('ChangeCPUOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+
+            <div class="flex items-center justify-between bg-[#262626] p-3 rounded-lg shadow">
+                <span class="text-lg text-[#c2c1c1]">VRChat Logs</span>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="VRChatLogsSwitch" class="sr-only peer" onclick="SetDisplay('ChangeVRChatLogsOptions')">
+                    <div class="w-11 h-6 bg-gray-700 peer-focus:ring-4 peer-focus:ring-purple-800 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-1 after:left-1 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#7751a2]"></div>
+                </label>
+            </div>
+        </div>
+    </div>
+    `
                 },
                 {
                     text: 'Logs',
                     href: '#',
                     active: false,
                     content: `<div class="grid-container" style="display: grid; grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(4, auto); gap: 16px; padding: 0; justify-self: center; width: 100%; height: 100%;">
-    <div class="Logs-Box">
-        <h4 class="flex justify-between items-center">
-            <div class="flex items-center"></div>
-            <a class="text-[#7751a2] font-bold text-center"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Join Logs</a>
-            <span class="text-[#7751a2] text-sm"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
-        </h4>
-        <div class="separator my-2 border-t border-[#444]"></div>
-        <div class="text" id="JoinLogsText">Loading join logs...</div>
-    </div>
+                    <div class="Logs-Box">
+                        <h4 class="flex justify-between items-center">
+                            <div class="flex items-center"></div>
+                            <a class="text-[#7751a2] font-bold text-center"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Join Logs</a>
+                            <span class="text-[#7751a2] text-sm"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
+                        </h4>
+                        <div class="separator my-2 border-t border-[#444]"></div>
+                        <div class="text" id="JoinLogsText">Loading join logs...</div>
+                    </div>
 
-    <div class="Logs-Box">
-        <h4 class="flex justify-between items-center">
-            <div class="flex items-center"></div>
-            <span class="text-[#7751a2] font-bold text-center"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Leave Logs</span>
-            <span class="text-[#7751a2] text-sm"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
-        </h4>
-        <div class="separator my-2 border-t border-[#444]"></div>
-        <div class="text" id="LeaveLogsText">Loading leave logs...</div>
-    </div>
+                    <div class="Logs-Box">
+                        <h4 class="flex justify-between items-center">
+                            <div class="flex items-center"></div>
+                            <span class="text-[#7751a2] font-bold text-center"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Leave Logs</span>
+                            <span class="text-[#7751a2] text-sm"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
+                        </h4>
+                        <div class="separator my-2 border-t border-[#444]"></div>
+                        <div class="text" id="LeaveLogsText">Loading leave logs...</div>
+                    </div>
 
-    <div class="Logs-Box">
-        <h4 class="flex justify-between items-center">
-            <div class="flex items-center"></div>
-            <span class="text-[#7751a2] font-bold text-center"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Chat Logs</span>
-            <span class="text-[#7751a2] text-sm"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
-        </h4>
-        <div class="separator my-2 border-t border-[#444]"></div>
-        <div class="text" id="ChatLogsText">Loading chat logs...</div>
-    </div>
+                    <div class="Logs-Box">
+                        <h4 class="flex justify-between items-center">
+                            <div class="flex items-center"></div>
+                            <span class="text-[#7751a2] font-bold text-center"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Chat Logs</span>
+                            <span class="text-[#7751a2] text-sm"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
+                        </h4>
+                        <div class="separator my-2 border-t border-[#444]"></div>
+                        <div class="text" id="ChatLogsText">Loading chat logs...</div>
+                    </div>
 
-    <div class="Logs-Box">
-        <h4 class="flex justify-between items-center">
-            <div class="flex items-center"></div>
-            <span class="text-[#7751a2] font-bold text-center"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Error Logs</span>
-            <span class="text-[#7751a2] text-sm"
-                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
-        </h4>
-        <div class="separator my-2 border-t border-[#444]"></div>
-        <div class="text" id="ErrorLogsText">Loading error logs...</div>
-    </div>
-</div>
-`
+                    <div class="Logs-Box">
+                        <h4 class="flex justify-between items-center">
+                            <div class="flex items-center"></div>
+                            <span class="text-[#7751a2] font-bold text-center"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);">Error Logs</span>
+                            <span class="text-[#7751a2] text-sm"
+                                style="text-shadow: 0 5px 10px rgba(0, 0, 0, 0.6);"></span>
+                        </h4>
+                        <div class="separator my-2 border-t border-[#444]"></div>
+                        <div class="text" id="ErrorLogsText">Loading error logs...</div>
+                    </div>
+                </div>`
                 }
             ]
         },
@@ -267,6 +346,7 @@
         }
     ];
 
+
     const menuContainer = document.getElementById('menuContainer');
     const mainContent = document.getElementById('mainContent');
 
@@ -282,7 +362,7 @@
 
             const sectionTitle = document.createElement('h4');
             sectionTitle.textContent = sectionName;
-            sectionTitle.classList.add("text-[#7751a2]", "mb-2", "text-md", "font-semibold");
+            sectionTitle.classList.add("text-[#7751a2]", "mb-2", "tew", "font-semibold");
             sectionDiv.appendChild(sectionTitle);
 
             itemsArray.forEach(item => {
@@ -303,7 +383,7 @@
                 if (item.active) {
                     button.classList.add('bg-[#7751a2]');
                 } else {
-                    button.classList.add('bg-[#262626]', 'hover:bg-[#624486]');
+                    button.classList.add('bg-[#262626]', 'hover:bg-[w]');
                 }
 
                 button.textContent = item.text;
@@ -323,6 +403,11 @@
                         startGetJoinLogs(GetJoinLogs);
                     }
 
+                    const GetModules = document.getElementById("LoadingSwitch");
+                    if (GetModules) {
+                        StartGetModules();
+                    }
+
                     const GetLeaveLogs = document.getElementById("LeaveLogsText");
                     if (GetLeaveLogs) {
                         startGetLeaveLogs(GetLeaveLogs);
@@ -338,6 +423,45 @@
 
     const PreView = document.getElementById('PreViewText');
     const DisplayCLimit = document.getElementById("DisplayC");
+    function StartGetModules() {
+        const ws = new WebSocket("/ws/modules");
+        ws.onmessage = (event) => {
+            try {
+                const message = JSON.parse(event.data);
+                console.log("Received:", message);
+
+                Object.keys(message).forEach(key => {
+                    const switchElement = document.getElementById(`${key}Switch`);
+                    if (switchElement) {
+                        switchElement.checked = message[key];
+
+                        if (!switchElement.dataset.listenerAttached) {
+                            switchElement.addEventListener("change", () => {
+                                console.log(key, switchElement.checked)
+                            });
+                            switchElement.dataset.listenerAttached = "true";
+                        }
+                    } else {
+                        console.warn(`Element #${key}Switch not found`);
+                    }
+                });
+
+            } catch (error) {
+                console.error(error);
+            }
+        };
+    }
+
+
+
+    function startPreviewUpdate() {
+        const ws = new WebSocket("/ws/preview")
+        ws.onmessage = (event) => {
+            const message = JSON.parse(event.data);
+            PreView.innerHTML = message;
+            DisplayCLimit.textContent = `${message.length}/144`;
+        }
+    }
 
     function startGetJoinLogs(GetJoinLogs) {
         const ws = new WebSocket("/ws/logs/join")
@@ -350,20 +474,11 @@
         }
     }
 
-    function startPreviewUpdate() {
-        const ws = new WebSocket("/ws/preview")
-        ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            PreView.innerHTML = message;
-            DisplayCLimit.textContent = `${message.length}/144`;
-        }
-    }
-
     function startGetLeaveLogs(GetJoinLogs) {
         const ws = new WebSocket("/ws/logs/leave")
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
-                    if (message.length > 0 && GetJoinLogs.innerHTML.includes("Loading leave logs...")) {
+            if (message.length > 0 && GetJoinLogs.innerHTML.includes("Loading leave logs...")) {
                 GetJoinLogs.innerHTML = ""
             }
             GetJoinLogs.innerHTML = message + "\n" + GetJoinLogs.innerHTML
@@ -372,8 +487,28 @@
 
     startPreviewUpdate();
     renderMenu();
+
+    menuItems[0].Dashboard[0].active = true;
+    mainContent.innerHTML = menuItems[0].Dashboard[0].content;
+
+    StartGetModules();
+
+    menuItems.forEach(sectionObj => {
+        const sectionName = Object.keys(sectionObj)[0];
+        sectionObj[sectionName].forEach(item => {
+            item.active = item.text === "VRChatLogs";
+        });
+    });
+
+
+    function SetDisplay(Display) {
+        const ws = new WebSocket("/ws/console");
+        ws.onopen = function() {
+            console.log("WebSocket Opened");
+            const message = { text: Display };
+            ws.send(JSON.stringify(message));
+        };
+    }
 </script>
-
 </body>
-
 </html>

@@ -36,7 +36,10 @@ func handleMessage(msg *osc.Message) {
 		if containsAny(msg.Address, "/Velocity", "/AngularY") {
 			lastVelocityTime = time.Now()
 		}
-	} else if IsActiveWindowChanged() || containsAny(msg.Address, "/Velocity", "/AngularY", "/Voice") {
+		return
+	}
+
+	if IsActiveWindowChanged() || containsAny(msg.Address, "/Velocity", "/AngularY", "/Voice") {
 		lastVelocityTime = time.Now()
 	}
 }
@@ -56,6 +59,7 @@ func startUDPListener() {
 	if err != nil {
 		panic(fmt.Errorf("failed to start UDP listener: %w", err))
 	}
+
 	defer listener.Close()
 
 	messageQueue := make(chan osc.Packet, 100)

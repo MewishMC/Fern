@@ -13,9 +13,11 @@ var backupConfig config
 
 type config struct {
 	DisplayOptions struct {
+		Show         bool `json:"show,omitempty"`
 		Loading      bool `json:"loading,omitempty"`
 		Time         bool `json:"time,omitempty"`
 		Afk          bool `json:"afk,omitempty"`
+		Media        bool `json:"media,omitempty"`
 		Text         bool `json:"text,omitempty"`
 		Memory       bool `json:"memory,omitempty"`
 		ActiveWindow bool `json:"active_window,omitempty"`
@@ -73,18 +75,22 @@ func init() {
 var startStat = time.Now()
 var defaultConfig = config{
 	DisplayOptions: struct {
+		Show         bool `json:"show,omitempty"`
 		Loading      bool `json:"loading,omitempty"`
 		Time         bool `json:"time,omitempty"`
 		Afk          bool `json:"afk,omitempty"`
+		Media        bool `json:"media,omitempty"`
 		Text         bool `json:"text,omitempty"`
 		Memory       bool `json:"memory,omitempty"`
 		ActiveWindow bool `json:"active_window,omitempty"`
 		CPU          bool `json:"cpu,omitempty"`
 		VRChatLogs   bool `json:"vr_chat_logs,omitempty"`
 	}{
+		Show:         true,
 		Loading:      true,
 		Time:         true,
 		Afk:          true,
+		Media:        true,
 		Text:         true,
 		Memory:       false,
 		ActiveWindow: false,

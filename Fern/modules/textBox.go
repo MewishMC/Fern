@@ -10,6 +10,7 @@ var text string
 
 func TextBox() string {
 	text = getMessage(MessageN)
+
 	meow := []struct {
 		flag bool
 		text string
@@ -20,6 +21,7 @@ func TextBox() string {
 		{Config.DisplayOptions.Text, text},
 		{Config.DisplayOptions.Memory, GetMem()},
 		{Config.DisplayOptions.CPU, GetCpuInfo(true, true)},
+		{Config.DisplayOptions.Media, PrintMediaInfo()},
 		{Config.DisplayOptions.ActiveWindow, GetActiveWindow()},
 		{Config.DisplayOptions.VRChatLogs, GetJoinAndLeaveLogs()},
 	}

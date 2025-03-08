@@ -42,7 +42,8 @@ func StartWebview() {
 		w.Navigate("http://127.0.0.1:" + strconv.Itoa(port) + "/")
 	})
 
-	w.SetSize(400, 200, webview.HintMin)
+	w.SetSize(800, 600, webview.HintNone)
+	w.SetSize(800, 600, webview.HintMin)
 	w.SetTitle("Fern ｢フェルン｣")
 	w.Run()
 }
