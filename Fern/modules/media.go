@@ -25,6 +25,8 @@ type windowInfo struct {
 	procPath  string
 }
 
+var foundSpotifyWindow *windowInfo
+
 func GetProcessPath(hwnd uintptr) (string, error) {
 	var pid uint32
 	_, _, _ = getWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
@@ -52,41 +54,47 @@ func GetProcessPath(hwnd uintptr) (string, error) {
 	}
 
 	return syscall.UTF16ToString(buf[:size]), nil
+}
 
+var spotifyWindowCallback uintptr
+
+func init() {
+	spotifyWindowCallback = syscall.NewCallback(spotifyWindowEnum)
+}
+
+func spotifyWindowEnum(hwnd uintptr, lParam uintptr) uintptr {
+	path, err := GetProcessPath(hwnd)
+	if err != nil {
+		return 1
+	}
+
+	if strings.Contains(strings.ToLower(path), "spotify.exe") {
+		title, _ := GetWindowText(hwnd)
+		foundSpotifyWindow = &windowInfo{
+			hwnd:     hwnd,
+			title:    title,
+			procPath: path,
+		}
+		return 0
+	}
+
+	return 1
 }
 
 func findSpotifyWindow() (*windowInfo, string) {
-	var spotifyWindow *windowInfo
+	foundSpotifyWindow = nil
 
-	cb := syscall.NewCallback(func(hwnd uintptr, lParam uintptr) uintptr {
-		path, err := GetProcessPath(hwnd)
-		if err != nil {
-			return 1
-		}
+	ret, _, err := enumWindowsProc.Call(spotifyWindowCallback, 0)
 
-		if strings.Contains(strings.ToLower(path), "spotify.exe") {
-			title, _ := GetWindowText(hwnd)
-			spotifyWindow = &windowInfo{
-				hwnd:     hwnd,
-				title:    title,
-				procPath: path,
-			}
-			return 0
-		}
+	if foundSpotifyWindow == nil {
+		return nil, "Media not found"
+	}
 
-		return 1
-	})
-
-	ret, _, err := enumWindowsProc.Call(cb, 0)
 	if ret == 0 && err != nil && err.Error() != "The operation completed successfully." {
 		return nil, "Media not found"
 	}
 
-	if spotifyWindow == nil {
-		return nil, "Media not found"
-	}
-
-	return spotifyWindow, ""
+	return foundSpotifyWindow, ""
 }
 
 func parseMediaInfo(title string) (artist, song string) {
@@ -112,7 +120,7 @@ func PrintMediaInfo() string {
 	lowerTitle := strings.ToLower(title)
 
 	if strings.Contains(lowerTitle, "spotify") {
-		return "Pause"
+		return "Music paused"
 	}
 
 	artist, song := parseMediaInfo(title)
@@ -120,5 +128,5 @@ func PrintMediaInfo() string {
 		return "Media not found"
 	}
 
-	return fmt.Sprintf("%s by %s", song, artist)
+	return fmt.Sprintf("'%s' by %s", song, artist)
 }

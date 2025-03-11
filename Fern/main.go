@@ -22,15 +22,25 @@ var msg = osc.NewMessage("/chatbox/input", "", true)
 func main() {
 	fmt.Println("Starting up!")
 	go UI.StartWebview()
+	go func() {
+		for len(modules.Config.TextMessages) < 1 {
+			time.Sleep(time.Second)
+		}
+		for {
+			modules.MessageN += 1
+			time.Sleep(time.Millisecond * time.Duration(modules.Config.TextOptions.Speed))
+		}
+	}()
 
 	for {
-		modules.MessageN += 1
 		msg.Arguments[0] = modules.TextBox()
 		msg.Arguments[0] = msg.Arguments[0].(string)[:min(len(msg.Arguments[0].(string)), 142)] + "\x03\xFE"
+
 		if modules.Config.DisplayOptions.Show {
 			_ = client.Send(msg)
 		}
 
+		modules.SearchForPeople()
 		time.Sleep(time.Millisecond * time.Duration(modules.Config.TimeoutMS))
 	}
 }

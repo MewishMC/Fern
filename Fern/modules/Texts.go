@@ -1,8 +1,8 @@
 package modules
 
 import (
+	"fmt"
 	"math"
-	"strconv"
 	"strings"
 )
 
@@ -28,18 +28,17 @@ func Loading() string {
 	return result.String()
 }
 
-func getMessage(message int) string {
+func getMessage() string {
 	if len(Config.TextMessages) == 0 {
 		return ""
 	}
 
-	if Config.TextOptions.Cycle == true {
-		messages := make([]string, 0, len(Config.TextMessages))
-		for _, text := range Config.TextMessages {
-			messages = append(messages, text)
+	if Config.TextOptions.Cycle {
+		for {
+			fmt.Println(MessageN)
+			return Config.TextMessages[MessageN%len(Config.TextMessages)]
 		}
-		return messages[message%len(messages)]
 	}
 
-	return Config.TextMessages[strconv.Itoa(0)]
+	return Config.TextMessages[0]
 }

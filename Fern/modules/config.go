@@ -8,8 +8,11 @@ import (
 	"time"
 )
 
-var Config config
-var backupConfig config
+var (
+	Config       config
+	backupConfig config
+	startStat    = time.Now()
+)
 
 type config struct {
 	DisplayOptions struct {
@@ -25,7 +28,8 @@ type config struct {
 		VRChatLogs   bool `json:"vr_chat_logs,omitempty"`
 	} `json:"display_options"`
 
-	TextMessages  map[string]string
+	TextMessages []string
+
 	WindowOptions struct {
 		Simplified bool `json:"simplified,omitempty"`
 	}
@@ -44,35 +48,6 @@ type config struct {
 	TimeoutMS int64 `json:"timeout_ms,omitempty"`
 }
 
-func init() {
-	backupConfig = Config
-
-	go func() {
-		if err := loadConfig(); err != nil {
-			if err.Error() == "unexpected end of JSON input" {
-				_ = os.Remove("./config.json")
-			}
-			Config = backupConfig
-			fmt.Println("Config reset to backup due to error:", err)
-		}
-		for {
-			if err := saveConfig(); err != nil {
-				if err.Error() == "config updated" {
-					fmt.Println("config updated")
-					if err := loadConfig(); err != nil {
-						Config = backupConfig
-						fmt.Println("Config reset to backup due to error:", err)
-					}
-					continue
-				}
-				panic(err)
-			}
-			time.Sleep(time.Second * 5)
-		}
-	}()
-}
-
-var startStat = time.Now()
 var defaultConfig = config{
 	DisplayOptions: struct {
 		Show         bool `json:"show,omitempty"`
@@ -103,7 +78,6 @@ var defaultConfig = config{
 	}{
 		Simplified: true,
 	},
-	TextMessages: make(map[string]string),
 	TextOptions: struct {
 		Cycle bool `json:"cycle"`
 		Speed int  `json:"speed"`
@@ -124,6 +98,35 @@ var defaultConfig = config{
 		AFKMessage: "AFK",
 	},
 	TimeoutMS: 2500,
+}
+
+func init() {
+
+	backupConfig = Config
+
+	go func() {
+		if err := loadConfig(); err != nil {
+			if err.Error() == "unexpected end of JSON input" {
+				_ = os.Remove("./config.json")
+			}
+			Config = backupConfig
+			fmt.Println("Config reset to backup due to error:", err)
+		}
+		for {
+			if err := saveConfig(); err != nil {
+				if err.Error() == "config updated" {
+					fmt.Println("config updated")
+					if err := loadConfig(); err != nil {
+						Config = backupConfig
+						fmt.Println("Config reset to backup due to error:", err)
+					}
+					continue
+				}
+				panic(err)
+			}
+			time.Sleep(time.Second * 5)
+		}
+	}()
 }
 
 func loadConfig() error {

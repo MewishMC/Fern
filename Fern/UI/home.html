@@ -32,7 +32,7 @@
         }
 
         .text {
-            height: 90%;
+            height: 80%;
             width: 100%;
             text-align: center;
             margin-top: 0.25rem;
@@ -470,7 +470,7 @@
             if (message.length > 0 && GetJoinLogs.innerHTML.includes("Loading join logs...")) {
                 GetJoinLogs.innerHTML = ""
             }
-            GetJoinLogs.innerHTML = message + "\n" +GetJoinLogs.innerHTML
+            GetJoinLogs.innerHTML = message
         }
     }
 
@@ -481,7 +481,7 @@
             if (message.length > 0 && GetJoinLogs.innerHTML.includes("Loading leave logs...")) {
                 GetJoinLogs.innerHTML = ""
             }
-            GetJoinLogs.innerHTML = message + "\n" + GetJoinLogs.innerHTML
+            GetJoinLogs.innerHTML = message
         }
     }
 

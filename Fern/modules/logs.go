@@ -1,103 +1,144 @@
 package modules
 
 import (
+	"bufio"
 	"fmt"
-	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
+	"time"
 )
 
-const ignorePreLogged = true     // ignore all logs before the application was launched
-const readSize = 1024 * 1024 * 2 // 2MB
+var (
+	peopleJoined []string
+	peopleLeft   []string
+	activityLog  []string
+)
 
-var logFile *os.File
-var logFilePath string
-var preLoggedEnd int64 = 0
-
-func ReadLastLogs() []string {
-	logPath := GetLastLogPath()
-	if logPath == "" {
-		return nil
-	}
-	if logFilePath != logPath {
-		logFilePath = logPath
-		if logFile != nil {
-			_ = logFile.Close()
-		}
-		f, err := os.Open(logPath)
-		if err != nil {
-			fmt.Printf("Error opening %s: %s\n", logFilePath, err.Error())
-			return nil
-		}
-		logFile = f
-		stat, err := f.Stat()
-		if err != nil {
-			fmt.Printf("Error stat-ing %s: %s\n", logFilePath, err.Error())
-			return nil
-		}
-		if ignorePreLogged {
-			preLoggedEnd = stat.Size()
-		}
-	}
-	stat, err := logFile.Stat()
-	if err != nil {
-		fmt.Printf("Error stat-ing %s: %s\n", logFilePath, err.Error())
-		return nil
-	}
-	size := max(min(readSize, stat.Size()-preLoggedEnd), 0)
-	if _, err := logFile.Seek(-(size + 1), 2); err != nil {
-		fmt.Printf("Error seeking to %d in %s: %s\n", -size, logFilePath, err.Error())
-		return nil
-	}
-	buf := make([]byte, size)
-	_, err = logFile.Read(buf)
-	if err != nil {
-		fmt.Printf("Error reading from %s: %s\n", logFilePath, err.Error())
-		return nil
-	}
-	lines := strings.Split(string(buf), "\n")
-	// map lines;
-	for i, line := range lines {
-		data := strings.Split(line, " - ")
-		if len(data) < 2 {
-			lines[i] = ""
-			continue
-		}
-		lines[i] = strings.TrimSpace(data[1])
-	}
-	return lines
+func init() {
+	SearchForPeople()
 }
 
-func GetLastLogPath() string {
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		fmt.Println("APPDATA not set")
-		return ""
-	}
-	pathV := path.Join(appData, "\\..\\LocalLow\\VRChat\\VRChat\\")
-	files, err := os.ReadDir(pathV)
+func getLatestLogFile() (string, error) {
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println(err.Error())
-		return ""
+		return "", fmt.Errorf("failed to get user home directory: %v", err)
 	}
-	var lastLogFileStat fs.FileInfo = nil
-	for _, f := range files {
-		if f.IsDir() || !strings.Contains(f.Name(), "output_log_") {
-			continue
-		}
-		fInfo, err := f.Info()
-		if err != nil {
-			continue
-		}
-		if lastLogFileStat != nil && fInfo.ModTime().Before(lastLogFileStat.ModTime()) {
-			continue
-		}
-		lastLogFileStat = fInfo
+
+	logDir := filepath.Join(homeDir, "AppData", "LocalLow", "VRChat", "VRChat")
+	fmt.Println("Checking log directory:", logDir)
+
+	// Find all .txt log files
+	files, err := filepath.Glob(filepath.Join(logDir, "*.txt"))
+	if err != nil {
+		return "", fmt.Errorf("error searching log files in %s: %v", logDir, err)
 	}
-	if lastLogFileStat == nil {
-		fmt.Println("No log file found")
-		return ""
+	if len(files) == 0 {
+		return "", fmt.Errorf("no log files found in %s", logDir)
 	}
-	return path.Join(pathV, lastLogFileStat.Name())
+
+	// Find the latest modified file
+	var latestFile string
+	var latestModTime time.Time
+
+	for _, file := range files {
+		info, err := os.Stat(file)
+		if err == nil {
+			modTime := info.ModTime()
+			if latestFile == "" || modTime.After(latestModTime) {
+				latestFile = file
+				latestModTime = modTime
+			}
+		}
+	}
+
+	if latestFile == "" {
+		return "", fmt.Errorf("no valid log files found in %s", logDir)
+	}
+
+	return latestFile, nil
+}
+
+func SearchForPeople() {
+	logFile, err := getLatestLogFile()
+	if err != nil {
+		fmt.Println("Error finding log file:", err)
+		return
+	}
+
+	file, err := os.Open(logFile)
+	if err != nil {
+		fmt.Println("Unable to open file:", err)
+		return
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+
+	var tempActivityLog []string
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		processLogLine(line, "OnPlayerJoined", &peopleJoined, "has joined", &tempActivityLog)
+		processLogLine(line, "OnPlayerLeft", &peopleLeft, "has left", &tempActivityLog)
+	}
+
+	activityLog = append(tempActivityLog, activityLog...)
+
+	if err := scanner.Err(); err != nil {
+		fmt.Println("Error reading file:", err)
+	}
+}
+
+func processLogLine(line, keyword string, list *[]string, action string, tempActivityLog *[]string) {
+	if strings.Contains(line, keyword) {
+		startIdx := strings.Index(line, keyword) + len(keyword)
+		endIdx := strings.Index(line, "(usr_")
+
+		if startIdx != -1 && endIdx != -1 {
+			player := strings.TrimSpace(line[startIdx:endIdx])
+			if !contains(*list, player) {
+				*list = append(*list, player)
+				*tempActivityLog = append(*tempActivityLog, fmt.Sprintf("[%s] %s", player, action))
+			}
+		}
+	}
+}
+
+func contains(slice []string, value string) bool {
+	for _, item := range slice {
+		if item == value {
+			return true
+		}
+	}
+	return false
+}
+
+func getLastPlayerActivity() string {
+	if len(activityLog) == 0 {
+		return "No recent activity"
+	}
+	return activityLog[0]
+}
+
+func GetLastJoinLogs() string {
+	return formatLogs(peopleJoined, "has joined")
+}
+
+func GetLastLeaveLogs() string {
+	return formatLogs(peopleLeft, "has left")
+}
+
+func formatLogs(list []string, action string) string {
+	count := len(list)
+	if count == 0 {
+		return "No recent activity"
+	}
+
+	var logs []string
+	for i := count - 1; i >= 0 && len(logs) < 20; i-- {
+		logs = append(logs, fmt.Sprintf("(%s) %s", list[i], action))
+	}
+
+	return strings.Join(logs, "\n")
 }

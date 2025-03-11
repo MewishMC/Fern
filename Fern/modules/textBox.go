@@ -9,7 +9,7 @@ var MessageN int
 var text string
 
 func TextBox() string {
-	text = getMessage(MessageN)
+	text = getMessage()
 
 	meow := []struct {
 		flag bool
@@ -23,7 +23,7 @@ func TextBox() string {
 		{Config.DisplayOptions.CPU, GetCpuInfo(true, true)},
 		{Config.DisplayOptions.Media, PrintMediaInfo()},
 		{Config.DisplayOptions.ActiveWindow, GetActiveWindow()},
-		{Config.DisplayOptions.VRChatLogs, GetJoinAndLeaveLogs()},
+		{Config.DisplayOptions.VRChatLogs, getLastPlayerActivity()},
 	}
 	var result []string
 	for _, condition := range meow {

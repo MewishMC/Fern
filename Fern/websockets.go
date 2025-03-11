@@ -55,6 +55,7 @@ func init() {
 	updateLeaveLogs()
 	updateJoinLogs()
 	RegisterMessageHandler()
+
 }
 
 func updatePreview() {
@@ -80,19 +81,12 @@ func updatePreview() {
 func updateLeaveLogs() {
 	RegisterWebsocketHandler("/ws/logs/leave", func(conn *websocket.Conn, err error) {
 		defer conn.Close()
-		var sentLogsN int
 		for {
 			time.Sleep(time.Second)
-			leaveLogs := modules.GetLeaveLogs()
-			leaveLogsN := len(leaveLogs)
-			if sentLogsN == leaveLogsN {
-				continue
-			}
-			sentLogsN = min(sentLogsN, leaveLogsN)
-			if err := conn.WriteJSON(strings.Join(leaveLogs[sentLogsN:], "<br>")); err != nil {
+			leaveLogs := modules.GetLastLeaveLogs()
+			if err := conn.WriteJSON(leaveLogs); err != nil {
 				return
 			}
-			sentLogsN = leaveLogsN
 		}
 	})
 }
@@ -100,19 +94,13 @@ func updateLeaveLogs() {
 func updateJoinLogs() {
 	RegisterWebsocketHandler("/ws/logs/join", func(conn *websocket.Conn, err error) {
 		defer conn.Close()
-		var sentLogsN int
 		for {
+
 			time.Sleep(time.Second)
-			joinLogs := modules.GetJoinLogs()
-			joinLogsN := len(joinLogs)
-			if sentLogsN == joinLogsN {
-				continue
-			}
-			sentLogsN = min(sentLogsN, joinLogsN)
-			if err := conn.WriteJSON(strings.Join(joinLogs[sentLogsN:], "<br>")); err != nil {
+			joinLogs := modules.GetLastJoinLogs()
+			if err := conn.WriteJSON(joinLogs); err != nil {
 				return
 			}
-			sentLogsN = joinLogsN
 		}
 	})
 }
