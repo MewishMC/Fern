@@ -63,6 +63,8 @@ func updatePreview() {
 		defer conn.Close()
 		lastSentMessage := ""
 		for {
+			time.Sleep(time.Second)
+
 			lastSentMessageReal := msg.Arguments[0].(string)
 			lastSentMessageReal = strings.ReplaceAll(lastSentMessageReal, "\x03\xFE", "")
 

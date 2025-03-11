@@ -1,12 +1,11 @@
 package modules
 
 import (
-	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 var (
@@ -15,48 +14,28 @@ var (
 	activityLog  []string
 )
 
-func init() {
-	SearchForPeople()
-}
-
 func getLatestLogFile() (string, error) {
-	homeDir, err := os.UserHomeDir()
+	logDir := fmt.Sprintf("%s\\AppData\\LocalLow\\VRChat\\VRChat\\", os.Getenv("USERPROFILE"))
+
+	files, err := ioutil.ReadDir(logDir)
 	if err != nil {
-		return "", fmt.Errorf("failed to get user home directory: %v", err)
+		return "", err
 	}
 
-	logDir := filepath.Join(homeDir, "AppData", "LocalLow", "VRChat", "VRChat")
-	fmt.Println("Checking log directory:", logDir)
-
-	// Find all .txt log files
-	files, err := filepath.Glob(filepath.Join(logDir, "*.txt"))
-	if err != nil {
-		return "", fmt.Errorf("error searching log files in %s: %v", logDir, err)
-	}
-	if len(files) == 0 {
-		return "", fmt.Errorf("no log files found in %s", logDir)
-	}
-
-	// Find the latest modified file
-	var latestFile string
-	var latestModTime time.Time
-
+	var latestFile os.FileInfo
 	for _, file := range files {
-		info, err := os.Stat(file)
-		if err == nil {
-			modTime := info.ModTime()
-			if latestFile == "" || modTime.After(latestModTime) {
+		if !file.IsDir() {
+			if latestFile == nil || file.ModTime().After(latestFile.ModTime()) {
 				latestFile = file
-				latestModTime = modTime
 			}
 		}
 	}
 
-	if latestFile == "" {
-		return "", fmt.Errorf("no valid log files found in %s", logDir)
+	if latestFile == nil {
+		return "", fmt.Errorf("no log files found")
 	}
 
-	return latestFile, nil
+	return filepath.Join(logDir, latestFile.Name()), nil
 }
 
 func SearchForPeople() {
@@ -66,40 +45,33 @@ func SearchForPeople() {
 		return
 	}
 
-	file, err := os.Open(logFile)
+	data, err := ioutil.ReadFile(logFile)
 	if err != nil {
 		fmt.Println("Unable to open file:", err)
 		return
 	}
-	defer file.Close()
 
-	scanner := bufio.NewScanner(file)
+	lines := strings.Split(string(data), "\n")
+	for _, line := range lines {
+		if strings.Contains(line, "OnPlayerJoined") {
+			index := strings.Index(line, "(usr_")
+			if index != -1 {
+				player := strings.TrimSpace(line[strings.Index(line, "OnPlayerJoined")+15 : index])
+				if !contains(peopleJoined, player) {
+					peopleJoined = append(peopleJoined, player)
+					activityLog = append(activityLog, fmt.Sprintf("[%s] Has joined", player))
+				}
+			}
+		}
 
-	var tempActivityLog []string
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		processLogLine(line, "OnPlayerJoined", &peopleJoined, "has joined", &tempActivityLog)
-		processLogLine(line, "OnPlayerLeft", &peopleLeft, "has left", &tempActivityLog)
-	}
-
-	activityLog = append(tempActivityLog, activityLog...)
-
-	if err := scanner.Err(); err != nil {
-		fmt.Println("Error reading file:", err)
-	}
-}
-
-func processLogLine(line, keyword string, list *[]string, action string, tempActivityLog *[]string) {
-	if strings.Contains(line, keyword) {
-		startIdx := strings.Index(line, keyword) + len(keyword)
-		endIdx := strings.Index(line, "(usr_")
-
-		if startIdx != -1 && endIdx != -1 {
-			player := strings.TrimSpace(line[startIdx:endIdx])
-			if !contains(*list, player) {
-				*list = append(*list, player)
-				*tempActivityLog = append(*tempActivityLog, fmt.Sprintf("[%s] %s", player, action))
+		if strings.Contains(line, "OnPlayerLeft") {
+			index := strings.Index(line, "(usr_")
+			if index != -1 {
+				player := strings.TrimSpace(line[strings.Index(line, "OnPlayerLeft")+13 : index])
+				if !contains(peopleLeft, player) {
+					peopleLeft = append(peopleLeft, player)
+					activityLog = append(activityLog, fmt.Sprintf("[%s] Has left", player))
+				}
 			}
 		}
 	}
@@ -116,29 +88,25 @@ func contains(slice []string, value string) bool {
 
 func getLastPlayerActivity() string {
 	if len(activityLog) == 0 {
-		return "No recent activity"
+		return ""
 	}
-	return activityLog[0]
+	return activityLog[max(0, len(activityLog)-1)]
 }
 
 func GetLastJoinLogs() string {
-	return formatLogs(peopleJoined, "has joined")
+	var joinMessages []string
+	for i := len(peopleJoined) - 1; i >= 0 && len(joinMessages) < 20; i-- {
+		joinMessages = append(joinMessages, fmt.Sprintf("(%s) has joined", peopleJoined[i]))
+	}
+
+	return strings.Join(joinMessages, "\n")
 }
 
 func GetLastLeaveLogs() string {
-	return formatLogs(peopleLeft, "has left")
-}
-
-func formatLogs(list []string, action string) string {
-	count := len(list)
-	if count == 0 {
-		return "No recent activity"
+	var formattedLogs []string
+	for i := len(peopleLeft) - 1; i >= 0 && len(formattedLogs) < 20; i-- {
+		formattedLogs = append(formattedLogs, fmt.Sprintf("(%s) has left", peopleLeft[i]))
 	}
 
-	var logs []string
-	for i := count - 1; i >= 0 && len(logs) < 20; i-- {
-		logs = append(logs, fmt.Sprintf("(%s) %s", list[i], action))
-	}
-
-	return strings.Join(logs, "\n")
+	return strings.Join(formattedLogs, "\n")
 }
