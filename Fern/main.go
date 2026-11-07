@@ -2,45 +2,91 @@ package main
 
 import (
 	"Fern/UI"
-	"Fern/modules"
 	"fmt"
-	"github.com/hypebeast/go-osc/osc"
+	"log"
+	"strings"
+	"sync/atomic"
 	"time"
+
+	"github.com/hypebeast/go-osc/osc"
+
+	"Fern/modules"
 )
 
-//media to show what's playing
-//Get the prosses id of spotify and just display the windowname
+const appVersion = "2.0"
 
-// ideas, add commands if possible (by typing in the ui)
-//make it so you can send messages to the chatbox (by typing in the ui)
-//make it so you can change the random text through the ui
-//have the logs show in the ui to save more characters and saved as a file
-
-var client = osc.NewClient("127.0.0.1", 9000)
-var msg = osc.NewMessage("/chatbox/input", "", true)
+var (
+	client     *osc.Client
+	clientKey  string
+	sentCount  int64
+	lastSentAt int64
+	startedAt  = time.Now()
+)
 
 func main() {
-	fmt.Println("Starting up!")
-	go UI.StartWebview()
-	go func() {
-		for len(modules.Config.TextMessages) < 1 {
-			time.Sleep(time.Second)
-		}
-		for {
-			modules.MessageN += 1
-			time.Sleep(time.Millisecond * time.Duration(modules.Config.TextOptions.Speed))
-		}
-	}()
+	modules.Load()
+	modules.StartWorkers()
 
-	for {
-		msg.Arguments[0] = modules.TextBox()
-		msg.Arguments[0] = msg.Arguments[0].(string)[:min(len(msg.Arguments[0].(string)), 142)] + "\x03\xFE"
-
-		if modules.Config.DisplayOptions.Show {
-			_ = client.Send(msg)
-		}
-
-		modules.SearchForPeople()
-		time.Sleep(time.Millisecond * time.Duration(modules.Config.TimeoutMS))
+	port, listener, err := openListener()
+	if err != nil {
+		log.Fatal("could not open a local port: ", err)
 	}
+	go StartServer(listener)
+	go sendLoop()
+
+	fmt.Printf("Fern %s listening on http://127.0.0.1:%d/\n", appVersion, port)
+
+	UI.StartWebview(fmt.Sprintf("http://127.0.0.1:%d/", port))
+}
+
+// sendLoop pushes the chatbox to VRChat, re-sending instantly when the config
+// changes instead of always waiting for the full timeout.
+func sendLoop() {
+	for {
+		cfg := modules.GetConfig()
+		ensureClient(cfg.OSCOptions)
+
+		if cfg.DisplayOptions.Show {
+			if cfg.DisplayOptions.Loading {
+				modules.AdvanceLoading(int(modules.EffectiveRateMS(cfg)))
+			}
+			body, payload := modules.BuildPayload()
+			if body != "" && client != nil {
+				// Third argument false: do not play the notification sound on every
+				// update. While the loading animation is on this fires about once a
+				// second, which would ding everyone nearby non-stop.
+				msg := osc.NewMessage("/chatbox/input", payload, true, false)
+				if err := client.Send(msg); err == nil {
+					atomic.AddInt64(&sentCount, 1)
+					atomic.StoreInt64(&lastSentAt, time.Now().UnixMilli())
+					modules.AddHistory(body)
+				}
+			}
+		}
+
+		timeout := time.Duration(modules.EffectiveRateMS(cfg)) * time.Millisecond
+		if timeout < 100*time.Millisecond {
+			timeout = 100 * time.Millisecond
+		}
+		select {
+		case <-modules.Changes():
+		case <-time.After(timeout):
+		}
+	}
+}
+
+func ensureClient(opts modules.OSCOptions) {
+	key := fmt.Sprintf("%s:%d", opts.Host, opts.Port)
+	if client != nil && clientKey == key {
+		return
+	}
+	client = osc.NewClient(opts.Host, opts.Port)
+	clientKey = key
+}
+
+func oscTarget() string {
+	if clientKey == "" {
+		return "127.0.0.1:9000"
+	}
+	return strings.TrimSpace(clientKey)
 }

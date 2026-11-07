@@ -2,111 +2,290 @@ package modules
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
+	"time"
+	"unicode"
 )
+
+// LogEvent is one timestamped line shown in the UI.
+type LogEvent struct {
+	Time int64  `json:"time"`
+	Text string `json:"text"`
+}
 
 var (
-	peopleJoined []string
-	peopleLeft   []string
-	activityLog  []string
+	logMu        sync.Mutex
+	logPath      string
+	logOffset    int64
+	logRemainder string
+	logUpdated   time.Time
+
+	joined   = map[string]LogEvent{}
+	left     = map[string]LogEvent{}
+	activity []LogEvent // newest last
+	history  []LogEvent // newest last
+	order    []string   // insertion order of joined names
 )
 
-func getLatestLogFile() (string, error) {
-	logDir := fmt.Sprintf("%s\\AppData\\LocalLow\\VRChat\\VRChat\\", os.Getenv("USERPROFILE"))
+const (
+	maxLogEntries   = 30
+	maxActivitySize = 60
+	maxHistorySize  = 40
+)
 
-	files, err := ioutil.ReadDir(logDir)
+func logDirectory() string {
+	return filepath.Join(os.Getenv("USERPROFILE"), "AppData", "LocalLow", "VRChat", "VRChat")
+}
+
+func latestLogFile() (string, error) {
+	dir := logDirectory()
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		return "", err
 	}
-
-	var latestFile os.FileInfo
-	for _, file := range files {
-		if !file.IsDir() {
-			if latestFile == nil || file.ModTime().After(latestFile.ModTime()) {
-				latestFile = file
-			}
+	var newest string
+	var newestTime time.Time
+	for _, entry := range entries {
+		if entry.IsDir() {
+			continue
+		}
+		info, err := entry.Info()
+		if err != nil {
+			continue
+		}
+		if !strings.HasSuffix(strings.ToLower(entry.Name()), ".txt") {
+			continue
+		}
+		if info.ModTime().After(newestTime) {
+			newestTime = info.ModTime()
+			newest = filepath.Join(dir, entry.Name())
 		}
 	}
-
-	if latestFile == nil {
-		return "", fmt.Errorf("no log files found")
+	if newest == "" {
+		return "", fmt.Errorf("no log files")
 	}
-
-	return filepath.Join(logDir, latestFile.Name()), nil
+	return newest, nil
 }
 
-func SearchForPeople() {
-	logFile, err := getLatestLogFile()
+func startLogWorker() {
+	go func() {
+		ticker := time.NewTicker(2 * time.Second)
+		defer ticker.Stop()
+		for range ticker.C {
+			scanLog()
+		}
+	}()
+}
+
+// scanLog tails only the new part of the newest VRChat log. The previous
+// implementation re-read the whole file every update, which made big logs lag.
+func scanLog() {
+	path, err := latestLogFile()
 	if err != nil {
-		fmt.Println("Error finding log file:", err)
 		return
 	}
 
-	data, err := ioutil.ReadFile(logFile)
+	logMu.Lock()
+	defer logMu.Unlock()
+
+	if path != logPath {
+		logPath = path
+		logOffset = 0
+		logRemainder = ""
+	}
+
+	file, err := os.Open(path)
 	if err != nil {
-		fmt.Println("Unable to open file:", err)
 		return
 	}
+	defer file.Close()
 
-	lines := strings.Split(string(data), "\n")
-	for _, line := range lines {
-		if strings.Contains(line, "OnPlayerJoined") {
-			index := strings.Index(line, "(usr_")
-			if index != -1 {
-				player := strings.TrimSpace(line[strings.Index(line, "OnPlayerJoined")+15 : index])
-				if !contains(peopleJoined, player) {
-					peopleJoined = append(peopleJoined, player)
-					activityLog = append(activityLog, fmt.Sprintf("[%s] Has joined", player))
-				}
-			}
-		}
+	if _, err := file.Seek(logOffset, io.SeekStart); err != nil {
+		return
+	}
+	data, err := io.ReadAll(file)
+	if err != nil || len(data) == 0 {
+		return
+	}
+	logOffset += int64(len(data))
+	logUpdated = time.Now()
 
-		if strings.Contains(line, "OnPlayerLeft") {
-			index := strings.Index(line, "(usr_")
-			if index != -1 {
-				player := strings.TrimSpace(line[strings.Index(line, "OnPlayerLeft")+13 : index])
-				if !contains(peopleLeft, player) {
-					peopleLeft = append(peopleLeft, player)
-					activityLog = append(activityLog, fmt.Sprintf("[%s] Has left", player))
-				}
-			}
-		}
+	chunk := logRemainder + string(data)
+	lines := strings.Split(chunk, "\n")
+	logRemainder = lines[len(lines)-1]
+	for _, line := range lines[:len(lines)-1] {
+		parseLogLine(line)
 	}
 }
 
-func contains(slice []string, value string) bool {
-	for _, item := range slice {
-		if item == value {
-			return true
+func parseLogLine(line string) {
+	switch {
+	case strings.Contains(line, "OnPlayerJoined"):
+		name := playerName(line, "OnPlayerJoined")
+		if name == "" {
+			return
 		}
+		ev := LogEvent{Time: time.Now().UnixMilli(), Text: name}
+		if _, ok := joined[name]; ok {
+			return
+		}
+		joined[name] = ev
+		delete(left, name)
+		order = append(order, name)
+		addActivity(fmt.Sprintf("%s joined", name))
+	case strings.Contains(line, "OnPlayerLeft"):
+		name := playerName(line, "OnPlayerLeft")
+		if name == "" {
+			return
+		}
+		ev := LogEvent{Time: time.Now().UnixMilli(), Text: name}
+		left[name] = ev
+		delete(joined, name)
+		for i, n := range order {
+			if n == name {
+				order = append(order[:i], order[i+1:]...)
+				break
+			}
+		}
+		addActivity(fmt.Sprintf("%s left", name))
 	}
-	return false
 }
 
-func getLastPlayerActivity() string {
-	if len(activityLog) == 0 {
+func addActivity(text string) {
+	activity = append(activity, LogEvent{Time: time.Now().UnixMilli(), Text: text})
+	if len(activity) > maxActivitySize {
+		activity = activity[len(activity)-maxActivitySize:]
+	}
+}
+
+// playerName extracts the display name in front of the usr_ id.
+func playerName(line, marker string) string {
+	idx := strings.Index(line, marker)
+	if idx < 0 {
 		return ""
 	}
-	return activityLog[max(0, len(activityLog)-1)]
+	rest := strings.TrimSpace(line[idx+len(marker):])
+	if un := strings.Index(rest, "(usr_"); un >= 0 {
+		rest = rest[:un]
+	}
+	return strings.TrimSpace(rest)
 }
 
-func GetLastJoinLogs() string {
-	var joinMessages []string
-	for i := len(peopleJoined) - 1; i >= 0 && len(joinMessages) < 20; i-- {
-		joinMessages = append(joinMessages, fmt.Sprintf("(%s) has joined", peopleJoined[i]))
+// JoinLogs returns the most recent joins, newest first.
+func JoinLogs() []LogEvent {
+	logMu.Lock()
+	defer logMu.Unlock()
+	out := make([]LogEvent, 0, len(joined))
+	for i := len(order) - 1; i >= 0 && len(out) < maxLogEntries; i-- {
+		if ev, ok := joined[order[i]]; ok {
+			out = append(out, ev)
+		}
 	}
-
-	return strings.Join(joinMessages, "\n")
+	return out
 }
 
-func GetLastLeaveLogs() string {
-	var formattedLogs []string
-	for i := len(peopleLeft) - 1; i >= 0 && len(formattedLogs) < 20; i-- {
-		formattedLogs = append(formattedLogs, fmt.Sprintf("(%s) has left", peopleLeft[i]))
+// LeaveLogs returns the most recent leaves, newest first.
+func LeaveLogs() []LogEvent {
+	logMu.Lock()
+	defer logMu.Unlock()
+	all := make([]LogEvent, 0, len(left))
+	for _, ev := range left {
+		all = append(all, ev)
 	}
+	// Newest first, without pulling in a sort dependency.
+	for i := 0; i < len(all); i++ {
+		for j := i + 1; j < len(all); j++ {
+			if all[j].Time > all[i].Time {
+				all[i], all[j] = all[j], all[i]
+			}
+		}
+	}
+	if len(all) > maxLogEntries {
+		all = all[:maxLogEntries]
+	}
+	return all
+}
 
-	return strings.Join(formattedLogs, "\n")
+// ActivityFeed returns recent join/leave events, newest last.
+func ActivityFeed() []LogEvent {
+	logMu.Lock()
+	defer logMu.Unlock()
+	out := append([]LogEvent{}, activity...)
+	return out
+}
+
+// LastActivityLine is the single line shown in the chatbox log module.
+func LastActivityLine() string {
+	logMu.Lock()
+	defer logMu.Unlock()
+	if len(activity) == 0 {
+		return ""
+	}
+	return activity[len(activity)-1].Text
+}
+
+// PlayerCount is how many players are currently known to be in the instance.
+func PlayerCount() int {
+	logMu.Lock()
+	defer logMu.Unlock()
+	return len(joined)
+}
+
+// VRChatActive reports whether VRChat has written to its log recently.
+func VRChatActive() bool {
+	logMu.Lock()
+	defer logMu.Unlock()
+	return !logUpdated.IsZero() && time.Since(logUpdated) < 90*time.Second
+}
+
+var lastHistoryAt int64
+
+// normalizeHistory ignores the animated parts (spinner frame, clock, progress
+// bar) so the history lists meaningful chatbox changes instead of every frame.
+func normalizeHistory(text string) string {
+	var b strings.Builder
+	for _, r := range text {
+		switch {
+		case unicode.IsDigit(r), r == ':', r == '/', r == '▰', r == '▱', r == '.':
+			continue
+		case r >= 0x2800 && r <= 0x28FF: // legacy braille frames
+			continue
+		}
+		b.WriteRune(r)
+	}
+	return strings.Join(strings.Fields(b.String()), " ")
+}
+
+// AddHistory records a chatbox message that was actually sent.
+func AddHistory(text string) {
+	text = strings.TrimSpace(text)
+	if text == "" {
+		return
+	}
+	norm := normalizeHistory(text)
+	logMu.Lock()
+	defer logMu.Unlock()
+	now := time.Now().UnixMilli()
+	if len(history) > 0 && normalizeHistory(history[len(history)-1].Text) == norm {
+		return
+	}
+	if now-lastHistoryAt < 800 {
+		return
+	}
+	lastHistoryAt = now
+	history = append(history, LogEvent{Time: now, Text: text})
+	if len(history) > maxHistorySize {
+		history = history[len(history)-maxHistorySize:]
+	}
+}
+
+// History returns sent chatbox messages, newest last.
+func History() []LogEvent {
+	logMu.Lock()
+	defer logMu.Unlock()
+	return append([]LogEvent{}, history...)
 }
