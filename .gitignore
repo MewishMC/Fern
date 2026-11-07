@@ -1,4 +1,6 @@
 /.idea
 Fern.exe
 config.json
-update.exe/.freebuff
+update.exe
+/.freebuff
+fern-theme.png
