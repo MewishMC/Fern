@@ -1,7 +1,8 @@
 package UI
 
 import (
-	_ "embed"
+	"embed"
+	"io/fs"
 	"os"
 	"slices"
 
@@ -10,6 +11,19 @@ import (
 
 //go:embed home.html
 var MainPage string
+
+//go:embed all:assets
+var assets embed.FS
+
+// Assets is the bundled stylesheet and icon font the page links to. They live
+// inside the binary, so the interface needs no network at runtime.
+func Assets() fs.FS {
+	sub, err := fs.Sub(assets, "assets")
+	if err != nil {
+		return nil
+	}
+	return sub
+}
 
 // StartWebview opens the native window pointed at the local UI server. It blocks
 // until the window is closed, so it must run on the main thread.

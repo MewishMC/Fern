@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"mime"
 	"net"
 	"net/http"
 	"sync"
@@ -114,6 +115,11 @@ func openListener() (int, net.Listener, error) {
 
 // StartServer serves the interface and the state socket.
 func StartServer(listener net.Listener) {
+	// WebView2 wants a font type for the bundled icon font, and Go ships no
+	// .woff/.woff2 entry of its own.
+	_ = mime.AddExtensionType(".woff", "font/woff")
+	_ = mime.AddExtensionType(".woff2", "font/woff2")
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
@@ -125,6 +131,9 @@ func StartServer(listener net.Listener) {
 		_, _ = w.Write([]byte(UI.MainPage))
 	})
 	mux.HandleFunc("/ws", handleSocket)
+	if assets := UI.Assets(); assets != nil {
+		mux.Handle("/assets/", http.StripPrefix("/assets/", cacheForDay(http.FileServer(http.FS(assets)))))
+	}
 
 	go broadcastLoop()
 
@@ -135,6 +144,15 @@ func StartServer(listener net.Listener) {
 	if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
 		fmt.Println("server stopped:", err)
 	}
+}
+
+// cacheForDay lets WebView2 keep the bundled fonts and stylesheets; they only
+// change when the binary is rebuilt.
+func cacheForDay(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=86400")
+		next.ServeHTTP(w, r)
+	})
 }
 
 func handleSocket(w http.ResponseWriter, r *http.Request) {
