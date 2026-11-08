@@ -1,11 +1,15 @@
 package main
 
 import (
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"mime"
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -19,6 +23,22 @@ import (
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
+
+// assetStamp is a short hash of the bundled stylesheets, appended to their URLs
+// by the page. WebView2 happily reuses a cached stylesheet for a whole day
+// without asking the server, so a rebuild used to keep drawing the old layout
+// until the cache expired. A new URL per stylesheet change cannot be stale.
+var assetStamp = func() string {
+	hash := sha1.New()
+	if assets := UI.Assets(); assets != nil {
+		for _, name := range []string{"theme.css", "fonts/noto-emoji.css"} {
+			if data, err := fs.ReadFile(assets, name); err == nil {
+				_, _ = hash.Write(data)
+			}
+		}
+	}
+	return hex.EncodeToString(hash.Sum(nil)[:6])
+}()
 
 // uiState is the single payload pushed to the interface.
 type uiState struct {
@@ -128,11 +148,11 @@ func StartServer(listener net.Listener) {
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
-		_, _ = w.Write([]byte(UI.MainPage))
+		_, _ = w.Write([]byte(strings.ReplaceAll(UI.MainPage, "{{ASSET_STAMP}}", assetStamp)))
 	})
 	mux.HandleFunc("/ws", handleSocket)
 	if assets := UI.Assets(); assets != nil {
-		mux.Handle("/assets/", http.StripPrefix("/assets/", cacheForDay(http.FileServer(http.FS(assets)))))
+		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
 	}
 
 	go broadcastLoop()
@@ -146,11 +166,12 @@ func StartServer(listener net.Listener) {
 	}
 }
 
-// cacheForDay lets WebView2 keep the bundled fonts and stylesheets; they only
-// change when the binary is rebuilt.
-func cacheForDay(next http.Handler) http.Handler {
+// freshAssets keeps WebView2 from holding on to a stylesheet from an older
+// build. The files are embedded in the binary, so re-reading them costs nothing,
+// while a cached copy made every rebuild look broken until the cache expired.
+func freshAssets(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Cache-Control", "public, max-age=86400")
+		w.Header().Set("Cache-Control", "no-store")
 		next.ServeHTTP(w, r)
 	})
 }
