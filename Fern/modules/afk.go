@@ -46,19 +46,50 @@ func Talking() bool {
 	return voiceActive
 }
 
-// GetAfkTime renders the afk module line.
-func GetAfkTime(custom string) string {
+// afkLine renders the afk module line using the configured options.
+func afkLine(cfg Config) string {
+	o := cfg.AfkOptions
 	active, duration := AfkInfo()
 	if !active {
 		return ""
 	}
-	if strings.TrimSpace(custom) == "" {
-		custom = "AFK"
+	label := strings.TrimSpace(o.AFKMessage)
+	if label == "" {
+		label = "AFK"
 	}
-	hours := int(duration.Hours())
-	minutes := int(duration.Minutes()) % 60
-	secs := int(duration.Seconds()) % 60
-	return fmt.Sprintf("%s %02d:%02d:%02d", custom, hours, minutes, secs)
+	if !o.ShowTimer {
+		return label
+	}
+	return label + " " + formatIdle(duration, o.TimerStyle)
+}
+
+// formatIdle renders the idle time in one of the styles the options offer.
+func formatIdle(d time.Duration, style string) string {
+	total := int(d.Seconds())
+	if total < 0 {
+		total = 0
+	}
+	hours := total / 3600
+	minutes := (total % 3600) / 60
+	secs := total % 60
+	switch style {
+	case "short":
+		switch {
+		case hours > 0:
+			return fmt.Sprintf("%dh %02dm", hours, minutes)
+		case minutes > 0:
+			return fmt.Sprintf("%dm %02ds", minutes, secs)
+		default:
+			return fmt.Sprintf("%ds", secs)
+		}
+	case "minutes":
+		if total < 60 {
+			return fmt.Sprintf("%ds", total)
+		}
+		return fmt.Sprintf("%dm", total/60)
+	default:
+		return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, secs)
+	}
 }
 
 func isActivityAddress(address string) bool {

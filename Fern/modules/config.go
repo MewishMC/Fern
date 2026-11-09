@@ -57,21 +57,26 @@ type DisplayOptions struct {
 
 // WindowOptions controls how the active window title is shortened.
 type WindowOptions struct {
-	Simplified bool `json:"simplified"`
+	Simplified bool   `json:"simplified"`
+	Label      string `json:"label"`     // optional prefix
+	MaxChars   int    `json:"max_chars"` // 0 means no limit
 }
 
 // TextOptions controls the rotating custom messages.
 type TextOptions struct {
-	Cycle   bool `json:"cycle"`
-	Speed   int  `json:"speed"`
-	Shuffle bool `json:"shuffle"`
+	Cycle   bool   `json:"cycle"`
+	Speed   int    `json:"speed"`
+	Shuffle bool   `json:"shuffle"`
+	Label   string `json:"label"` // optional prefix before the message
 }
 
 // LoadingOptions controls the loading module.
 type LoadingOptions struct {
-	Fast   bool   `json:"fast"`
-	RateMS int    `json:"rate_ms"`
-	Text   string `json:"text"` // shown before the growing dots; empty means dots only
+	Fast     bool   `json:"fast"`
+	RateMS   int    `json:"rate_ms"`
+	Text     string `json:"text"` // shown before the growing dots; empty means dots only
+	ShowDots bool   `json:"show_dots"`
+	Dots     int    `json:"dots"` // longest run of dots before looping
 }
 
 // AfkOptions controls the afk timer shown in the chatbox.
@@ -81,22 +86,56 @@ type AfkOptions struct {
 	Poopyafk   bool    `json:"poopyafk"`
 	AFKTime    float64 `json:"afk_time"`
 	AFKMessage string  `json:"afk_message"`
+	ShowTimer  bool    `json:"show_timer"`
+	TimerStyle string  `json:"timer_style"` // full, short, minutes
 }
 
 // MediaOptions controls how the now playing line is rendered.
 type MediaOptions struct {
 	ShowProgress   bool   `json:"show_progress"`
-	ProgressStyle  string `json:"progress_style"` // bar, time, both
+	ProgressStyle  string `json:"progress_style"` // bar, time, both, none
 	ShowWhenPaused bool   `json:"show_when_paused"`
 	AppFilter      string `json:"app_filter"` // empty means any media app
-
+	Icon           string `json:"icon"`
+	PausedIcon     string `json:"paused_icon"`
+	ShowArtist     bool   `json:"show_artist"`
+	ShowAlbum      bool   `json:"show_album"`
+	BarWidth       int    `json:"bar_width"` // 0 hides the bar
+	MaxChars       int    `json:"max_chars"` // limit for the track part
 }
 
 // TimeOptions controls the clock line.
 type TimeOptions struct {
 	Use24h  bool   `json:"use_24h"`
 	Seconds bool   `json:"seconds"`
+	NoAmPm  bool   `json:"no_am_pm"` // 3:04 instead of 3:04 PM
 	Label   string `json:"label"`
+}
+
+// MemoryOptions controls the memory line.
+type MemoryOptions struct {
+	Label       string `json:"label"`
+	ShowUsed    bool   `json:"show_used"`
+	ShowTotal   bool   `json:"show_total"`
+	ShowPercent bool   `json:"show_percent"`
+	Decimals    int    `json:"decimals"`
+}
+
+// CPUOptions controls the CPU line.
+type CPUOptions struct {
+	Label     string `json:"label"`
+	ShowName  bool   `json:"show_name"`
+	ShowCores bool   `json:"show_cores"`
+	ShowUsage bool   `json:"show_usage"`
+	Decimals  int    `json:"decimals"`
+}
+
+// LogsOptions controls the VRChat log line.
+type LogsOptions struct {
+	Label     string `json:"label"`
+	ShowJoin  bool   `json:"show_join"`
+	ShowLeave bool   `json:"show_leave"`
+	MaxChars  int    `json:"max_chars"`
 }
 
 // OSCOptions is where chatbox messages are sent.
@@ -115,6 +154,9 @@ type Config struct {
 	AfkOptions     AfkOptions     `json:"AfkOptions"`
 	MediaOptions   MediaOptions   `json:"MediaOptions"`
 	TimeOptions    TimeOptions    `json:"TimeOptions"`
+	MemoryOptions  MemoryOptions  `json:"MemoryOptions"`
+	CPUOptions     CPUOptions     `json:"CPUOptions"`
+	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -150,30 +192,63 @@ func DefaultConfig() Config {
 		TextMessages: []string{"♡ hi there", "♡ have a good day", "♡ be kind"},
 		WindowOptions: WindowOptions{
 			Simplified: true,
+			Label:      "",
+			MaxChars:   60,
 		},
 		TextOptions: TextOptions{
 			Cycle:   true,
 			Speed:   2500,
 			Shuffle: false,
+			Label:   "",
 		},
 		LoadingOptions: LoadingOptions{
-			Fast:   true,
-			RateMS: 1000,
+			Fast:     true,
+			RateMS:   1000,
+			ShowDots: true,
+			Dots:     6,
 		},
 		AfkOptions: AfkOptions{
 			AutoDetect: true,
 			AFKTime:    10,
 			AFKMessage: "AFK",
+			ShowTimer:  true,
+			TimerStyle: "full",
 		},
 		MediaOptions: MediaOptions{
 			ShowProgress:   true,
 			ProgressStyle:  "both",
 			ShowWhenPaused: false,
 			AppFilter:      "",
+			Icon:           "♪",
+			PausedIcon:     "❚❚",
+			ShowArtist:     true,
+			ShowAlbum:      false,
+			BarWidth:       8,
+			MaxChars:       90,
 		},
 		TimeOptions: TimeOptions{
 			Use24h: false,
 			Label:  "",
+		},
+		MemoryOptions: MemoryOptions{
+			Label:       "ᵐᵉᵐ",
+			ShowUsed:    true,
+			ShowTotal:   true,
+			ShowPercent: true,
+			Decimals:    1,
+		},
+		CPUOptions: CPUOptions{
+			Label:     "ᶜᵖᵘ",
+			ShowName:  true,
+			ShowCores: false,
+			ShowUsage: true,
+			Decimals:  0,
+		},
+		LogsOptions: LogsOptions{
+			Label:     "",
+			ShowJoin:  true,
+			ShowLeave: true,
+			MaxChars:  80,
 		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
@@ -418,6 +493,32 @@ func (c *Config) sanitize() {
 	case "bar", "time", "both", "none":
 	default:
 		c.MediaOptions.ProgressStyle = "both"
+	}
+	c.MediaOptions.Icon = RuneLimit(strings.TrimSpace(c.MediaOptions.Icon), 4)
+	c.MediaOptions.PausedIcon = RuneLimit(strings.TrimSpace(c.MediaOptions.PausedIcon), 4)
+	c.MediaOptions.BarWidth = clampInt(c.MediaOptions.BarWidth, 0, 20)
+	c.MediaOptions.MaxChars = clampInt(c.MediaOptions.MaxChars, 4, 144)
+	if c.MediaOptions.MaxChars == 0 {
+		c.MediaOptions.MaxChars = 90
+	}
+
+	c.MemoryOptions.Label = RuneLimit(strings.TrimSpace(c.MemoryOptions.Label), 16)
+	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)
+	c.CPUOptions.Label = RuneLimit(strings.TrimSpace(c.CPUOptions.Label), 16)
+	c.CPUOptions.Decimals = clampInt(c.CPUOptions.Decimals, 0, 2)
+	c.WindowOptions.Label = RuneLimit(strings.TrimSpace(c.WindowOptions.Label), 16)
+	c.WindowOptions.MaxChars = clampInt(c.WindowOptions.MaxChars, 0, 144)
+	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
+	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
+	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
+	if c.LoadingOptions.Dots == 0 {
+		c.LoadingOptions.Dots = 6
+	}
+	c.LoadingOptions.Dots = clampInt(c.LoadingOptions.Dots, 1, 6)
+	switch c.AfkOptions.TimerStyle {
+	case "full", "short", "minutes":
+	default:
+		c.AfkOptions.TimerStyle = "full"
 	}
 
 	if c.OSCOptions.Host == "" {

@@ -218,14 +218,30 @@ func ActivityFeed() []LogEvent {
 	return out
 }
 
-// LastActivityLine is the single line shown in the chatbox log module.
-func LastActivityLine() string {
+// logsLine renders the latest join/leave that is still enabled.
+func logsLine(cfg Config) string {
+	o := cfg.LogsOptions
 	logMu.Lock()
-	defer logMu.Unlock()
-	if len(activity) == 0 {
+	line := ""
+	for i := len(activity) - 1; i >= 0; i-- {
+		text := activity[i].Text
+		if strings.HasSuffix(text, " joined") && !o.ShowJoin {
+			continue
+		}
+		if strings.HasSuffix(text, " left") && !o.ShowLeave {
+			continue
+		}
+		line = text
+		break
+	}
+	logMu.Unlock()
+	if line == "" {
 		return ""
 	}
-	return activity[len(activity)-1].Text
+	if limit := o.MaxChars; limit > 0 {
+		line = RuneLimit(line, limit)
+	}
+	return withLabel(o.Label, line)
 }
 
 // PlayerCount is how many players are currently known to be in the instance.

@@ -73,8 +73,11 @@ func HoldState() (text string, until int64, pinned bool) {
 }
 
 func holdOverlay() (string, bool) {
-	text, _, active := HoldState()
-	if !active {
+	// HoldState returns (text, until, pinned). Using the third value as
+	// "active" treated every timed hold as inactive, so only pinned messages
+	// ever reached the chatbox. An empty text means there is no overlay.
+	text, _, _ := HoldState()
+	if text == "" {
 		return "", false
 	}
 	return text, true
@@ -83,37 +86,56 @@ func holdOverlay() (string, bool) {
 func moduleText(id string, cfg Config) string {
 	switch id {
 	case ModuleAFK:
-		return GetAfkTime(cfg.AfkOptions.AFKMessage)
+		return afkLine(cfg)
 	case ModuleLoading:
 		return Loading()
 	case ModuleTime:
 		return clockText(cfg)
 	case ModuleText:
-		return CurrentMessage()
+		return textLine(cfg)
 	case ModuleMemory:
-		return GetMem()
+		return memoryLine(cfg)
 	case ModuleCPU:
-		return GetCpuInfo(true, false)
+		return cpuLine(cfg)
 	case ModuleMedia:
 		return mediaLine(cfg)
 	case ModuleWindow:
-		return GetActiveWindow()
+		return windowLine(cfg)
 	case ModuleLogs:
-		return LastActivityLine()
+		return logsLine(cfg)
 	}
 	return ""
+}
+
+// withLabel puts an optional prefix in front of a module line.
+func withLabel(label, text string) string {
+	label = strings.TrimSpace(label)
+	if label == "" || text == "" {
+		return text
+	}
+	return label + " " + text
+}
+
+func textLine(cfg Config) string {
+	return withLabel(cfg.TextOptions.Label, CurrentMessage())
 }
 
 func clockText(cfg Config) string {
 	now := time.Now()
 	layout := "3:04 PM"
-	if cfg.TimeOptions.Use24h {
+	switch {
+	case cfg.TimeOptions.Use24h:
 		layout = "15:04"
+	case cfg.TimeOptions.NoAmPm:
+		layout = "3:04"
 	}
 	if cfg.TimeOptions.Seconds {
-		if cfg.TimeOptions.Use24h {
+		switch {
+		case cfg.TimeOptions.Use24h:
 			layout = "15:04:05"
-		} else {
+		case cfg.TimeOptions.NoAmPm:
+			layout = "3:04:05"
+		default:
 			layout = "3:04:05 PM"
 		}
 	}

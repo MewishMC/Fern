@@ -56,6 +56,8 @@
                 <button class="nav-item" data-page="media" data-label="Media"><i class="fa fa-music" aria-hidden="true"></i><span class="nav-label">Media</span></button>
                 <button class="nav-item" data-page="afk" data-label="AFK"><i class="fa fa-moon" aria-hidden="true"></i><span class="nav-label">AFK</span></button>
                 <button class="nav-item" data-page="text" data-label="Text"><i class="fa fa-pen" aria-hidden="true"></i><span class="nav-label">Text</span></button>
+                <button class="nav-item" data-page="memory" data-label="Memory"><i class="fa fa-memory" aria-hidden="true"></i><span class="nav-label">Memory</span></button>
+                <button class="nav-item" data-page="cpu" data-label="CPU"><i class="fa fa-microchip" aria-hidden="true"></i><span class="nav-label">CPU</span></button>
                 <button class="nav-item" data-page="window" data-label="Window"><i class="fa fa-window-maximize" aria-hidden="true"></i><span class="nav-label">Window</span></button>
                 <button class="nav-item" data-page="logs" data-label="Logs"><i class="fa fa-scroll" aria-hidden="true"></i><span class="nav-label">Logs</span></button>
                 </div>
@@ -311,6 +313,13 @@
                 <div class="card">
                     <div class="field">
                         <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix before each message</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="textLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Cycle messages</b>
                             <span>Off keeps the first message forever</span>
                         </div>
@@ -342,6 +351,146 @@
                 <div class="section-title">Messages <span class="badge" id="msgCount">0</span></div>
                 <div class="list" id="msgList"></div>
                 <div class="hint">Drag the handle to reorder. Empty messages are ignored.</div>
+            </section>
+
+            <!-- ================= MEMORY ================= -->
+            <section class="page" id="page-memory">
+                <div class="page-head">
+                    <div>
+                        <h2>Memory</h2>
+                        <p>RAM used and total, sampled in the background</p>
+                    </div>
+                    <span class="badge" id="memBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the memory line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="memory"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the numbers. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="memLabel" placeholder="mem" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show used</b>
+                            <span>RAM currently in use</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="memUsed"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show total</b>
+                            <span>Installed RAM</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="memTotal"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show percent</b>
+                            <span>Used percentage after the sizes</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="memPercent"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Decimals</b>
+                            <span>Digits after the point in the GB values</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="memDecimals" min="0" max="3" step="1">
+                            <span class="val" id="memDecimalsVal">1</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= CPU ================= -->
+            <section class="page" id="page-cpu">
+                <div class="page-head">
+                    <div>
+                        <h2>CPU</h2>
+                        <p>Processor name, core count and load</p>
+                    </div>
+                    <span class="badge" id="cpuBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the CPU line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="cpu"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the processor name. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="cpuLabel" placeholder="cpu" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the name</b>
+                            <span>The processor model, shortened to four words</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="cpuName"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show cores</b>
+                            <span>How many logical cores the CPU has</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="cpuCores"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show load</b>
+                            <span>Current CPU usage in percent</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="cpuUsage"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Decimals</b>
+                            <span>Digits after the point in the load</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="cpuDecimals" min="0" max="2" step="1">
+                            <span class="val" id="cpuDecimalsVal">0</span>
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- ================= MEDIA ================= -->
@@ -428,6 +577,58 @@
                             <input type="text" id="mediaFilter" placeholder="Spotify" autocomplete="off">
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Playing icon</b>
+                            <span>Shown before the track. Leave empty for no icon.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="mediaIcon" placeholder="♪" maxlength="4" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Paused icon</b>
+                            <span>Used instead while playback is paused</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="mediaPausedIcon" placeholder="❚❚" maxlength="4" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show artist</b>
+                            <span>Track — artist instead of the track alone</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaArtist"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show album</b>
+                            <span>Appends the album after the artist</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaAlbum"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Bar width</b>
+                            <span>How many blocks the progress bar uses</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="mediaBarWidth" min="4" max="20" step="1">
+                            <span class="val" id="mediaBarWidthVal">8</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Track length limit</b>
+                            <span>Characters kept from the title and artist</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="mediaMaxChars" min="20" max="144" step="4">
+                            <span class="val" id="mediaMaxCharsVal">90</span>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -449,6 +650,44 @@
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" data-module-toggle="logs"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix before the event</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="logsLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show joins</b>
+                            <span>Include “X joined” in the line</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="logsJoin"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show leaves</b>
+                            <span>Include “X left” in the line</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="logsLeave"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Line length limit</b>
+                            <span>0 keeps the whole event</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="logsMaxChars" min="0" max="144" step="4">
+                            <span class="val" id="logsMaxCharsVal">80</span>
                         </div>
                     </div>
                 </div>
@@ -531,6 +770,15 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Hide AM/PM</b>
+                            <span>Shows 3:04 instead of 3:04 PM. Ignored in 24 hour mode.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="clockNoAmPm"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Label</b>
                             <span>Optional prefix, like “now”</span>
                         </div>
@@ -568,6 +816,25 @@
                         </div>
                         <div class="field-control">
                             <input type="text" id="loadText" placeholder="dots only" maxlength="40" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show dots</b>
+                            <span>Off shows the loading text only</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="loadDots"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Longest run</b>
+                            <span>Dots grow from one to this many, then loop</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="loadDotsRange" min="1" max="6" step="1">
+                            <span class="val" id="loadDotsVal">6</span>
                         </div>
                     </div>
                     <div class="field">
@@ -651,6 +918,28 @@
                         </div>
                         <div class="field-control"><input type="text" id="afkMessage" autocomplete="off"></div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the timer</b>
+                            <span>Off shows just the AFK text</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="afkShowTimer"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Timer style</b>
+                            <span>How the idle time is written</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="afkTimerStyle" style="width:170px">
+                                <option value="full">00:12:31</option>
+                                <option value="short">12m 31s</option>
+                                <option value="minutes">12m</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -684,6 +973,23 @@
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="windowSimplified"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix before the title</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="windowLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Title length limit</b>
+                            <span>Long page titles are cut to this many characters</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="windowMaxChars" min="0" max="144" step="4">
+                            <span class="val" id="windowMaxCharsVal">60</span>
                         </div>
                     </div>
                     <div class="meta-row" style="margin-top:8px">
@@ -1021,6 +1327,8 @@
             const memPct = st.perf.memPercent || 0;
             $("statMem").textContent = (st.perf.memUsed || 0).toFixed(1) + " GB";
             $("memBar").style.width = Math.min(100, memPct) + "%";
+            $("memBadge").textContent = (st.perf.memUsed || 0).toFixed(1) + " / " + (st.perf.memTotal || 0).toFixed(1) + " GB";
+            $("cpuBadge").textContent = cpu.toFixed(0) + "%";
         }
 
         function renderFooter(st) {
@@ -1069,6 +1377,34 @@
                 $("afkTime").value = c.AfkOptions.afk_time;
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("windowSimplified").checked = !!c.WindowOptions.simplified;
+                $("clockNoAmPm").checked = !!c.TimeOptions.no_am_pm;
+                $("loadDots").checked = !!c.LoadingOptions.show_dots;
+                $("loadDotsRange").value = c.LoadingOptions.dots;
+                $("textLabel").value = c.TextOptions.label || "";
+                $("mediaIcon").value = c.MediaOptions.icon || "";
+                $("mediaPausedIcon").value = c.MediaOptions.paused_icon || "";
+                $("mediaArtist").checked = !!c.MediaOptions.show_artist;
+                $("mediaAlbum").checked = !!c.MediaOptions.show_album;
+                $("mediaBarWidth").value = c.MediaOptions.bar_width;
+                $("mediaMaxChars").value = c.MediaOptions.max_chars;
+                $("afkShowTimer").checked = !!c.AfkOptions.show_timer;
+                $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
+                $("windowLabel").value = c.WindowOptions.label || "";
+                $("windowMaxChars").value = c.WindowOptions.max_chars;
+                $("logsLabel").value = c.LogsOptions.label || "";
+                $("logsJoin").checked = !!c.LogsOptions.show_join;
+                $("logsLeave").checked = !!c.LogsOptions.show_leave;
+                $("logsMaxChars").value = c.LogsOptions.max_chars;
+                $("memLabel").value = c.MemoryOptions.label || "";
+                $("memUsed").checked = !!c.MemoryOptions.show_used;
+                $("memTotal").checked = !!c.MemoryOptions.show_total;
+                $("memPercent").checked = !!c.MemoryOptions.show_percent;
+                $("memDecimals").value = c.MemoryOptions.decimals;
+                $("cpuLabel").value = c.CPUOptions.label || "";
+                $("cpuName").checked = !!c.CPUOptions.show_name;
+                $("cpuCores").checked = !!c.CPUOptions.show_cores;
+                $("cpuUsage").checked = !!c.CPUOptions.show_usage;
+                $("cpuDecimals").value = c.CPUOptions.decimals;
                 document.querySelectorAll("[data-module-toggle]").forEach((el) => {
                     el.checked = !!(st.modules && st.modules[el.dataset.moduleToggle]);
                 });
@@ -1080,6 +1416,13 @@
             $("speedVal").textContent = (c.TextOptions.speed / 1000).toFixed(1) + "s";
             $("rateVal").textContent = (c.timeout_ms / 1000).toFixed(2) + "s";
             $("windowBadge").textContent = d.active_window ? "on" : "off";
+            $("loadDotsVal").textContent = c.LoadingOptions.dots;
+            $("mediaBarWidthVal").textContent = c.MediaOptions.bar_width;
+            $("mediaMaxCharsVal").textContent = c.MediaOptions.max_chars;
+            $("windowMaxCharsVal").textContent = c.WindowOptions.max_chars;
+            $("logsMaxCharsVal").textContent = c.LogsOptions.max_chars;
+            $("memDecimalsVal").textContent = c.MemoryOptions.decimals;
+            $("cpuDecimalsVal").textContent = c.CPUOptions.decimals;
 
             const style = c.MediaOptions.progress_style || "both";
             document.querySelectorAll("#styleSeg button").forEach((b) => {
@@ -1536,6 +1879,111 @@
             pushConfigNow((c) => { c.MediaOptions.progress_style = button.dataset.style; });
             S.dirtyUntil = 0;
             toast("Progress style: " + button.dataset.style);
+        });
+
+        /* ---------------- per module options ---------------- */
+        $("clockNoAmPm").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.TimeOptions.no_am_pm = ev.target.checked; });
+        });
+        $("loadDots").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.LoadingOptions.show_dots = ev.target.checked; });
+        });
+        $("loadDotsRange").addEventListener("input", (ev) => {
+            const v = num(ev.target.value, 6);
+            $("loadDotsVal").textContent = v;
+            pushConfig((c) => { c.LoadingOptions.dots = v; });
+        });
+        $("textLabel").addEventListener("input", (ev) => {
+            const value = ev.target.value.slice(0, 16);
+            pushConfig((c) => { c.TextOptions.label = value; });
+        });
+        $("mediaIcon").addEventListener("input", (ev) => {
+            pushConfig((c) => { c.MediaOptions.icon = ev.target.value.slice(0, 4); });
+        });
+        $("mediaPausedIcon").addEventListener("input", (ev) => {
+            pushConfig((c) => { c.MediaOptions.paused_icon = ev.target.value.slice(0, 4); });
+        });
+        $("mediaArtist").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.MediaOptions.show_artist = ev.target.checked; });
+        });
+        $("mediaAlbum").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.MediaOptions.show_album = ev.target.checked; });
+        });
+        $("mediaBarWidth").addEventListener("input", (ev) => {
+            const v = num(ev.target.value, 8);
+            $("mediaBarWidthVal").textContent = v;
+            pushConfig((c) => { c.MediaOptions.bar_width = v; });
+        });
+        $("mediaMaxChars").addEventListener("input", (ev) => {
+            const v = num(ev.target.value, 90);
+            $("mediaMaxCharsVal").textContent = v;
+            pushConfig((c) => { c.MediaOptions.max_chars = v; });
+        });
+        $("afkShowTimer").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.AfkOptions.show_timer = ev.target.checked; });
+        });
+        $("afkTimerStyle").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.AfkOptions.timer_style = ev.target.value; });
+        });
+        $("windowLabel").addEventListener("input", (ev) => {
+            const value = ev.target.value.slice(0, 16);
+            pushConfig((c) => { c.WindowOptions.label = value; });
+        });
+        $("windowMaxChars").addEventListener("input", (ev) => {
+            const v = num(ev.target.value, 60);
+            $("windowMaxCharsVal").textContent = v;
+            pushConfig((c) => { c.WindowOptions.max_chars = v; });
+        });
+        $("logsLabel").addEventListener("input", (ev) => {
+            const value = ev.target.value.slice(0, 16);
+            pushConfig((c) => { c.LogsOptions.label = value; });
+        });
+        $("logsJoin").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.LogsOptions.show_join = ev.target.checked; });
+        });
+        $("logsLeave").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.LogsOptions.show_leave = ev.target.checked; });
+        });
+        $("logsMaxChars").addEventListener("input", (ev) => {
+            const v = num(ev.target.value, 80);
+            $("logsMaxCharsVal").textContent = v;
+            pushConfig((c) => { c.LogsOptions.max_chars = v; });
+        });
+        $("memLabel").addEventListener("input", (ev) => {
+            const value = ev.target.value.slice(0, 16);
+            pushConfig((c) => { c.MemoryOptions.label = value; });
+        });
+        $("memUsed").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.MemoryOptions.show_used = ev.target.checked; });
+        });
+        $("memTotal").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.MemoryOptions.show_total = ev.target.checked; });
+        });
+        $("memPercent").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.MemoryOptions.show_percent = ev.target.checked; });
+        });
+        $("memDecimals").addEventListener("input", (ev) => {
+            const v = num(ev.target.value, 1);
+            $("memDecimalsVal").textContent = v;
+            pushConfig((c) => { c.MemoryOptions.decimals = v; });
+        });
+        $("cpuLabel").addEventListener("input", (ev) => {
+            const value = ev.target.value.slice(0, 16);
+            pushConfig((c) => { c.CPUOptions.label = value; });
+        });
+        $("cpuName").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.CPUOptions.show_name = ev.target.checked; });
+        });
+        $("cpuCores").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.CPUOptions.show_cores = ev.target.checked; });
+        });
+        $("cpuUsage").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.CPUOptions.show_usage = ev.target.checked; });
+        });
+        $("cpuDecimals").addEventListener("input", (ev) => {
+            const v = num(ev.target.value, 0);
+            $("cpuDecimalsVal").textContent = v;
+            pushConfig((c) => { c.CPUOptions.decimals = v; });
         });
 
         /* ---------------- settings page ---------------- */

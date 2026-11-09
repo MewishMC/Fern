@@ -237,56 +237,69 @@ func isSpotifyBranding(title string) bool {
 
 // mediaLine renders the now playing module for the chatbox.
 func mediaLine(cfg Config) string {
+	o := cfg.MediaOptions
 	info := CurrentMedia()
 	if !info.Available {
 		return ""
 	}
-	if !info.Playing && !cfg.MediaOptions.ShowWhenPaused {
+	if !info.Playing && !o.ShowWhenPaused {
 		return ""
 	}
 
-	track := info.Title
-	if info.Artist != "" {
+	track := strings.TrimSpace(info.Title)
+	if artist := strings.TrimSpace(info.Artist); o.ShowArtist && artist != "" {
 		if track != "" {
-			track = track + " — " + info.Artist
+			track = track + " — " + artist
 		} else {
-			track = info.Artist
+			track = artist
+		}
+	}
+	if album := strings.TrimSpace(info.Album); o.ShowAlbum && album != "" {
+		if track != "" {
+			track = track + " · " + album
+		} else {
+			track = album
 		}
 	}
 	if track == "" {
 		return ""
 	}
-	track = strings.TrimSpace(RuneLimit(track, 90))
+	limit := o.MaxChars
+	if limit <= 0 {
+		limit = 90
+	}
+	track = strings.TrimSpace(RuneLimit(track, limit))
 
-	icon := "♪"
+	icon := strings.TrimSpace(o.Icon)
 	if !info.Playing {
-		icon = "❚❚"
+		icon = strings.TrimSpace(o.PausedIcon)
 	}
 
+	// The progress switch wins over the style: with it off the line is just
+	// the track, which is what the switch promises in the UI.
 	detail := ""
-	if info.DurationMS > 0 {
+	if o.ShowProgress && info.DurationMS > 0 {
 		pos := time.Duration(info.PositionMS) * time.Millisecond
 		dur := time.Duration(info.DurationMS) * time.Millisecond
 		clock := ""
-		switch cfg.MediaOptions.ProgressStyle {
-		case "time":
+		if o.ProgressStyle == "time" || o.ProgressStyle == "both" {
 			clock = shortClock(pos) + "/" + shortClock(dur)
-		case "both":
-			clock = shortClock(pos) + "/" + shortClock(dur)
-		case "bar":
-		case "none":
 		}
 		bar := ""
-		if cfg.MediaOptions.ProgressStyle == "bar" || cfg.MediaOptions.ProgressStyle == "both" {
-			bar = progressBar(pos, dur, 8)
+		if o.ProgressStyle == "bar" || o.ProgressStyle == "both" {
+			bar = progressBar(pos, dur, o.BarWidth)
 		}
 		detail = strings.TrimSpace(strings.Join([]string{bar, clock}, " "))
 	}
 
-	if detail == "" {
-		return fmt.Sprintf("%s %s", icon, track)
+	line := track
+	if detail != "" {
+		line = track + " " + detail
 	}
-	return fmt.Sprintf("%s %s %s", icon, track, detail)
+	if icon != "" {
+		line = icon + " " + line
+	}
+	return line
 }
 
 func shortClock(d time.Duration) string {

@@ -70,28 +70,39 @@ func startSpecsWorker() {
 	}()
 }
 
-// GetCpuInfo renders the CPU module line.
-func GetCpuInfo(cpuName bool, cores bool) string {
+// cpuLine renders the CPU module line using the configured options.
+func cpuLine(cfg Config) string {
+	o := cfg.CPUOptions
 	specsMu.RLock()
 	usage := cpuUsage
 	primed := specsPrimed
+	model := cpuModel
 	specsMu.RUnlock()
 	if !primed {
 		sampleSpecs()
 		specsMu.RLock()
 		usage = cpuUsage
+		model = cpuModel
 		specsMu.RUnlock()
 	}
 
-	var result []string
-	if cpuName {
-		result = append(result, fmt.Sprintf("ᶜᵖᵘ %s", cpuModel))
+	label := strings.TrimSpace(o.Label)
+	var parts []string
+	if o.ShowName {
+		if model == "" {
+			model = "CPU"
+		}
+		parts = append(parts, withLabel(label, model))
+	} else if label != "" {
+		parts = append(parts, label)
 	}
-	if cores {
-		result = append(result, fmt.Sprintf("| ᶜᵒʳᵉˢ %d", runtime.NumCPU()))
+	if o.ShowCores {
+		parts = append(parts, fmt.Sprintf("cores %d", runtime.NumCPU()))
 	}
-	result = append(result, fmt.Sprintf("· %.0f%%", usage))
-	return strings.Join(result, " ")
+	if o.ShowUsage {
+		parts = append(parts, fmt.Sprintf("%.*f%%", o.Decimals, usage))
+	}
+	return strings.Join(parts, " · ")
 }
 
 // CpuUsage returns the last sampled CPU load in percent.
@@ -101,18 +112,31 @@ func CpuUsage() float64 {
 	return cpuUsage
 }
 
-// GetMem renders the memory module line.
-func GetMem() string {
-	specsMu.RLock()
-	used, total, pct := memUsedGB, memTotalGB, memPercent
-	specsMu.RUnlock()
+// memoryLine renders the memory module line using the configured options.
+func memoryLine(cfg Config) string {
+	o := cfg.MemoryOptions
+	used, total, pct := MemoryStats()
 	if total == 0 {
 		sampleSpecs()
-		specsMu.RLock()
-		used, total, pct = memUsedGB, memTotalGB, memPercent
-		specsMu.RUnlock()
+		used, total, pct = MemoryStats()
 	}
-	return fmt.Sprintf("ᵐᵉᵐ %.1f/%.1f GB · %.0f%%", used, total, pct)
+
+	var parts []string
+	switch {
+	case o.ShowUsed && o.ShowTotal:
+		parts = append(parts, fmt.Sprintf("%.*f/%.*f GB", o.Decimals, used, o.Decimals, total))
+	case o.ShowUsed:
+		parts = append(parts, fmt.Sprintf("%.*f GB", o.Decimals, used))
+	case o.ShowTotal:
+		parts = append(parts, fmt.Sprintf("%.*f GB", o.Decimals, total))
+	}
+	if o.ShowPercent {
+		parts = append(parts, fmt.Sprintf("%.0f%%", pct))
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return withLabel(o.Label, strings.Join(parts, " · "))
 }
 
 // MemoryStats exposes the sampled memory numbers to the UI.

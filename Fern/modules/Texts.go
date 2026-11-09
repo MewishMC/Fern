@@ -45,17 +45,26 @@ func AdvanceLoading(paceMS int) {
 }
 
 // Loading renders a growing run of dots: ".", "..", "..." and so on, looping
-// back to a single dot after the longest run. A custom loading text is shown in
-// front of the dots, so "brb" reads "brb", "brb.", "brb.." and so on; with no
-// text set the line is just the dots.
+// back to a single dot after the configured longest run. A custom loading text
+// is shown in front of the dots, so "brb" reads "brb", "brb.", "brb.." and so
+// on; with no text set the line is just the dots.
 func Loading() string {
 	cfg := GetConfig()
-	n := int(loadingStep.Load())%loadingDots + 1
-	text := strings.TrimRight(strings.TrimSpace(cfg.LoadingOptions.Text), ".")
-	if text == "" {
-		return strings.Repeat(".", n)
+	o := cfg.LoadingOptions
+	text := strings.TrimRight(strings.TrimSpace(o.Text), ".")
+	if !o.ShowDots {
+		return text
 	}
-	return text + strings.Repeat(".", n)
+	longest := o.Dots
+	if longest < 1 || longest > loadingDots {
+		longest = loadingDots
+	}
+	n := int(loadingStep.Load())%longest + 1
+	dots := strings.Repeat(".", n)
+	if text == "" {
+		return dots
+	}
+	return text + dots
 }
 
 func shuffleIndex(n, step int) int {

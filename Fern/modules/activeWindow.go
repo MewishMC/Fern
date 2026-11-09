@@ -69,6 +69,18 @@ var simplifiedApps = []struct {
 	{"obs", "OBS"},
 }
 
+// windowLine renders the active window line with its optional label and limit.
+func windowLine(cfg Config) string {
+	title := strings.TrimSpace(GetActiveWindow())
+	if title == "" {
+		return ""
+	}
+	if limit := cfg.WindowOptions.MaxChars; limit > 0 {
+		title = RuneLimit(title, limit)
+	}
+	return withLabel(cfg.WindowOptions.Label, title)
+}
+
 // GetActiveWindow returns the active window title, optionally simplified.
 // Results are cached for a moment so several modules can read it cheaply.
 func GetActiveWindow() string {
