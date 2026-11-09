@@ -1,6 +1,19 @@
-/.idea
-Fern.exe
+# Build output
+*.exe
+/Fern/Fern.exe
+/update/update.exe
+dist/
+
+# Local runtime state
 config.json
-update.exe
-/.freebuff
+*.log
+
+# Editor and OS clutter
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local experiments
+.freebuff/
 fern-theme.png

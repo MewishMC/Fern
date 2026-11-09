@@ -14,7 +14,7 @@ import (
 	"unsafe"
 )
 
-const RepoURL = "https://github.com/TrippleAWap/Fern"
+const RepoURL = "https://github.com/MewishMC/Fern"
 const ExeName = "Fern.exe"
 const VersionURL = RepoURL + "/releases/latest"
 
