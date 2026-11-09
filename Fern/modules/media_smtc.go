@@ -2,6 +2,7 @@ package modules
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 	"unsafe"
@@ -27,15 +28,22 @@ type rawMedia struct {
 }
 
 type smtcRequest struct {
-	control bool
-	action  string
-	read    chan smtcReadResult
-	done    chan error
+	kind   string // read, control, sessions
+	action string
+	app    string
+	read   chan smtcReadResult
+	list   chan smtcListResult
+	done   chan error
 }
 
 type smtcReadResult struct {
 	raw rawMedia
 	err error
+}
+
+type smtcListResult struct {
+	sources []MediaSource
+	err     error
 }
 
 var (
@@ -118,10 +126,20 @@ func managerLocked() (*control.GlobalSystemMediaTransportControlsSessionManager,
 	return smtcManager, nil
 }
 
-func currentSessionLocked() (*control.GlobalSystemMediaTransportControlsSession, error) {
+// sessionLocked returns the chosen app's session, or the current session when
+// none was chosen. Must hold smtcMu.
+func sessionLocked(preferred string) (*control.GlobalSystemMediaTransportControlsSession, error) {
 	mgr, err := managerLocked()
 	if err != nil {
 		return nil, err
+	}
+	preferred = strings.TrimSpace(preferred)
+	if preferred != "" {
+		if session := findSessionLocked(mgr, preferred); session != nil {
+			return session, nil
+		}
+		// Do not quietly show another app: the user picked this one.
+		return nil, fmt.Errorf("media: %s has no session", preferred)
 	}
 	session, err := mgr.GetCurrentSession()
 	if err != nil {
@@ -133,9 +151,95 @@ func currentSessionLocked() (*control.GlobalSystemMediaTransportControlsSession,
 	return session, nil
 }
 
-// readLocked samples the current media session. Must hold smtcMu.
-func readLocked() (rawMedia, error) {
-	session, err := currentSessionLocked()
+// findSessionLocked walks the session list and returns the chosen app, or nil.
+func findSessionLocked(mgr *control.GlobalSystemMediaTransportControlsSessionManager, preferred string) *control.GlobalSystemMediaTransportControlsSession {
+	vec, err := mgr.GetSessions()
+	if err != nil || vec == nil {
+		return nil
+	}
+	defer vec.Release()
+	size, err := vec.GetSize()
+	if err != nil {
+		return nil
+	}
+	for i := uint32(0); i < size; i++ {
+		ptr, err := vec.GetAt(i)
+		if err != nil || ptr == nil {
+			continue
+		}
+		session := (*control.GlobalSystemMediaTransportControlsSession)(ptr)
+		appID, _ := session.GetSourceAppUserModelId()
+		if matchesApp(appID, preferred) {
+			return session
+		}
+		session.Release()
+	}
+	return nil
+}
+
+func matchesApp(appID, preferred string) bool {
+	if strings.EqualFold(strings.TrimSpace(appID), preferred) {
+		return true
+	}
+	return strings.EqualFold(appNameFromID(appID), preferred)
+}
+
+// sessionsLocked lists every media session Windows reports. Must hold smtcMu.
+func sessionsLocked() ([]MediaSource, error) {
+	mgr, err := managerLocked()
+	if err != nil {
+		return nil, err
+	}
+	vec, err := mgr.GetSessions()
+	if err != nil || vec == nil {
+		return nil, err
+	}
+	defer vec.Release()
+	size, err := vec.GetSize()
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]MediaSource, 0, size)
+	seen := make(map[string]bool, size)
+	for i := uint32(0); i < size && len(out) < 16; i++ {
+		ptr, err := vec.GetAt(i)
+		if err != nil || ptr == nil {
+			continue
+		}
+		session := (*control.GlobalSystemMediaTransportControlsSession)(ptr)
+		appID, _ := session.GetSourceAppUserModelId()
+		src := MediaSource{AppID: appID, App: appNameFromID(appID)}
+		if pi, err := session.GetPlaybackInfo(); err == nil && pi != nil {
+			status, _ := pi.GetPlaybackStatus()
+			src.Playing = status == control.GlobalSystemMediaTransportControlsSessionPlaybackStatusPlaying
+			pi.Release()
+		}
+		if op, err := session.TryGetMediaPropertiesAsync(); err == nil && op != nil {
+			if res, err := awaitAsync(op, control.SignatureGlobalSystemMediaTransportControlsSessionMediaProperties); err == nil && res != nil {
+				props := (*control.GlobalSystemMediaTransportControlsSessionMediaProperties)(res)
+				src.Title, _ = props.GetTitle()
+				props.Release()
+			}
+		}
+		session.Release()
+
+		key := strings.ToLower(strings.TrimSpace(appID))
+		if key == "" {
+			key = strings.ToLower(src.App)
+		}
+		if key == "" || seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, src)
+	}
+	return out, nil
+}
+
+// readLocked samples the chosen media session. Must hold smtcMu.
+func readLocked(preferred string) (rawMedia, error) {
+	session, err := sessionLocked(preferred)
 	if err != nil {
 		return rawMedia{}, err
 	}
@@ -190,9 +294,9 @@ func readLocked() (rawMedia, error) {
 	return out, nil
 }
 
-// controlLocked asks the media app to do something. Must hold smtcMu.
-func controlLocked(action string) error {
-	session, err := currentSessionLocked()
+// controlLocked asks the chosen media app to do something. Must hold smtcMu.
+func controlLocked(action, preferred string) error {
+	session, err := sessionLocked(preferred)
 	if err != nil {
 		return err
 	}
@@ -229,15 +333,20 @@ func smtcLoop() {
 	_ = ole.RoInitialize(1)
 	for req := range smtcQueue {
 		smtcMu.Lock()
-		if req.control {
-			err := controlLocked(req.action)
+		switch req.kind {
+		case "control":
+			err := controlLocked(req.action, req.app)
 			smtcMu.Unlock()
 			req.done <- err
-			continue
+		case "sessions":
+			sources, err := sessionsLocked()
+			smtcMu.Unlock()
+			req.list <- smtcListResult{sources: sources, err: err}
+		default:
+			raw, err := readLocked(req.app)
+			smtcMu.Unlock()
+			req.read <- smtcReadResult{raw: raw, err: err}
 		}
-		raw, err := readLocked()
-		smtcMu.Unlock()
-		req.read <- smtcReadResult{raw: raw, err: err}
 	}
 }
 
@@ -249,8 +358,8 @@ func startSMTCLoop() {
 	go smtcLoop()
 }
 
-func smtcRead() (rawMedia, error) {
-	req := smtcRequest{read: make(chan smtcReadResult, 1)}
+func smtcRead(app string) (rawMedia, error) {
+	req := smtcRequest{kind: "read", app: app, read: make(chan smtcReadResult, 1)}
 	select {
 	case smtcQueue <- req:
 	case <-time.After(2 * time.Second):
@@ -264,9 +373,26 @@ func smtcRead() (rawMedia, error) {
 	}
 }
 
-// MediaControl sends a transport command to the active media session.
+// smtcSessions lists the media sessions Windows is exposing.
+func smtcSessions() ([]MediaSource, error) {
+	req := smtcRequest{kind: "sessions", list: make(chan smtcListResult, 1)}
+	select {
+	case smtcQueue <- req:
+	case <-time.After(2 * time.Second):
+		return nil, fmt.Errorf("media: busy")
+	}
+	select {
+	case res := <-req.list:
+		return res.sources, res.err
+	case <-time.After(6 * time.Second):
+		return nil, fmt.Errorf("media: timeout")
+	}
+}
+
+// MediaControl sends a transport command to the chosen media session.
 func MediaControl(action string) error {
-	req := smtcRequest{control: true, action: action, done: make(chan error, 1)}
+	preferred := strings.TrimSpace(GetConfig().MediaOptions.PreferredApp)
+	req := smtcRequest{kind: "control", action: action, app: preferred, done: make(chan error, 1)}
 	select {
 	case smtcQueue <- req:
 	case <-time.After(2 * time.Second):

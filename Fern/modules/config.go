@@ -100,8 +100,9 @@ type MediaOptions struct {
 	PausedIcon     string `json:"paused_icon"`
 	ShowArtist     bool   `json:"show_artist"`
 	ShowAlbum      bool   `json:"show_album"`
-	BarWidth       int    `json:"bar_width"` // 0 hides the bar
-	MaxChars       int    `json:"max_chars"` // limit for the track part
+	BarWidth       int    `json:"bar_width"`     // 0 hides the bar
+	MaxChars       int    `json:"max_chars"`     // limit for the track part
+	PreferredApp   string `json:"preferred_app"` // session to read; empty follows the current one
 }
 
 // TimeOptions controls the clock line.
@@ -225,6 +226,7 @@ func DefaultConfig() Config {
 			ShowAlbum:      false,
 			BarWidth:       8,
 			MaxChars:       90,
+			PreferredApp:   "",
 		},
 		TimeOptions: TimeOptions{
 			Use24h: false,
@@ -501,6 +503,7 @@ func (c *Config) sanitize() {
 	if c.MediaOptions.MaxChars == 0 {
 		c.MediaOptions.MaxChars = 90
 	}
+	c.MediaOptions.PreferredApp = RuneLimit(strings.TrimSpace(c.MediaOptions.PreferredApp), 128)
 
 	c.MemoryOptions.Label = RuneLimit(strings.TrimSpace(c.MemoryOptions.Label), 16)
 	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)

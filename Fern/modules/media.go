@@ -7,6 +7,16 @@ import (
 	"time"
 )
 
+// MediaSource is one media session Windows currently exposes, used by the
+// "detect from" picker so Fern can follow a chosen app instead of the current
+// session.
+type MediaSource struct {
+	AppID   string `json:"appId"`
+	App     string `json:"app"`
+	Title   string `json:"title"`
+	Playing bool   `json:"playing"`
+}
+
 // MediaInfo is the sanitized media state shared with the UI and the chatbox.
 type MediaInfo struct {
 	Available  bool   `json:"available"`
@@ -27,6 +37,10 @@ var (
 	mediaMu      sync.RWMutex
 	mediaCurrent rawMedia
 	lastFallback time.Time
+
+	sourcesMu sync.RWMutex
+	sources   []MediaSource
+	sourcesAt time.Time
 
 	// The position Windows reports lags behind actual playback, so the same
 	// track can report a lower position than we already showed. Track the last
@@ -165,27 +179,66 @@ func startMediaWorker() {
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
 		for range ticker.C {
-			raw, err := smtcRead()
-			if err == nil {
-				setMedia(raw)
-				continue
-			}
-			// Fall back to the Spotify window title if Windows reports nothing.
-			if time.Since(lastFallback) > 3*time.Second {
-				lastFallback = time.Now()
-				if fb, ok := windowTitleFallback(); ok {
-					setMedia(fb)
-					continue
-				}
-			}
-			mediaMu.RLock()
-			hadOne := mediaCurrent.Available
-			mediaMu.RUnlock()
-			if hadOne {
-				setMedia(rawMedia{})
+			sampleMedia()
+			// The session list only feeds the picker, so it can refresh slower
+			// than the playback position.
+			if sourcesStale() {
+				refreshSources()
 			}
 		}
 	}()
+}
+
+// sampleMedia reads the chosen session (or the current one) once.
+func sampleMedia() {
+	cfg := GetConfig()
+	preferred := strings.TrimSpace(cfg.MediaOptions.PreferredApp)
+	raw, err := smtcRead(preferred)
+	if err == nil {
+		setMedia(raw)
+		return
+	}
+	// Fall back to the Spotify window title only when no particular app was
+	// chosen; otherwise a different app's window would override the choice.
+	if preferred == "" || strings.Contains(strings.ToLower(preferred), "spotify") {
+		if time.Since(lastFallback) > 3*time.Second {
+			lastFallback = time.Now()
+			if fb, ok := windowTitleFallback(); ok {
+				setMedia(fb)
+				return
+			}
+		}
+	}
+	mediaMu.RLock()
+	hadOne := mediaCurrent.Available
+	mediaMu.RUnlock()
+	if hadOne {
+		setMedia(rawMedia{})
+	}
+}
+
+// MediaSources returns the media sessions Windows is exposing right now.
+func MediaSources() []MediaSource {
+	sourcesMu.RLock()
+	defer sourcesMu.RUnlock()
+	return append([]MediaSource{}, sources...)
+}
+
+func refreshSources() {
+	list, err := smtcSessions()
+	if err != nil {
+		return
+	}
+	sourcesMu.Lock()
+	sources = list
+	sourcesAt = time.Now()
+	sourcesMu.Unlock()
+}
+
+func sourcesStale() bool {
+	sourcesMu.RLock()
+	defer sourcesMu.RUnlock()
+	return time.Since(sourcesAt) > 3*time.Second
 }
 
 // windowTitleFallback is the legacy "read the Spotify window title" path. It is

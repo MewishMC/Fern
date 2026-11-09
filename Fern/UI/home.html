@@ -570,8 +570,19 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
-                            <b>Only this app</b>
-                            <span>Filter by name, e.g. Spotify. Empty means any app.</span>
+                            <b>Detect from</b>
+                            <span>Pick which app's media session Fern reads. Automatic follows whatever Windows marks as current.</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="mediaPick" style="width:230px">
+                                <option value="">Automatic (current session)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Keyword filter</b>
+                            <span>Matches the app, title or artist, e.g. Spotify. Empty means any app.</span>
                         </div>
                         <div class="field-control">
                             <input type="text" id="mediaFilter" placeholder="Spotify" autocomplete="off">
@@ -1132,7 +1143,8 @@
             timer: null,
             pending: null,
             msgs: null,
-            msgsDirty: 0
+            msgsDirty: 0,
+            mediaSourcesSig: ""
         };
 
         /* ---------------- connection ---------------- */
@@ -1236,6 +1248,7 @@
 
             renderPreview(st);
             renderMedia(st);
+            renderMediaSources(st);
             renderStats(st);
             renderFooter(st);
             syncControls(st);
@@ -1308,6 +1321,44 @@
             $("mediaBadge").textContent = m.available ? (m.app || "media") : "no session";
             $("mediaSource").textContent = m.app || "—";
             $("mediaSource").classList.toggle("on", !!m.playing);
+        }
+
+        // Sessions Windows exposes. Picking one pins Fern to that app's media
+        // session instead of following whichever app Windows calls current.
+        function renderMediaSources(st) {
+            const select = $("mediaPick");
+            if (!select) return;
+            const sources = st.mediaSources || [];
+            const saved = ((st.config.MediaOptions && st.config.MediaOptions.preferred_app) || "").trim();
+            const sig = JSON.stringify(sources.map((s) => [s.appId, s.app, s.title, s.playing])) + "|" + saved;
+            if (sig === S.mediaSourcesSig) return;
+            if (document.activeElement === select) return;
+            S.mediaSourcesSig = sig;
+
+            select.innerHTML = '<option value="">Automatic (current session)</option>';
+            const seen = {};
+            sources.forEach((src) => {
+                const id = src.appId || src.app || "";
+                if (!id || seen[id]) return;
+                seen[id] = true;
+                const option = document.createElement("option");
+                option.value = id;
+                option.textContent = mediaSourceLabel(src);
+                select.appendChild(option);
+            });
+            if (saved && !seen[saved]) {
+                const option = document.createElement("option");
+                option.value = saved;
+                option.textContent = saved.replace(/\.exe$/i, "") + " (not running)";
+                select.appendChild(option);
+            }
+            select.value = saved || "";
+        }
+
+        function mediaSourceLabel(src) {
+            const name = src.app || src.appId || "Media";
+            const title = src.title ? " — " + src.title : "";
+            return name + title + (src.playing ? " · playing" : "");
         }
 
         function renderStats(st) {
@@ -1872,6 +1923,12 @@
         $("mediaFilter").addEventListener("input", (ev) => {
             const value = ev.target.value;
             pushConfig((c) => { c.MediaOptions.app_filter = value; });
+        });
+        $("mediaPick").addEventListener("change", (ev) => {
+            const value = ev.target.value;
+            S.mediaSourcesSig = "";
+            pushConfigNow((c) => { c.MediaOptions.preferred_app = value; });
+            toast(value ? "Detecting " + value.replace(/\.exe$/i, "") : "Following the current media session");
         });
         $("styleSeg").addEventListener("click", (ev) => {
             const button = ev.target.closest("button[data-style]");

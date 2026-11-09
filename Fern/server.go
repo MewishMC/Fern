@@ -42,26 +42,27 @@ var assetStamp = func() string {
 
 // uiState is the single payload pushed to the interface.
 type uiState struct {
-	Preview   string             `json:"preview"`
-	Chars     int                `json:"chars"`
-	Lines     int                `json:"lines"`
-	MaxChars  int                `json:"maxChars"`
-	MaxLines  int                `json:"maxLines"`
-	Modules   map[string]bool    `json:"modules"`
-	Order     []string           `json:"order"`
-	Config    modules.Config     `json:"config"`
-	Media     modules.MediaInfo  `json:"media"`
-	Afk       afkState           `json:"afk"`
-	Perf      perfState          `json:"perf"`
-	Logs      logsState          `json:"logs"`
-	History   []modules.LogEvent `json:"history"`
-	Hold      holdState          `json:"hold"`
-	Stats     statsState         `json:"stats"`
-	VRChat    bool               `json:"vrchat"`
-	Players   int                `json:"players"`
-	TextIndex int                `json:"textIndex"`
-	OSC       string             `json:"osc"`
-	Version   string             `json:"version"`
+	Preview   string                `json:"preview"`
+	Chars     int                   `json:"chars"`
+	Lines     int                   `json:"lines"`
+	MaxChars  int                   `json:"maxChars"`
+	MaxLines  int                   `json:"maxLines"`
+	Modules   map[string]bool       `json:"modules"`
+	Order     []string              `json:"order"`
+	Config    modules.Config        `json:"config"`
+	Media     modules.MediaInfo     `json:"media"`
+	Sources   []modules.MediaSource `json:"mediaSources"`
+	Afk       afkState              `json:"afk"`
+	Perf      perfState             `json:"perf"`
+	Logs      logsState             `json:"logs"`
+	History   []modules.LogEvent    `json:"history"`
+	Hold      holdState             `json:"hold"`
+	Stats     statsState            `json:"stats"`
+	VRChat    bool                  `json:"vrchat"`
+	Players   int                   `json:"players"`
+	TextIndex int                   `json:"textIndex"`
+	OSC       string                `json:"osc"`
+	Version   string                `json:"version"`
 }
 
 type afkState struct {
@@ -366,6 +367,13 @@ func buildState() uiState {
 		Order:  d.Order,
 		Config: cfg,
 		Media:  modules.CurrentMedia(),
+		Sources: func() []modules.MediaSource {
+			list := modules.MediaSources()
+			if list == nil {
+				return []modules.MediaSource{}
+			}
+			return list
+		}(),
 		Afk: afkState{
 			Active:  active,
 			IdleMS:  idle.Milliseconds(),
