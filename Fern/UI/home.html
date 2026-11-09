@@ -1648,7 +1648,7 @@
                 <h3>Custom CSS</h3>
                 <button class="btn ghost" type="button" id="cssClose">Close</button>
             </div>
-            <p class="modal-hint">Applied after the theme, so it wins on equal specificity.</p>
+            <p class="modal-hint">Applied after the theme, so it wins on equal specificity. Ctrl+Shift+Alt+C always clears it, even if the page goes blank.</p>
             <textarea id="cssEditor" spellcheck="false" placeholder=".card { border-radius: 6px; }"></textarea>
             <div class="modal-foot">
                 <button class="btn ghost" type="button" id="cssReset">Reset</button>
@@ -1670,9 +1670,23 @@
             const write = (key, value) => { try { localStorage.setItem(key, value); } catch (e) { } };
 
             const sideButtons = document.querySelectorAll("#sideSeg button");
+            const railLogo = document.querySelector(".rail-logo");
+            const sidebarEl = document.querySelector(".sidebar");
+            const mainEl = document.getElementById("main");
+
+            // With the rail on the right the brand would sit in the window's
+            // top-right, so the block moves into the main column and the Fern
+            // logo stays in the top-left corner either way.
+            function placeLogo(side) {
+                const home = side === "right" ? mainEl : sidebarEl;
+                if (railLogo.parentElement !== home) home.insertBefore(railLogo, home.firstChild);
+                railLogo.classList.toggle("rail-logo-detached", side === "right");
+            }
+
             function applySide(side) {
                 app.classList.toggle("side-right", side === "right");
                 sideButtons.forEach((b) => b.classList.toggle("active", b.dataset.side === side));
+                placeLogo(side);
             }
             function applyImage(image) {
                 const label = document.getElementById("bgName");
@@ -1785,7 +1799,52 @@
             cssStyle.id = "fernCustomCss";
             document.head.appendChild(cssStyle);
             const applyCustomCss = (css) => { cssStyle.textContent = css || ""; };
+
+            // A wildcard rule like `* { display: none }` hides the whole app,
+            // including the buttons that would undo it, so check and drop it.
+            function cssHidesApp() {
+                const appBox = document.querySelector(".app");
+                const dockBox = document.querySelector(".preview-dock");
+                const rect = appBox ? appBox.getBoundingClientRect() : null;
+                return !rect || rect.width < 200 || rect.height < 200 ||
+                    !dockBox || dockBox.getBoundingClientRect().height < 20;
+            }
+
+            function clearCustomCss() {
+                applyCustomCss("");
+                write(CSS_KEY, "");
+                // Looked up rather than captured: this also runs on startup, before
+                // the editor's own const declarations further down are reached.
+                const overlay = document.getElementById("cssModal");
+                if (overlay) overlay.hidden = true;
+                toast("Custom CSS cleared");
+            }
+
+            function applyCustomCssGuarded(css) {
+                applyCustomCss(css);
+                if (!css || !cssHidesApp()) return true;
+                // Undo it but leave the editor open so the rule can be fixed.
+                applyCustomCss("");
+                write(CSS_KEY, "");
+                toast("That CSS hid the interface, so it was not kept");
+                return false;
+            }
+
             applyCustomCss(read(CSS_KEY, ""));
+            const rescueHiddenCss = () => {
+                if (cssStyle.textContent && cssHidesApp()) clearCustomCss();
+            };
+            rescueHiddenCss();
+            setTimeout(rescueHiddenCss, 250);
+            window.addEventListener("load", rescueHiddenCss);
+
+            // Escape hatch that works even while the page is invisible.
+            document.addEventListener("keydown", (ev) => {
+                if (ev.ctrlKey && ev.shiftKey && ev.altKey && ev.code === "KeyC") {
+                    ev.preventDefault();
+                    clearCustomCss();
+                }
+            });
 
             const modal = document.getElementById("cssModal");
             const editor = document.getElementById("cssEditor");
@@ -1799,7 +1858,7 @@
             modal.addEventListener("click", (ev) => { if (ev.target === modal) closeCss(); });
             document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !modal.hidden) closeCss(); });
             document.getElementById("cssSave").addEventListener("click", () => {
-                applyCustomCss(editor.value);
+                if (!applyCustomCssGuarded(editor.value)) return;
                 write(CSS_KEY, editor.value);
                 closeCss();
                 toast("Custom CSS saved");
@@ -1845,8 +1904,7 @@
                 applyImage(image);
                 write(KEYS.image, image);
                 const css = typeof data.css === "string" ? data.css : "";
-                applyCustomCss(css);
-                write(CSS_KEY, css);
+                if (applyCustomCssGuarded(css)) write(CSS_KEY, css);
             }
 
             document.getElementById("appearanceExport").addEventListener("click", () => {

@@ -146,7 +146,11 @@ i.fa {
     border-radius: 10px;
     transform: scale(1.85);
     transform-origin: 50% 16%;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
+
 
 .brand-text {
     display: block;
@@ -1612,14 +1616,8 @@ html.glass.has-bg {
     -webkit-backdrop-filter: blur(22px) saturate(150%);
 }
 
-/* Fern's avatar is a 128px asset drawn at 38px in the sidebar and 220px in the
-   hero; nearest-neighbour resampling keeps the lines crisp instead of smearing
-   them when the window and hero scale up. */
-.avatar,
 .hero-portrait {
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
+    image-rendering: auto;
 }
 
 /* ---------------- custom CSS modal ---------------- */
@@ -1697,4 +1695,12 @@ html.glass.has-bg {
 #cssEditor:focus {
     outline: none;
     border-color: var(--accent-border);
+}
+
+/* The brand block moves into the main column when the rail is on the right, so
+   the Fern logo always sits in the window's top-left corner. */
+.rail-logo-detached {
+    padding: 0 2px 10px;
+    margin: 0 0 12px;
+    border-bottom: 1px solid var(--border-subtle);
 }
