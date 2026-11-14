@@ -493,6 +493,16 @@ nav {
     padding: 1px 6px;
 }
 
+/* The bubble sits in a box tall enough for VRChat's largest chatbox (nine
+   lines), so the sidebar below it stays put as the lines rotate. */
+.preview-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: calc(9 * 1.3 * 11.5px + 16px);
+    overflow: hidden;
+}
+
 .preview-dock .chat-preview {
     /* VRChat draws the chatbox as a black bubble above the avatar: Noto Sans,
        white text, centred both ways, and the bubble hugs the text width. */
