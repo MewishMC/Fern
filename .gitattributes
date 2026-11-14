@@ -1,2 +1,7 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# gofmt rejects CRLF, so keep Go sources LF even on Windows checkouts.
+*.go text eol=lf
+go.mod text eol=lf
+go.sum text eol=lf
