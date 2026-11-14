@@ -254,7 +254,12 @@
             color: var(--text-secondary);
         }
 
-        li.CodeMirror-hint-active {
+        .CodeMirror-hint.fern-hint {
+            color: var(--accent);
+        }
+
+        li.CodeMirror-hint-active,
+        li.CodeMirror-hint-active.fern-hint {
             color: var(--text-primary);
             background: var(--accent-fill);
         }
@@ -346,6 +351,66 @@
             }));
         }
 
+        /* ---- Suggestions for Fern's own classes and ids ----
+           Collected from the panel's markup and theme, so typing ".c" in a
+           selector offers .card, .chat-preview and the rest. */
+        const fernNames = { ".": new Set(), "#": new Set() };
+
+        function collectFromMarkup(html) {
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            // Font Awesome's per-icon classes (fa-clock, fa-music, ...) would bury the rest.
+            doc.querySelectorAll("[class]").forEach((el) => el.classList.forEach((c) => {
+                if (!c.startsWith("fa-")) fernNames["."].add(c);
+            }));
+            doc.querySelectorAll("[id]").forEach((el) => fernNames["#"].add(el.id));
+            // Classes the script adds at runtime (row, toast, log-line, ...).
+            doc.querySelectorAll("script").forEach((script) => {
+                for (const m of script.textContent.matchAll(/className\s*=\s*"([\w\s-]+)"/g)) {
+                    m[1].split(/\s+/).forEach((c) => c && fernNames["."].add(c));
+                }
+            });
+        }
+
+        function collectFromTheme() {
+            for (const sheet of document.styleSheets) {
+                if (!sheet.href || !sheet.href.includes("/assets/theme.css")) continue;
+                let rules;
+                try { rules = sheet.cssRules; } catch (e) { continue; }
+                const walk = (list) => {
+                    for (const rule of list) {
+                        if (rule.cssRules) walk(rule.cssRules);
+                        if (!rule.selectorText) continue;
+                        for (const m of rule.selectorText.matchAll(/([.#])([a-zA-Z_][\w-]*)/g)) fernNames[m[1]].add(m[2]);
+                    }
+                };
+                walk(rules);
+            }
+        }
+
+        collectFromTheme();
+        fetch("/").then((res) => res.text()).then(collectFromMarkup).catch(() => { });
+
+        // True when the cursor is in a selector rather than inside a { } block.
+        function inSelector(ed) {
+            const state = ed.getTokenAt(ed.getCursor()).state;
+            const mode = state && state.state;
+            return mode === "top" || mode === "pseudo";
+        }
+
+        function fernHint(ed, options) {
+            const cur = ed.getCursor();
+            const m = /([.#])([\w-]*)$/.exec(ed.getLine(cur.line).slice(0, cur.ch));
+            if (m && inSelector(ed)) {
+                const [whole, prefix, typed] = m;
+                const list = [...fernNames[prefix]]
+                    .filter((name) => name.startsWith(typed) && name !== typed)
+                    .sort()
+                    .map((name) => ({ text: prefix + name, className: "fern-hint" }));
+                return { list, from: CodeMirror.Pos(cur.line, cur.ch - whole.length), to: cur };
+            }
+            return CodeMirror.hint.css(ed, options);
+        }
+
         const cm = CodeMirror(document.getElementById("editor"), {
             value: initial,
             mode: "css",
@@ -360,7 +425,7 @@
             styleActiveLine: true,
             autofocus: true,
             placeholder: ".card { border-radius: 6px; }",
-            hintOptions: { completeSingle: false },
+            hintOptions: { hint: fernHint, completeSingle: false },
             extraKeys: {
                 "Ctrl-Space": "autocomplete",
                 "Ctrl-/": toggleLineComments,
@@ -378,9 +443,11 @@
         });
 
         // Suggest as you type a property or value name, not only on Ctrl+Space.
+        // Suggest as you type a property, value, class or id, not only on Ctrl+Space.
         cm.on("inputRead", (ed, change) => {
             if (change.origin !== "+input" || ed.state.completionActive) return;
-            if (/^[a-zA-Z-]$/.test(change.text[0])) ed.showHint({ completeSingle: false });
+            const ch = change.text[0];
+            if (/^[a-zA-Z-]$/.test(ch) || ((ch === "." || ch === "#") && inSelector(ed))) ed.showHint();
         });
 
         function save() {
