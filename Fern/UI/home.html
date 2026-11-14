@@ -1984,21 +1984,6 @@
         })();
     </script>
 
-    <div class="modal" id="cssModal" hidden>
-        <div class="modal-panel">
-            <div class="modal-head">
-                <h3>Custom CSS</h3>
-                <button class="btn ghost" type="button" id="cssClose">Close</button>
-            </div>
-            <p class="modal-hint">Applied after the theme, so it wins on equal specificity. Ctrl+Shift+Alt+C always clears it, even if the page goes blank.</p>
-            <textarea id="cssEditor" spellcheck="false" placeholder=".card { border-radius: 6px; }"></textarea>
-            <div class="modal-foot">
-                <button class="btn ghost" type="button" id="cssReset">Reset</button>
-                <button class="btn" type="button" id="cssSave">Save CSS</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         /* Appearance: sidebar side, backdrop image, glass and neutral tint.
            Everything lives in localStorage so it survives a restart. */
@@ -2142,74 +2127,38 @@
             document.head.appendChild(cssStyle);
             const applyCustomCss = (css) => { cssStyle.textContent = css || ""; };
 
-            // A wildcard rule like `* { display: none }` hides the whole app,
-            // including the buttons that would undo it, so check and drop it.
-            function cssHidesApp() {
-                const appBox = document.querySelector(".app");
-                const dockBox = document.querySelector(".preview-dock");
-                const rect = appBox ? appBox.getBoundingClientRect() : null;
-                return !rect || rect.width < 200 || rect.height < 200 ||
-                    !dockBox || dockBox.getBoundingClientRect().height < 20;
-            }
-
             function clearCustomCss() {
                 applyCustomCss("");
                 write(CSS_KEY, "");
-                // Looked up rather than captured: this also runs on startup, before
-                // the editor's own const declarations further down are reached.
-                const overlay = document.getElementById("cssModal");
-                if (overlay) overlay.hidden = true;
                 toast("Custom CSS cleared");
-            }
-
-            function applyCustomCssGuarded(css) {
-                applyCustomCss(css);
-                if (!css || !cssHidesApp()) return true;
-                // Undo it but leave the editor open so the rule can be fixed.
-                applyCustomCss("");
-                write(CSS_KEY, "");
-                toast("That CSS hid the interface, so it was not kept");
-                return false;
             }
 
             applyCustomCss(read(CSS_KEY, ""));
-            const rescueHiddenCss = () => {
-                if (cssStyle.textContent && cssHidesApp()) clearCustomCss();
-            };
-            rescueHiddenCss();
-            setTimeout(rescueHiddenCss, 250);
-            window.addEventListener("load", rescueHiddenCss);
 
-            // Escape hatch that works even while the page is invisible.
+            // The editor lives in its own window and saves to localStorage as
+            // you type; this window applies each change it hears about.
+            window.addEventListener("storage", (ev) => {
+                if (ev.key === CSS_KEY) applyCustomCss(ev.newValue);
+            });
+
+            // window.open reuses the named window, so a second click focuses it.
+            const openCssEditor = () => {
+                const popup = window.open("/css-editor", "fern-css-editor", "popup,width=720,height=560");
+                if (popup) popup.focus();
+            };
+            document.getElementById("cssOpen").addEventListener("click", openCssEditor);
+
+            // Keyboard escape hatches, for when custom CSS has hidden the panel:
+            // Ctrl+Shift+Alt+C clears it, Ctrl+Shift+Alt+E opens the editor.
             document.addEventListener("keydown", (ev) => {
-                if (ev.ctrlKey && ev.shiftKey && ev.altKey && ev.code === "KeyC") {
+                if (!(ev.ctrlKey && ev.shiftKey && ev.altKey)) return;
+                if (ev.code === "KeyC") {
                     ev.preventDefault();
                     clearCustomCss();
+                } else if (ev.code === "KeyE") {
+                    ev.preventDefault();
+                    openCssEditor();
                 }
-            });
-
-            const modal = document.getElementById("cssModal");
-            const editor = document.getElementById("cssEditor");
-            const closeCss = () => { modal.hidden = true; };
-            document.getElementById("cssOpen").addEventListener("click", () => {
-                editor.value = read(CSS_KEY, "");
-                modal.hidden = false;
-                editor.focus();
-            });
-            document.getElementById("cssClose").addEventListener("click", closeCss);
-            modal.addEventListener("click", (ev) => { if (ev.target === modal) closeCss(); });
-            document.addEventListener("keydown", (ev) => { if (ev.key === "Escape" && !modal.hidden) closeCss(); });
-            document.getElementById("cssSave").addEventListener("click", () => {
-                if (!applyCustomCssGuarded(editor.value)) return;
-                write(CSS_KEY, editor.value);
-                closeCss();
-                toast("Custom CSS saved");
-            });
-            document.getElementById("cssReset").addEventListener("click", () => {
-                editor.value = "";
-                applyCustomCss("");
-                write(CSS_KEY, "");
-                toast("Custom CSS cleared");
             });
 
             /* ---------------- appearance export / import ---------------- */
@@ -2246,7 +2195,8 @@
                 applyImage(image);
                 write(KEYS.image, image);
                 const css = typeof data.css === "string" ? data.css : "";
-                if (applyCustomCssGuarded(css)) write(CSS_KEY, css);
+                applyCustomCss(css);
+                write(CSS_KEY, css);
             }
 
             document.getElementById("appearanceExport").addEventListener("click", () => {

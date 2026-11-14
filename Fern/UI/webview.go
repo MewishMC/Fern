@@ -12,6 +12,11 @@ import (
 //go:embed home.html
 var MainPage string
 
+// CSSEditorPage is the custom CSS editor, opened in its own window.
+//
+//go:embed css-editor.html
+var CSSEditorPage string
+
 //go:embed all:assets
 var assets embed.FS
 
