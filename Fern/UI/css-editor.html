@@ -5,139 +5,232 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fern · Custom CSS</title>
-    <!-- This window never loads the theme or the custom CSS it edits, so a rule
-         that breaks the panel cannot hide the editor needed to fix it. -->
+    <!-- The panel's own theme is safe to load here. The custom CSS this window
+         edits never is, so a rule that breaks the panel cannot hide the editor. -->
+    <link rel="stylesheet" href="/assets/fa/css/all.min.css?v={{ASSET_STAMP}}" />
+    <link rel="stylesheet" href="/assets/theme.css?v={{ASSET_STAMP}}" />
+    <script>
+        try {
+            const hue = localStorage.getItem("fern_accent_hue");
+            if (hue !== null) document.documentElement.style.setProperty("--hue", hue);
+            if (localStorage.getItem("fern_neutral") === "1") document.documentElement.style.setProperty("--tint", "0");
+        } catch (e) { }
+    </script>
     <style>
-        :root {
-            --hue: 268;
-            color-scheme: dark;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-        }
-
         body {
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            padding: 12px;
-            background: #141218;
-            color: #ece9f1;
-            font: 13px/1.4 "Segoe UI", system-ui, sans-serif;
+            gap: 12px;
+            padding: 16px;
         }
 
-        header {
+        .ed-bar {
             display: flex;
-            align-items: baseline;
-            justify-content: space-between;
+            align-items: center;
             gap: 12px;
         }
 
-        h1 {
-            margin: 0;
-            font-size: 15px;
-            font-weight: 600;
+        .icon-tile {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            flex: 0 0 auto;
+            border-radius: 10px;
+            color: var(--accent);
+            background: var(--accent-soft);
+            border: 1px solid var(--accent-border);
         }
 
-        .hint {
-            margin: 0;
-            color: #9a94a6;
-            font-size: 12px;
-        }
-
-        textarea {
+        .titles {
             flex: 1;
-            width: 100%;
+            min-width: 0;
+        }
+
+        .titles h1 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 650;
+        }
+
+        .titles p {
+            margin: 0;
+            color: var(--text-desc);
+            font-size: 11.5px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            color: var(--text-muted);
+            background: var(--bg-input);
+            border: 1px solid var(--border-default);
+        }
+
+        .pill::before {
+            content: "";
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        .pill.editing::before {
+            background: var(--amber);
+        }
+
+        .pill.error::before {
+            background: var(--red);
+        }
+
+        .editor {
+            display: flex;
+            flex: 1;
             min-height: 0;
-            padding: 10px 12px;
+            overflow: hidden;
+            background: var(--bg-input);
+            border: 1px solid var(--border-default);
+            border-radius: 12px;
+            transition: border-color .15s;
+        }
+
+        .editor:focus-within {
+            border-color: var(--accent-border);
+        }
+
+        .gutter,
+        #editor {
+            margin: 0;
+            padding: 12px 0;
+            font: 12.5px/1.6 "Cascadia Mono", Consolas, ui-monospace, monospace;
+        }
+
+        .gutter {
+            min-width: 44px;
+            padding-right: 10px;
+            overflow: hidden;
+            text-align: right;
+            color: var(--text-faint);
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+            user-select: none;
+        }
+
+        #editor {
+            flex: 1;
+            min-height: 0;
+            width: auto;
+            padding-left: 12px;
+            padding-right: 12px;
             resize: none;
-            color: inherit;
-            background: #0d0c10;
-            border: 1px solid #2c2834;
-            border-radius: 8px;
-            font: 12.5px/1.55 "Cascadia Mono", Consolas, ui-monospace, monospace;
+            white-space: pre;
+            overflow: auto;
+            color: var(--text-primary);
+            background: transparent;
+            border: 0;
+            border-radius: 0;
             tab-size: 4;
         }
 
-        textarea:focus {
-            outline: none;
-            border-color: hsl(var(--hue) 70% 65%);
+        #editor:focus {
+            border: 0;
         }
 
-        footer {
-            display: flex;
-            align-items: center;
+        .foot {
             justify-content: space-between;
-            gap: 12px;
         }
 
-        #status {
-            color: #9a94a6;
-            font-size: 12px;
+        .ed-hint {
+            color: var(--text-dim);
+            font-size: 11px;
         }
 
-        button {
-            padding: 6px 14px;
-            color: inherit;
-            background: #221f29;
-            border: 1px solid #3a3544;
-            border-radius: 7px;
-            font: inherit;
-            cursor: pointer;
+        kbd {
+            padding: 1px 5px;
+            border-radius: 4px;
+            font: 10.5px "Cascadia Mono", Consolas, monospace;
+            color: var(--text-muted);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-default);
         }
 
-        button:hover {
-            border-color: hsl(var(--hue) 70% 65%);
+        .actions {
+            display: flex;
+            gap: 8px;
         }
     </style>
 </head>
 
 <body>
-    <header>
-        <h1>Custom CSS</h1>
-        <p class="hint">Applied to the panel as you type</p>
-    </header>
-    <textarea id="editor" spellcheck="false" placeholder=".card { border-radius: 6px; }"></textarea>
-    <footer>
-        <span id="status">Saved</span>
-        <button type="button" id="clear">Clear</button>
-    </footer>
+    <div class="ed-bar">
+        <div class="icon-tile"><i class="fa fa-code" aria-hidden="true"></i></div>
+        <div class="titles">
+            <h1>Custom CSS</h1>
+            <p>Applied to the panel as you type, after the theme</p>
+        </div>
+        <span class="pill" id="status">Saved</span>
+    </div>
+
+    <div class="editor">
+        <pre class="gutter" id="gutter" aria-hidden="true">1</pre>
+        <textarea id="editor" spellcheck="false" wrap="off" aria-label="Custom CSS"
+            placeholder=".card { border-radius: 6px; }"></textarea>
+    </div>
+
+    <div class="ed-bar foot">
+        <span class="ed-hint"><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Alt</kbd> <kbd>C</kbd> in the panel clears it</span>
+        <div class="actions">
+            <button class="btn ghost" type="button" id="clear">Clear</button>
+            <button class="btn" type="button" id="done">Done</button>
+        </div>
+    </div>
 
     <script>
         "use strict";
         // The panel listens for changes to this key and applies them live.
         const KEY = "fern_custom_css";
         const editor = document.getElementById("editor");
+        const gutter = document.getElementById("gutter");
         const status = document.getElementById("status");
 
-        try {
-            const hue = localStorage.getItem("fern_accent_hue");
-            if (hue !== null) document.documentElement.style.setProperty("--hue", hue);
-            editor.value = localStorage.getItem(KEY) || "";
-        } catch (e) { }
+        function setStatus(text, kind) {
+            status.textContent = text;
+            status.className = "pill" + (kind ? " " + kind : "");
+        }
+
+        let lineCount = 0;
+        function renumber() {
+            const lines = editor.value.split("\n").length;
+            if (lines === lineCount) return;
+            lineCount = lines;
+            gutter.textContent = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+        }
+
+        try { editor.value = localStorage.getItem(KEY) || ""; } catch (e) { }
+        renumber();
 
         function save() {
+            timer = null;
             try {
                 localStorage.setItem(KEY, editor.value);
-                status.textContent = "Saved";
+                setStatus("Saved");
             } catch (e) {
-                status.textContent = "Could not save: storage is full";
+                setStatus("Storage is full", "error");
             }
         }
 
         let timer = null;
         editor.addEventListener("input", () => {
-            status.textContent = "Editing…";
+            renumber();
+            setStatus("Editing", "editing");
             clearTimeout(timer);
             timer = setTimeout(save, 250);
         });
+        editor.addEventListener("scroll", () => { gutter.scrollTop = editor.scrollTop; });
 
         // Tab indents instead of leaving the editor.
         editor.addEventListener("keydown", (ev) => {
@@ -148,15 +241,26 @@
         });
 
         document.getElementById("clear").addEventListener("click", () => {
+            if (editor.value && !confirm("Clear all custom CSS?")) return;
             editor.value = "";
             clearTimeout(timer);
+            renumber();
             save();
             editor.focus();
         });
 
-        // The panel can clear the CSS too (Ctrl+Shift+Alt+C); keep this window in step.
+        document.getElementById("done").addEventListener("click", () => {
+            clearTimeout(timer);
+            save();
+            window.close();
+        });
+
+        // The panel can clear the CSS too; keep this window in step.
         window.addEventListener("storage", (ev) => {
-            if (ev.key === KEY && ev.newValue !== editor.value) editor.value = ev.newValue || "";
+            if (ev.key === KEY && ev.newValue !== editor.value) {
+                editor.value = ev.newValue || "";
+                renumber();
+            }
         });
 
         window.addEventListener("beforeunload", () => {

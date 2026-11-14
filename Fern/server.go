@@ -154,7 +154,7 @@ func StartServer(listener net.Listener) {
 	mux.HandleFunc("/css-editor", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-store")
-		_, _ = w.Write([]byte(UI.CSSEditorPage))
+		_, _ = w.Write([]byte(strings.ReplaceAll(UI.CSSEditorPage, "{{ASSET_STAMP}}", assetStamp)))
 	})
 	mux.HandleFunc("/ws", handleSocket)
 	if assets := UI.Assets(); assets != nil {
