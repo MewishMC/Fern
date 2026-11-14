@@ -2180,8 +2180,14 @@
                 if (ev.key === CSS_KEY) applyCustomCss(ev.newValue);
             });
 
-            // window.open reuses the named window, so a second click focuses it.
+            // In the desktop app Go opens the editor as a native window (no URL
+            // bar). In a browser, window.open reuses the named window, so a
+            // second click focuses it.
             const openCssEditor = () => {
+                if (typeof window.fernOpenCssEditor === "function") {
+                    window.fernOpenCssEditor();
+                    return;
+                }
                 const popup = window.open("/css-editor", "fern-css-editor", "popup,width=720,height=560");
                 if (popup) popup.focus();
             };

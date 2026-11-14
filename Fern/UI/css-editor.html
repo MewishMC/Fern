@@ -411,7 +411,9 @@
         document.getElementById("done").addEventListener("click", () => {
             clearTimeout(timer);
             save();
-            window.close();
+            // A native editor window is closed by the app; a browser popup by itself.
+            if (typeof window.fernCloseEditor === "function") window.fernCloseEditor();
+            else window.close();
         });
 
         // The panel can clear the CSS too; keep this window in step.
