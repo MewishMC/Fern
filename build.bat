@@ -2,9 +2,6 @@
 windres -o .\Fern\Fern.syso .\Fern\Fern.rc
 if errorlevel 1 goto :error
 
-go generate .\Fern\
-if errorlevel 1 goto :error
-
 go build -ldflags "-H windowsgui" .\Fern\
 if errorlevel 1 goto :error
 
