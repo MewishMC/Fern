@@ -9,6 +9,8 @@
          edits never is, so a rule that breaks the panel cannot hide the editor. -->
     <link rel="stylesheet" href="/assets/fa/css/all.min.css?v={{ASSET_STAMP}}" />
     <link rel="stylesheet" href="/assets/theme.css?v={{ASSET_STAMP}}" />
+    <link rel="stylesheet" href="/assets/codemirror/codemirror.css?v={{ASSET_STAMP}}" />
+    <script src="/assets/codemirror/codemirror.js?v={{ASSET_STAMP}}"></script>
     <script>
         try {
             const hue = localStorage.getItem("fern_accent_hue");
@@ -88,7 +90,6 @@
         }
 
         .editor {
-            display: flex;
             flex: 1;
             min-height: 0;
             overflow: hidden;
@@ -102,49 +103,14 @@
             border-color: var(--accent-border);
         }
 
-        .gutter,
-        #editor {
-            margin: 0;
-            padding: 12px 0;
-            font: 12.5px/1.6 "Cascadia Mono", Consolas, ui-monospace, monospace;
-        }
-
-        .gutter {
-            min-width: 44px;
-            padding-right: 10px;
-            overflow: hidden;
-            text-align: right;
-            color: var(--text-faint);
-            background: var(--bg-surface);
-            border-right: 1px solid var(--border-subtle);
-            user-select: none;
-        }
-
-        #editor {
-            flex: 1;
-            min-height: 0;
-            width: auto;
-            padding-left: 12px;
-            padding-right: 12px;
-            resize: none;
-            white-space: pre;
-            overflow: auto;
-            color: var(--text-primary);
-            background: transparent;
-            border: 0;
-            border-radius: 0;
-            tab-size: 4;
-        }
-
-        #editor:focus {
-            border: 0;
-        }
-
         .foot {
             justify-content: space-between;
         }
 
-        .ed-hint {
+        .keys {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
             color: var(--text-dim);
             font-size: 11px;
         }
@@ -160,7 +126,154 @@
 
         .actions {
             display: flex;
+            flex: 0 0 auto;
             gap: 8px;
+        }
+
+        /* ---- CodeMirror, themed from the panel's tokens ---- */
+        .CodeMirror {
+            height: 100%;
+            font: 12.5px/1.6 "Cascadia Mono", Consolas, ui-monospace, monospace;
+        }
+
+        .cm-s-fern.CodeMirror {
+            color: var(--text-primary);
+            background: transparent;
+        }
+
+        .cm-s-fern .CodeMirror-gutters {
+            background: var(--bg-surface);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        .cm-s-fern .CodeMirror-linenumber {
+            padding: 0 10px 0 8px;
+            color: var(--text-faint);
+        }
+
+        .cm-s-fern .CodeMirror-lines {
+            padding: 10px 0;
+        }
+
+        .cm-s-fern .CodeMirror-cursor {
+            border-left: 2px solid var(--accent);
+        }
+
+        .cm-s-fern .CodeMirror-activeline-background {
+            background: var(--bg-hover-1);
+        }
+
+        .cm-s-fern .CodeMirror-activeline-gutter .CodeMirror-linenumber {
+            color: var(--text-muted);
+        }
+
+        .cm-s-fern .CodeMirror-selected,
+        .cm-s-fern.CodeMirror-focused .CodeMirror-selected {
+            background: var(--accent-soft);
+        }
+
+        .cm-s-fern .CodeMirror-line::selection,
+        .cm-s-fern .CodeMirror-line>span::selection,
+        .cm-s-fern .CodeMirror-line>span>span::selection {
+            background: var(--accent-soft);
+        }
+
+        .cm-s-fern .CodeMirror-matchingbracket {
+            color: var(--accent-light) !important;
+            outline: 1px solid var(--accent-border);
+        }
+
+        .cm-s-fern .CodeMirror-nonmatchingbracket {
+            color: var(--red) !important;
+        }
+
+        .cm-s-fern .CodeMirror-placeholder {
+            color: var(--text-faint);
+        }
+
+        .cm-s-fern .cm-tag,
+        .cm-s-fern .cm-qualifier,
+        .cm-s-fern .cm-builtin {
+            color: var(--accent);
+        }
+
+        .cm-s-fern .cm-property {
+            color: hsl(calc(var(--hue) + 160) calc(55% * var(--tint)) 72%);
+        }
+
+        .cm-s-fern .cm-atom,
+        .cm-s-fern .cm-variable-2,
+        .cm-s-fern .cm-variable-3 {
+            color: var(--text-secondary);
+        }
+
+        .cm-s-fern .cm-number {
+            color: var(--amber);
+        }
+
+        .cm-s-fern .cm-string,
+        .cm-s-fern .cm-string-2 {
+            color: var(--green);
+        }
+
+        .cm-s-fern .cm-keyword {
+            color: var(--red);
+        }
+
+        .cm-s-fern .cm-def,
+        .cm-s-fern .cm-variable {
+            color: var(--accent-light);
+        }
+
+        .cm-s-fern .cm-comment {
+            color: var(--text-faint);
+            font-style: italic;
+        }
+
+        .cm-s-fern .cm-error {
+            color: var(--red);
+            text-decoration: underline wavy;
+        }
+
+        /* Suggestions and the find bar */
+        .CodeMirror-hints {
+            padding: 4px;
+            font: 12px/1.5 "Cascadia Mono", Consolas, ui-monospace, monospace;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+        }
+
+        .CodeMirror-hint {
+            padding: 2px 8px;
+            border-radius: 5px;
+            color: var(--text-secondary);
+        }
+
+        li.CodeMirror-hint-active {
+            color: var(--text-primary);
+            background: var(--accent-fill);
+        }
+
+        .cm-s-fern .CodeMirror-dialog {
+            padding: 6px 10px;
+            color: var(--text-muted);
+            background: var(--bg-surface);
+        }
+
+        .cm-s-fern .CodeMirror-dialog-top {
+            border-bottom: 1px solid var(--border-default);
+        }
+
+        .cm-s-fern .CodeMirror-dialog input {
+            width: 16em;
+            color: var(--text-primary);
+            font-family: inherit;
+        }
+
+        .cm-s-fern .cm-searching {
+            background: hsl(45 90% 50% / .3);
         }
     </style>
 </head>
@@ -175,14 +288,16 @@
         <span class="pill" id="status">Saved</span>
     </div>
 
-    <div class="editor">
-        <pre class="gutter" id="gutter" aria-hidden="true">1</pre>
-        <textarea id="editor" spellcheck="false" wrap="off" aria-label="Custom CSS"
-            placeholder=".card { border-radius: 6px; }"></textarea>
-    </div>
+    <div class="editor" id="editor"></div>
 
     <div class="ed-bar foot">
-        <span class="ed-hint"><kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>Alt</kbd> <kbd>C</kbd> in the panel clears it</span>
+        <div class="keys" title="Sublime Text keybinds. Ctrl+Shift+Alt+C in the panel clears all custom CSS.">
+            <span><kbd>Ctrl</kbd> <kbd>Space</kbd> suggest</span>
+            <span><kbd>Ctrl</kbd> <kbd>/</kbd> comment</span>
+            <span><kbd>Ctrl</kbd> <kbd>D</kbd> next match</span>
+            <span><kbd>Alt</kbd> <kbd>↑</kbd><kbd>↓</kbd> move line</span>
+            <span><kbd>Ctrl</kbd> <kbd>F</kbd> find</span>
+        </div>
         <div class="actions">
             <button class="btn ghost" type="button" id="clear">Clear</button>
             <button class="btn" type="button" id="done">Done</button>
@@ -193,8 +308,6 @@
         "use strict";
         // The panel listens for changes to this key and applies them live.
         const KEY = "fern_custom_css";
-        const editor = document.getElementById("editor");
-        const gutter = document.getElementById("gutter");
         const status = document.getElementById("status");
 
         function setStatus(text, kind) {
@@ -202,21 +315,75 @@
             status.className = "pill" + (kind ? " " + kind : "");
         }
 
-        let lineCount = 0;
-        function renumber() {
-            const lines = editor.value.split("\n").length;
-            if (lines === lineCount) return;
-            lineCount = lines;
-            gutter.textContent = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+        let initial = "";
+        try { initial = localStorage.getItem(KEY) || ""; } catch (e) { }
+
+        // CSS has no line comments, so CodeMirror's toggle wraps the whole line
+        // including its indent. Comment each selected line after its indent
+        // instead, the way VS Code does, and uncomment when all already are.
+        function toggleLineComments(ed) {
+            const lines = new Set();
+            ed.listSelections().forEach((range) => {
+                const from = Math.min(range.anchor.line, range.head.line);
+                const to = Math.max(range.anchor.line, range.head.line);
+                for (let line = from; line <= to; line++) lines.add(line);
+            });
+            const targets = [...lines].filter((line) => ed.getLine(line).trim());
+            if (!targets.length) return;
+            const isCommented = (text) => /^\s*\/\*.*\*\/\s*$/.test(text);
+            const uncomment = targets.every((line) => isCommented(ed.getLine(line)));
+            ed.operation(() => targets.forEach((line) => {
+                const text = ed.getLine(line);
+                const indent = text.match(/^\s*/)[0];
+                const body = text.slice(indent.length).trimEnd();
+                const next = uncomment
+                    ? body.replace(/^\/\*\s?/, "").replace(/\s?\*\/$/, "")
+                    : "/* " + body + " */";
+                ed.replaceRange(indent + next, { line, ch: 0 }, { line, ch: text.length });
+            }));
         }
 
-        try { editor.value = localStorage.getItem(KEY) || ""; } catch (e) { }
-        renumber();
+        const cm = CodeMirror(document.getElementById("editor"), {
+            value: initial,
+            mode: "css",
+            theme: "fern",
+            keyMap: "sublime",
+            lineNumbers: true,
+            indentUnit: 4,
+            tabSize: 4,
+            indentWithTabs: false,
+            autoCloseBrackets: true,
+            matchBrackets: true,
+            styleActiveLine: true,
+            autofocus: true,
+            placeholder: ".card { border-radius: 6px; }",
+            hintOptions: { completeSingle: false },
+            extraKeys: {
+                "Ctrl-Space": "autocomplete",
+                "Ctrl-/": toggleLineComments,
+                "Ctrl-S": () => { clearTimeout(timer); save(); },
+                "Alt-Up": "swapLineUp",
+                "Alt-Down": "swapLineDown",
+                "Shift-Alt-Down": "duplicateLine",
+                "Shift-Tab": "indentLess",
+                // Indent a selection; otherwise insert spaces rather than a tab.
+                "Tab": (ed) => {
+                    if (ed.somethingSelected()) ed.indentSelection("add");
+                    else ed.replaceSelection(" ".repeat(ed.getOption("indentUnit")), "end");
+                },
+            },
+        });
+
+        // Suggest as you type a property or value name, not only on Ctrl+Space.
+        cm.on("inputRead", (ed, change) => {
+            if (change.origin !== "+input" || ed.state.completionActive) return;
+            if (/^[a-zA-Z-]$/.test(change.text[0])) ed.showHint({ completeSingle: false });
+        });
 
         function save() {
             timer = null;
             try {
-                localStorage.setItem(KEY, editor.value);
+                localStorage.setItem(KEY, cm.getValue());
                 setStatus("Saved");
             } catch (e) {
                 setStatus("Storage is full", "error");
@@ -224,29 +391,21 @@
         }
 
         let timer = null;
-        editor.addEventListener("input", () => {
-            renumber();
+        // setValue from the storage listener below must not echo back as an edit.
+        let applyingRemote = false;
+        cm.on("change", () => {
+            if (applyingRemote) return;
             setStatus("Editing", "editing");
             clearTimeout(timer);
             timer = setTimeout(save, 250);
         });
-        editor.addEventListener("scroll", () => { gutter.scrollTop = editor.scrollTop; });
-
-        // Tab indents instead of leaving the editor.
-        editor.addEventListener("keydown", (ev) => {
-            if (ev.key !== "Tab" || ev.shiftKey || ev.ctrlKey || ev.altKey) return;
-            ev.preventDefault();
-            editor.setRangeText("    ", editor.selectionStart, editor.selectionEnd, "end");
-            editor.dispatchEvent(new Event("input"));
-        });
 
         document.getElementById("clear").addEventListener("click", () => {
-            if (editor.value && !confirm("Clear all custom CSS?")) return;
-            editor.value = "";
+            if (cm.getValue() && !confirm("Clear all custom CSS?")) return;
+            cm.setValue("");
             clearTimeout(timer);
-            renumber();
             save();
-            editor.focus();
+            cm.focus();
         });
 
         document.getElementById("done").addEventListener("click", () => {
@@ -257,16 +416,21 @@
 
         // The panel can clear the CSS too; keep this window in step.
         window.addEventListener("storage", (ev) => {
-            if (ev.key === KEY && ev.newValue !== editor.value) {
-                editor.value = ev.newValue || "";
-                renumber();
-            }
+            if (ev.key !== KEY || ev.newValue === cm.getValue()) return;
+            applyingRemote = true;
+            cm.setValue(ev.newValue || "");
+            applyingRemote = false;
         });
 
-        window.addEventListener("beforeunload", () => {
-            if (timer) save();
-        });
-        editor.focus();
+        // Flush a pending save when focus leaves (say, back to the panel) or the
+        // window closes, instead of waiting out the typing delay.
+        const flush = () => {
+            if (!timer) return;
+            clearTimeout(timer);
+            save();
+        };
+        window.addEventListener("blur", flush);
+        window.addEventListener("beforeunload", flush);
     </script>
 </body>
 

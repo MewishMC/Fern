@@ -119,3 +119,4 @@ Bundled third-party assets keep their own licences:
 
 - Font Awesome Free icons — [LICENSE](Fern/UI/assets/fa/LICENSE.txt)
 - Noto Emoji font — [OFL 1.1](Fern/UI/assets/fonts/LICENSE.txt)
+- CodeMirror 5 (custom CSS editor) — [MIT](Fern/UI/assets/codemirror/LICENSE.txt)
