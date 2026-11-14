@@ -174,7 +174,7 @@ func appNameFromID(id string) string {
 }
 
 func startMediaWorker() {
-	startSMTCLoop()
+	go smtcLoop()
 	go func() {
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
