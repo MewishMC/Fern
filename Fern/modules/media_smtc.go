@@ -252,6 +252,7 @@ func loopRead(preferred string) (rawMedia, error) {
 			out.Title, _ = props.GetTitle()
 			out.Artist, _ = props.GetArtist()
 			out.Album, _ = props.GetAlbumTitle()
+			loopUpdateCover(props, trackKey(out))
 			props.Release()
 		}
 	}

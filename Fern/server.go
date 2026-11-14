@@ -156,6 +156,16 @@ func StartServer(listener net.Listener) {
 		w.Header().Set("Cache-Control", "no-store")
 		_, _ = w.Write([]byte(strings.ReplaceAll(UI.CSSEditorPage, "{{ASSET_STAMP}}", assetStamp)))
 	})
+	mux.HandleFunc("/media/cover", func(w http.ResponseWriter, r *http.Request) {
+		cover := modules.CurrentCover()
+		if len(cover.Data) == 0 {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", cover.ContentType)
+		w.Header().Set("Cache-Control", "no-store")
+		_, _ = w.Write(cover.Data)
+	})
 	mux.HandleFunc("/ws", handleSocket)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))

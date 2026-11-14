@@ -29,6 +29,7 @@ type MediaInfo struct {
 	Playing    bool   `json:"playing"`
 	PositionMS int64  `json:"positionMs"`
 	DurationMS int64  `json:"durationMs"`
+	Cover      string `json:"cover"` // changes with the artwork; empty when there is none
 	Source     string `json:"source"`
 	SampledAt  int64  `json:"sampledAt"`
 }
@@ -80,7 +81,7 @@ func CurrentMedia() MediaInfo {
 		pos = 0
 	}
 
-	key := raw.AppID + "\x00" + raw.Title + "\x00" + raw.Artist
+	key := trackKey(raw)
 	switch {
 	case !raw.Available:
 		mediaLastKey, mediaLastPos = "", 0
@@ -115,6 +116,9 @@ func CurrentMedia() MediaInfo {
 	if raw.Sampled.IsZero() {
 		info.Source = ""
 	}
+	if c := CurrentCover(); c.Key != "" && coverTrack() == key {
+		info.Cover = c.Key
+	}
 
 	if filter := strings.TrimSpace(cfg.MediaOptions.AppFilter); filter != "" && info.Available {
 		haystack := strings.ToLower(info.AppID + " " + info.App + " " + info.Title + " " + info.Artist)
@@ -139,6 +143,11 @@ func CurrentMedia() MediaInfo {
 		info.Album = ""
 	}
 	return info
+}
+
+// trackKey identifies a track within one app.
+func trackKey(raw rawMedia) string {
+	return raw.AppID + "\x00" + raw.Title + "\x00" + raw.Artist
 }
 
 // isAppNameText reports whether a media string is really the app or its branding
@@ -170,7 +179,24 @@ func appNameFromID(id string) string {
 	if name == "" {
 		return id
 	}
+	// Firefox registers its media session under a 16-digit hex hash of its
+	// install path instead of a readable name.
+	if isHexID(name) {
+		return "Firefox"
+	}
 	return strings.ToUpper(name[:1]) + name[1:]
+}
+
+func isHexID(s string) bool {
+	if len(s) != 16 {
+		return false
+	}
+	for _, r := range s {
+		if !strings.ContainsRune("0123456789ABCDEFabcdef", r) {
+			return false
+		}
+	}
+	return true
 }
 
 func startMediaWorker() {

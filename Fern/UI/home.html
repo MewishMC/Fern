@@ -111,7 +111,7 @@
                     <div class="card">
                         <div class="card-head">
                             <h3>Now playing</h3>
-                            <span class="badge" id="mediaSource">—</span>
+                            <select class="media-pick compact" aria-label="Media source"></select>
                         </div>
                         <div class="np-top">
                             <div class="np-art idle" id="npArt">♪</div>
@@ -518,8 +518,15 @@
                 </div>
 
                 <div class="card" style="margin-bottom:12px">
+                    <div class="np-source">
+                        <div class="field-label">
+                            <b>Source</b>
+                            <span>The app whose track appears here and in the chatbox. Automatic follows whatever Windows marks as current.</span>
+                        </div>
+                        <select class="media-pick" id="mediaPick" aria-label="Media source"></select>
+                    </div>
                     <div class="np-top">
-                        <div class="np-art idle" id="npArt2">♪</div>
+                        <div class="np-art lg idle" id="npArt2">♪</div>
                         <div style="min-width:0;flex:1">
                             <div class="np-title" id="npTitle2">Nothing playing</div>
                             <div class="np-sub" id="npSub2">title, artist and playback time appear automatically</div>
@@ -568,17 +575,6 @@
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="pausedSwitch"><span></span></label>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>Detect from</b>
-                            <span>Pick which app's media session Fern reads. Automatic follows whatever Windows marks as current.</span>
-                        </div>
-                        <div class="field-control">
-                            <select id="mediaPick" style="width:230px">
-                                <option value="">Automatic (current session)</option>
-                            </select>
                         </div>
                     </div>
                     <div class="field">
@@ -1301,8 +1297,7 @@
 
             ["npTitle", "npTitle2"].forEach((id) => $(id).textContent = title);
             ["npSub", "npSub2"].forEach((id) => $(id).textContent = sub || (m.app || ""));
-            ["npArt", "npArt2"].forEach((id) => $(id).classList.toggle("idle", !has));
-            ["npArt", "npArt2"].forEach((id) => $(id).textContent = m.playing ? "♪" : "❚❚");
+            ["npArt", "npArt2"].forEach((id) => paintArt($(id), has, m));
 
             const dur = m.durationMs || 0;
             paintProgress(Math.min(m.positionMs || 0, dur), dur);
@@ -1315,8 +1310,25 @@
             stateEl.classList.toggle("playing", status === "playing");
 
             $("mediaBadge").textContent = m.available ? (m.app || "media") : "no session";
-            $("mediaSource").textContent = m.app || "—";
-            $("mediaSource").classList.toggle("on", !!m.playing);
+        }
+
+        // Cover art when the app provides it, otherwise a play or pause glyph.
+        // The image URL carries the cover key, so it only reloads on a new track.
+        function paintArt(el, has, m) {
+            el.classList.toggle("idle", !has);
+            const key = has && m.cover ? m.cover : "";
+            el.classList.toggle("has-cover", !!key);
+            if (!key) {
+                el.dataset.cover = "";
+                el.textContent = m.playing ? "♪" : "❚❚";
+                return;
+            }
+            if (el.dataset.cover === key) return;
+            el.dataset.cover = key;
+            const img = new Image();
+            img.alt = "";
+            img.src = "/media/cover?k=" + encodeURIComponent(key);
+            el.replaceChildren(img);
         }
 
         // Both now-playing cards share the bar and elapsed time.
@@ -1329,32 +1341,34 @@
         // Sessions Windows exposes. Picking one pins Fern to that app's media
         // session instead of following whichever app Windows calls current.
         function renderMediaSources(st) {
-            const select = $("mediaPick");
+            const selects = Array.from(document.querySelectorAll(".media-pick"));
             const sources = st.mediaSources || [];
             const saved = ((st.config.MediaOptions && st.config.MediaOptions.preferred_app) || "").trim();
             const sig = JSON.stringify(sources.map((s) => [s.appId, s.app, s.title, s.playing])) + "|" + saved;
             if (sig === S.mediaSourcesSig) return;
-            if (document.activeElement === select) return;
+            // Rebuilding a select while it is open would close it under the user.
+            if (selects.includes(document.activeElement)) return;
             S.mediaSourcesSig = sig;
 
-            select.innerHTML = '<option value="">Automatic (current session)</option>';
+            const options = [["", "Automatic (current session)"]];
             const seen = {};
             sources.forEach((src) => {
                 const id = src.appId || src.app || "";
                 if (!id || seen[id]) return;
                 seen[id] = true;
-                const option = document.createElement("option");
-                option.value = id;
-                option.textContent = mediaSourceLabel(src);
-                select.appendChild(option);
+                options.push([id, mediaSourceLabel(src)]);
             });
-            if (saved && !seen[saved]) {
-                const option = document.createElement("option");
-                option.value = saved;
-                option.textContent = saved.replace(/\.exe$/i, "") + " (not running)";
-                select.appendChild(option);
-            }
-            select.value = saved || "";
+            if (saved && !seen[saved]) options.push([saved, saved.replace(/\.exe$/i, "") + " (not running)"]);
+
+            selects.forEach((select) => {
+                select.replaceChildren(...options.map(([value, label]) => {
+                    const option = document.createElement("option");
+                    option.value = value;
+                    option.textContent = label;
+                    return option;
+                }));
+                select.value = saved;
+            });
         }
 
         function mediaSourceLabel(src) {
@@ -1892,7 +1906,8 @@
         });
 
         /* ---------------- media page ---------------- */
-        $("mediaPick").addEventListener("change", (ev) => {
+        document.addEventListener("change", (ev) => {
+            if (!ev.target.classList.contains("media-pick")) return;
             const value = ev.target.value;
             S.mediaSourcesSig = "";
             pushConfigNow((c) => { c.MediaOptions.preferred_app = value; });
