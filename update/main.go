@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -69,10 +68,7 @@ func main() {
 		panic(err)
 	}
 
-	latestVersionHash, err := hashBytes(bytesV)
-	if err != nil {
-		panic(err)
-	}
+	latestVersionHash := hashBytes(bytesV)
 	procAttr := new(os.ProcAttr)
 	procAttr.Files = []*os.File{os.Stdout, os.Stdout, os.Stdout}
 	procAttr.Env = os.Environ()
@@ -112,35 +108,21 @@ func getLatestVersion() (string, error) {
 	return breadcrumbs[len(breadcrumbs)-1], nil
 }
 
-func hashBytes(bytesV []byte) (string, error) {
-	hash := sha256.New()
-
-	if _, err := io.Copy(hash, bytes.NewReader(bytesV)); err != nil {
-		return "", err
-	}
-
-	hashBytes := hash.Sum(nil)
-
-	return fmt.Sprintf("%x", hashBytes), nil
+func hashBytes(data []byte) string {
+	return fmt.Sprintf("%x", sha256.Sum256(data))
 }
 
+// getCurrentHash hashes the installed executable, or returns "none" when there
+// is nothing installed yet so any release counts as newer.
 func getCurrentHash() (string, error) {
-	file, err := os.OpenFile(os.Args[1], os.O_RDONLY, 0777)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "none", nil
-		}
-		return "", err
+	data, err := os.ReadFile(os.Args[1])
+	if os.IsNotExist(err) {
+		return "none", nil
 	}
-	bytesV, err := io.ReadAll(file)
 	if err != nil {
 		return "", err
 	}
-	fileHash, err := hashBytes(bytesV)
-	if err != nil {
-		return "", err
-	}
-	return fileHash, nil
+	return hashBytes(data), nil
 }
 
 func getLatestVersionBytes(version string) ([]byte, error) {
@@ -155,9 +137,5 @@ func getLatestVersionBytes(version string) ([]byte, error) {
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("failed to download latest version - %s", res.Status)
 	}
-	bytesV, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	return bytesV, nil
+	return io.ReadAll(res.Body)
 }
