@@ -39,13 +39,12 @@ func main() {
 		fmt.Println("No executable provided, using default: " + ExeName)
 	}
 
-	fmt.Println(os.Args[1])
 	defer func() {
 		if r := recover(); r != nil {
 			stackBuf := make([]byte, 2048)
 			stackSize := runtime.Stack(stackBuf, true)
 
-			message := fmt.Sprintf("Panic Occured: %v\n\n%s", r, stackBuf[:stackSize])
+			message := fmt.Sprintf("Panic occurred: %v\n\n%s", r, stackBuf[:stackSize])
 			title := "Whoops, something went wrong!"
 
 			if _, err := MessageBoxW(title, message); err != nil {
@@ -69,25 +68,23 @@ func main() {
 	}
 
 	latestVersionHash := hashBytes(bytesV)
-	procAttr := new(os.ProcAttr)
-	procAttr.Files = []*os.File{os.Stdout, os.Stdout, os.Stdout}
-	procAttr.Env = os.Environ()
-	procAttr.Dir = filepath.Dir(os.Args[1])
-
-	if latestVersionHash == currentVersionHash {
-		if _, err := os.StartProcess(os.Args[1], append(os.Args[1:], "--launch"), procAttr); err != nil {
+	if latestVersionHash != currentVersionHash {
+		fmt.Println("Installing latest version...")
+		if err := os.WriteFile(os.Args[1], bytesV, 0755); err != nil {
 			panic(err)
 		}
-		os.Exit(0)
 	}
+	launch(os.Args[1])
+}
 
-	fmt.Println("Installing latest version...")
-	if err := os.WriteFile(os.Args[1], bytesV, 0777); err != nil {
-		panic(err)
+// launch starts Fern with the arguments the updater was given and exits.
+func launch(exe string) {
+	procAttr := &os.ProcAttr{
+		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
+		Env:   os.Environ(),
+		Dir:   filepath.Dir(exe),
 	}
-
-	_, err = os.StartProcess(os.Args[1], []string{"--launch"}, procAttr)
-	if err != nil {
+	if _, err := os.StartProcess(exe, append(os.Args[1:], "--launch"), procAttr); err != nil {
 		panic(err)
 	}
 	os.Exit(0)
