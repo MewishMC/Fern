@@ -52,6 +52,8 @@ func StartWebview(url string) {
 	w.SetSize(1040, 760, webview.HintNone)
 	w.SetSize(820, 600, webview.HintMin)
 	w.SetTitle("Fern ｢フェルン｣")
+	mainView = w
+	hookClose(uintptr(w.Window()), closeMain)
 	w.Run()
 }
 
@@ -89,11 +91,56 @@ func openEditorWindow(url string) {
 		w.SetSize(480, 360, webview.HintMin)
 		w.Navigate(url)
 
+		hwnd := uintptr(w.Window())
+		editorView = w
+		hookClose(hwnd, closeEditor)
 		editorMu.Lock()
-		editorWindow = uintptr(w.Window())
+		editorWindow = hwnd
 		editorMu.Unlock()
 		w.Run()
 	}()
+}
+
+// webview only ends a window's run loop when the process's last window
+// closes. With the panel and the editor both open, closing either one with its
+// X button left that window's Run blocked: the editor stayed marked as open and
+// could not be reopened, and closing the panel left Fern running with no panel.
+// Catching WM_CLOSE and ending the loop ourselves fixes both.
+var (
+	comctl32              = syscall.NewLazyDLL("comctl32.dll")
+	procSetWindowSubclass = comctl32.NewProc("SetWindowSubclass")
+	procDefSubclassProc   = comctl32.NewProc("DefSubclassProc")
+	closeHook             = syscall.NewCallback(closeWndProc)
+
+	// Each is set and read only on its own window's thread.
+	mainView   webview.WebView
+	editorView webview.WebView
+)
+
+// Subclass ids, passed back to closeWndProc to say which window closed.
+const (
+	closeMain   = 1
+	closeEditor = 2
+	wmClose     = 0x0010
+)
+
+func hookClose(hwnd uintptr, which uintptr) {
+	_, _, _ = procSetWindowSubclass.Call(hwnd, closeHook, which, 0)
+}
+
+func closeWndProc(hwnd, msg, wParam, lParam, which, _ uintptr) uintptr {
+	if msg == wmClose {
+		switch {
+		case which == closeMain && mainView != nil:
+			mainView.Terminate() // Run returns and StartWebview exits the app
+			return 0
+		case which == closeEditor && editorView != nil:
+			editorView.Terminate() // Run returns and the deferred Destroy closes it
+			return 0
+		}
+	}
+	ret, _, _ := procDefSubclassProc.Call(hwnd, msg, wParam, lParam)
+	return ret
 }
 
 var (
