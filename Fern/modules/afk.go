@@ -151,21 +151,25 @@ func startAfkWorker() {
 }
 
 // listenOSC listens for VRChat's outgoing OSC so activity can be detected.
-// A busy port is not fatal: another Fern instance may already own it.
+// A busy port is not fatal (another OSC app may own it), but the panel shows
+// it, and the port is retried in case it frees up.
 func listenOSC() {
 	addr := &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 9001}
 	buf := make([]byte, 2048)
 	for {
 		conn, err := net.ListenUDP("udp", addr)
 		if err != nil {
-			time.Sleep(20 * time.Second)
+			setOSCListener(false, err)
+			time.Sleep(5 * time.Second)
 			continue
 		}
+		setOSCListener(true, nil)
 		for {
 			n, _, err := conn.ReadFromUDP(buf)
 			if err != nil {
 				break
 			}
+			noteOSCPacket()
 			pkt, err := osc.ParsePacket(string(buf[:n]))
 			if err != nil {
 				continue
@@ -173,6 +177,7 @@ func listenOSC() {
 			handlePackage(pkt)
 		}
 		conn.Close()
+		setOSCListener(false, nil)
 		time.Sleep(time.Second)
 	}
 }

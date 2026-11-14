@@ -1398,16 +1398,32 @@
             $("cpuBadge").textContent = cpu.toFixed(0) + "%";
         }
 
+        // Fern sends to VRChat blind over UDP, so "connected" means VRChat is
+        // running and has sent OSC back on the port Fern listens to.
+        function vrchatLink(v) {
+            if (!v.running) return { text: "not running", detail: "Start VRChat to use the chatbox" };
+            if (!v.listening) {
+                return { text: "OSC port busy", detail: "Another app holds port 9001, so Fern cannot hear VRChat. " + (v.listenErr || "") };
+            }
+            if (!v.linked) {
+                return { text: "waiting for OSC", detail: "Enable OSC in VRChat: Action Menu → Options → OSC → Enabled" };
+            }
+            return { text: "connected", detail: "Last OSC message " + fmtAgo(v.lastOscMs) };
+        }
+
         function renderFooter(st) {
             $("oscLabel").textContent = st.osc;
             $("oscBadge").textContent = st.osc;
-            $("vrLabel").textContent = "VRChat: " + (st.vrchat ? "running" : "not detected");
+            const vr = vrchatLink(st.vrchat || {});
+            $("vrLabel").textContent = "VRChat: " + vr.text;
+            $("vrLabel").title = vr.detail;
             $("verLabel").textContent = "v" + st.version;
             $("versionFoot").textContent = "Fern v" + st.version;
-            $("logBadge").textContent = st.vrchat ? "live" : "waiting";
-            $("logBadge").classList.toggle("on", !!st.vrchat);
+            $("logBadge").textContent = st.vrchat.running ? "live" : "waiting";
+            $("logBadge").classList.toggle("on", !!st.vrchat.running);
             $("heroOsc").textContent = st.osc;
-            $("heroVr").textContent = st.vrchat ? "running" : "not detected";
+            $("heroVr").textContent = vr.text;
+            $("heroVr").title = vr.detail;
         }
 
         const lockForms = () => Date.now() < S.dirtyUntil;

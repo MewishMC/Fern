@@ -59,7 +59,7 @@ type uiState struct {
 	History   []modules.LogEvent    `json:"history"`
 	Hold      holdState             `json:"hold"`
 	Stats     statsState            `json:"stats"`
-	VRChat    bool                  `json:"vrchat"`
+	VRChat    modules.VRChatStatus  `json:"vrchat"`
 	Players   int                   `json:"players"`
 	TextIndex int                   `json:"textIndex"`
 	OSC       string                `json:"osc"`
@@ -385,7 +385,7 @@ func buildState() uiState {
 		History:   orEmpty(modules.History()),
 		Hold:      holdState{Text: holdText, Until: holdUntil, Pinned: holdPinned},
 		Stats:     statsState{UptimeSec: int64(time.Since(startedAt).Seconds()), Sent: atomic.LoadInt64(&sentCount), LastSentMS: atomic.LoadInt64(&lastSentAt), RateMS: modules.EffectiveRateMS(cfg)},
-		VRChat:    modules.VRChatActive(),
+		VRChat:    modules.CurrentVRChatStatus(),
 		Players:   modules.PlayerCount(),
 		TextIndex: modules.MessageIndex(),
 		OSC:       oscTarget(),

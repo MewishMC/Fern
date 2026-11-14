@@ -24,7 +24,6 @@ var (
 	logPath      string
 	logOffset    int64
 	logRemainder string
-	logUpdated   time.Time
 
 	joined   = map[string]LogEvent{}
 	left     = map[string]LogEvent{}
@@ -114,7 +113,6 @@ func scanLog() {
 		return
 	}
 	logOffset += int64(len(data))
-	logUpdated = time.Now()
 
 	chunk := logRemainder + string(data)
 	lines := strings.Split(chunk, "\n")
@@ -243,13 +241,6 @@ func PlayerCount() int {
 	logMu.Lock()
 	defer logMu.Unlock()
 	return len(joined)
-}
-
-// VRChatActive reports whether VRChat has written to its log recently.
-func VRChatActive() bool {
-	logMu.Lock()
-	defer logMu.Unlock()
-	return !logUpdated.IsZero() && time.Since(logUpdated) < 90*time.Second
 }
 
 var lastHistoryAt int64
