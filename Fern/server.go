@@ -66,11 +66,10 @@ type uiState struct {
 }
 
 type afkState struct {
-	Active  bool    `json:"active"`
-	IdleMS  int64   `json:"idleMs"`
-	LimitMS int64   `json:"limitMs"`
-	Talking bool    `json:"talking"`
-	Source  float64 `json:"since"`
+	Active  bool  `json:"active"`
+	IdleMS  int64 `json:"idleMs"`
+	LimitMS int64 `json:"limitMs"`
+	Talking bool  `json:"talking"`
 }
 
 type perfState struct {

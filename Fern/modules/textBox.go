@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -205,22 +204,4 @@ func BuildPayload() (body, payload string) {
 		return "", ""
 	}
 	return body, body + chatboxMarker
-}
-
-// ChatboxText is the exact payload sent over OSC.
-func ChatboxText() string {
-	_, payload := BuildPayload()
-	return payload
-}
-
-// TextStats reports the character and line usage of the current preview.
-func TextStats() (chars int, lines int, limit int, maxLines int) {
-	cfg := GetConfig()
-	preview := PreviewText()
-	return len([]rune(preview)), len(strings.Split(preview, "\n")), cfg.DisplayOptions.MaxChars, cfg.DisplayOptions.MaxLines
-}
-
-// FormatClock is a small helper used by the UI payloads.
-func FormatClock(d time.Duration) string {
-	return fmt.Sprintf("%02d:%02d", int(d.Minutes()), int(d.Seconds())%60)
 }

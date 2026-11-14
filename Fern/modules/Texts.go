@@ -134,9 +134,3 @@ func SkipMessage() {
 	textEpoch = textEpoch.Add(-speed)
 	NotifyChange()
 }
-
-// ResetMessageTimer restarts the rotation from the first message.
-func ResetMessageTimer() {
-	textEpoch = time.Now()
-	NotifyChange()
-}

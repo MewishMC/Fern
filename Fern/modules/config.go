@@ -317,9 +317,6 @@ func Load() {
 	NotifyChange()
 }
 
-// ConfigPath returns the file the configuration is stored in.
-func ConfigPath() string { return cfgPath }
-
 // SetConfig replaces the whole configuration after validating it.
 func SetConfig(in Config) {
 	in.sanitize()

@@ -244,11 +244,11 @@ func sourcesStale() bool {
 // windowTitleFallback is the legacy "read the Spotify window title" path. It is
 // slower and has no playback position, so it is only used when SMTC is empty.
 func windowTitleFallback() (rawMedia, bool) {
-	win, errText := findSpotifyWindow()
-	if errText != "" {
+	title, found := findSpotifyWindow()
+	if !found {
 		return rawMedia{}, false
 	}
-	artist, song, ok := parseSpotifyTitle(win.title)
+	artist, song, ok := parseSpotifyTitle(title)
 	if !ok {
 		return rawMedia{Available: true, AppID: "Spotify.exe", Status: "paused", Sampled: time.Now()}, true
 	}
