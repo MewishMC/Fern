@@ -13,6 +13,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode/utf8"
 
 	"Fern/UI"
 	"Fern/modules"
@@ -318,37 +319,19 @@ func broadcast(payload []byte) {
 func buildState() uiState {
 	cfg := modules.GetConfig()
 	preview := modules.PreviewText()
-	chars := len([]rune(preview))
 	lines := 0
 	if preview != "" {
-		lines = len(splitLines(preview))
+		lines = strings.Count(preview, "\n") + 1
 	}
 	holdText, holdUntil, holdPinned := modules.HoldState()
 
 	active, idle := modules.AfkInfo()
 	cfgAfk := cfg.AfkOptions
 	used, total, percent := modules.MemoryStats()
-	join := modules.JoinLogs()
-	leave := modules.LeaveLogs()
-	activity := modules.ActivityFeed()
-	if join == nil {
-		join = []modules.LogEvent{}
-	}
-	if leave == nil {
-		leave = []modules.LogEvent{}
-	}
-	if activity == nil {
-		activity = []modules.LogEvent{}
-	}
-	history := modules.History()
-	if history == nil {
-		history = []modules.LogEvent{}
-	}
-
 	d := cfg.DisplayOptions
 	return uiState{
 		Preview:  preview,
-		Chars:    chars,
+		Chars:    utf8.RuneCountInString(preview),
 		Lines:    lines,
 		MaxChars: d.MaxChars,
 		MaxLines: d.MaxLines,
@@ -363,16 +346,10 @@ func buildState() uiState {
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
 		},
-		Order:  d.Order,
-		Config: cfg,
-		Media:  modules.CurrentMedia(),
-		Sources: func() []modules.MediaSource {
-			list := modules.MediaSources()
-			if list == nil {
-				return []modules.MediaSource{}
-			}
-			return list
-		}(),
+		Order:   d.Order,
+		Config:  cfg,
+		Media:   modules.CurrentMedia(),
+		Sources: orEmpty(modules.MediaSources()),
 		Afk: afkState{
 			Active:  active,
 			IdleMS:  idle.Milliseconds(),
@@ -386,11 +363,11 @@ func buildState() uiState {
 			MemPercent: percent,
 		},
 		Logs: logsState{
-			Join:     join,
-			Leave:    leave,
-			Activity: activity,
+			Join:     orEmpty(modules.JoinLogs()),
+			Leave:    orEmpty(modules.LeaveLogs()),
+			Activity: orEmpty(modules.ActivityFeed()),
 		},
-		History:   history,
+		History:   orEmpty(modules.History()),
 		Hold:      holdState{Text: holdText, Until: holdUntil, Pinned: holdPinned},
 		Stats:     statsState{UptimeSec: int64(time.Since(startedAt).Seconds()), Sent: atomic.LoadInt64(&sentCount), LastSentMS: atomic.LoadInt64(&lastSentAt), RateMS: modules.EffectiveRateMS(cfg)},
 		VRChat:    modules.VRChatActive(),
@@ -401,14 +378,10 @@ func buildState() uiState {
 	}
 }
 
-func splitLines(s string) []string {
-	out := []string{""}
-	for _, r := range s {
-		if r == '\n' {
-			out = append(out, "")
-			continue
-		}
-		out[len(out)-1] += string(r)
+// orEmpty keeps nil slices from reaching the page as JSON null.
+func orEmpty[T any](list []T) []T {
+	if list == nil {
+		return []T{}
 	}
-	return out
+	return list
 }

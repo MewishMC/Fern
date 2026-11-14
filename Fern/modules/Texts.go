@@ -17,9 +17,6 @@ var (
 	perm      []int
 )
 
-// loadingDots is how long the run gets before it loops back to a single dot.
-const loadingDots = 6
-
 var (
 	loadingStep   atomic.Int32
 	loadingLastAt atomic.Int64 // unix nano of the last step
@@ -49,22 +46,14 @@ func AdvanceLoading(paceMS int) {
 // is shown in front of the dots, so "brb" reads "brb", "brb.", "brb.." and so
 // on; with no text set the line is just the dots.
 func Loading() string {
-	cfg := GetConfig()
-	o := cfg.LoadingOptions
+	o := GetConfig().LoadingOptions
 	text := strings.TrimRight(strings.TrimSpace(o.Text), ".")
 	if !o.ShowDots {
 		return text
 	}
-	longest := o.Dots
-	if longest < 1 || longest > loadingDots {
-		longest = loadingDots
-	}
-	n := int(loadingStep.Load())%longest + 1
-	dots := strings.Repeat(".", n)
-	if text == "" {
-		return dots
-	}
-	return text + dots
+	// sanitize keeps Dots between 1 and 6.
+	n := int(loadingStep.Load())%o.Dots + 1
+	return text + strings.Repeat(".", n)
 }
 
 func shuffleIndex(n, step int) int {
@@ -96,15 +85,20 @@ func CurrentMessage() string {
 		return messages[0]
 	}
 
-	speed := time.Duration(cfg.TextOptions.Speed) * time.Millisecond
-	if speed <= 0 {
-		speed = 2500 * time.Millisecond
-	}
-	step := int(time.Since(textEpoch) / speed)
+	return messages[rotationIndex(cfg)]
+}
+
+// rotationIndex is the position of the message the timed rotation is on.
+func rotationIndex(cfg Config) int {
+	step := int(time.Since(textEpoch) / rotationSpeed(cfg))
 	if cfg.TextOptions.Shuffle {
-		return messages[shuffleIndex(len(messages), step)]
+		return shuffleIndex(len(cfg.TextMessages), step)
 	}
-	return messages[step%len(messages)]
+	return step % len(cfg.TextMessages)
+}
+
+func rotationSpeed(cfg Config) time.Duration {
+	return time.Duration(cfg.TextOptions.Speed) * time.Millisecond
 }
 
 // MessageIndex is the zero based position of the message being shown.
@@ -113,24 +107,11 @@ func MessageIndex() int {
 	if len(cfg.TextMessages) == 0 {
 		return 0
 	}
-	speed := time.Duration(cfg.TextOptions.Speed) * time.Millisecond
-	if speed <= 0 {
-		speed = 2500 * time.Millisecond
-	}
-	step := int(time.Since(textEpoch) / speed)
-	if cfg.TextOptions.Shuffle {
-		return shuffleIndex(len(cfg.TextMessages), step)
-	}
-	return step % len(cfg.TextMessages)
+	return rotationIndex(cfg)
 }
 
 // SkipMessage advances to the next custom message immediately.
 func SkipMessage() {
-	cfg := GetConfig()
-	speed := time.Duration(cfg.TextOptions.Speed) * time.Millisecond
-	if speed <= 0 {
-		speed = 2500 * time.Millisecond
-	}
-	textEpoch = textEpoch.Add(-speed)
+	textEpoch = textEpoch.Add(-rotationSpeed(GetConfig()))
 	NotifyChange()
 }

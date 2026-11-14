@@ -71,15 +71,10 @@ func HoldState() (text string, until int64, pinned bool) {
 	return holdText, holdUntil.UnixMilli(), false
 }
 
+// holdOverlay returns the held message, pinned or timed, while one is active.
 func holdOverlay() (string, bool) {
-	// HoldState returns (text, until, pinned). Using the third value as
-	// "active" treated every timed hold as inactive, so only pinned messages
-	// ever reached the chatbox. An empty text means there is no overlay.
 	text, _, _ := HoldState()
-	if text == "" {
-		return "", false
-	}
-	return text, true
+	return text, text != ""
 }
 
 func moduleText(id string, cfg Config) string {
@@ -138,20 +133,12 @@ func clockText(cfg Config) string {
 			layout = "3:04:05 PM"
 		}
 	}
-	text := now.Format(layout)
-	if label := strings.TrimSpace(cfg.TimeOptions.Label); label != "" {
-		text = label + " " + text
-	}
-	return text
+	return withLabel(cfg.TimeOptions.Label, now.Format(layout))
 }
 
 // buildLines renders every enabled module in the configured order.
 func buildLines(cfg Config) []string {
 	lines := make([]string, 0, len(cfg.DisplayOptions.Order))
-	maxLines := cfg.DisplayOptions.MaxLines
-	if maxLines < 1 {
-		maxLines = 9
-	}
 	for _, id := range cfg.DisplayOptions.Order {
 		if !ModuleEnabled(id, cfg.DisplayOptions) {
 			continue
@@ -160,7 +147,7 @@ func buildLines(cfg Config) []string {
 		if text == "" {
 			continue
 		}
-		if len(lines) >= maxLines {
+		if len(lines) >= cfg.DisplayOptions.MaxLines {
 			break
 		}
 		lines = append(lines, text)
@@ -181,11 +168,7 @@ func PreviewText() string {
 	if len(lines) == 0 {
 		return ""
 	}
-	separator := cfg.DisplayOptions.Separator
-	if separator == "" {
-		separator = "\n"
-	}
-	text := strings.Join(lines, separator)
+	text := strings.Join(lines, cfg.DisplayOptions.Separator)
 	return strings.TrimSpace(RuneLimit(text, cfg.DisplayOptions.MaxChars))
 }
 

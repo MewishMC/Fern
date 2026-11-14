@@ -1,10 +1,12 @@
 package modules
 
 import (
+	"cmp"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -81,8 +83,8 @@ func startLogWorker() {
 	}()
 }
 
-// scanLog tails only the new part of the newest VRChat log. The previous
-// implementation re-read the whole file every update, which made big logs lag.
+// scanLog reads only what was appended to the newest VRChat log since the last
+// scan, so large logs stay cheap.
 func scanLog() {
 	path, err := latestLogFile()
 	if err != nil {
@@ -196,14 +198,7 @@ func LeaveLogs() []LogEvent {
 	for _, ev := range left {
 		all = append(all, ev)
 	}
-	// Newest first, without pulling in a sort dependency.
-	for i := 0; i < len(all); i++ {
-		for j := i + 1; j < len(all); j++ {
-			if all[j].Time > all[i].Time {
-				all[i], all[j] = all[j], all[i]
-			}
-		}
-	}
+	slices.SortFunc(all, func(a, b LogEvent) int { return cmp.Compare(b.Time, a.Time) })
 	if len(all) > maxLogEntries {
 		all = all[:maxLogEntries]
 	}
@@ -214,8 +209,7 @@ func LeaveLogs() []LogEvent {
 func ActivityFeed() []LogEvent {
 	logMu.Lock()
 	defer logMu.Unlock()
-	out := append([]LogEvent{}, activity...)
-	return out
+	return append([]LogEvent{}, activity...)
 }
 
 // logsLine renders the latest join/leave that is still enabled.

@@ -62,7 +62,7 @@ func spotifyWindowEnum(hwnd uintptr, _ uintptr) uintptr {
 	if !strings.Contains(strings.ToLower(path), "spotify.exe") {
 		return 1
 	}
-	title, _ := GetWindowText(hwnd)
+	title := windowText(hwnd)
 	if strings.TrimSpace(title) == "" {
 		return 1
 	}

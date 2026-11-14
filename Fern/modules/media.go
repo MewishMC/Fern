@@ -317,11 +317,7 @@ func mediaLine(cfg Config) string {
 	if track == "" {
 		return ""
 	}
-	limit := o.MaxChars
-	if limit <= 0 {
-		limit = 90
-	}
-	track = strings.TrimSpace(RuneLimit(track, limit))
+	track = strings.TrimSpace(RuneLimit(track, o.MaxChars))
 
 	icon := strings.TrimSpace(o.Icon)
 	if !info.Playing {
