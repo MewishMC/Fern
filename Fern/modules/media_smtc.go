@@ -102,10 +102,9 @@ func loopManager() (*control.GlobalSystemMediaTransportControlsSessionManager, e
 	}
 	smtcLastInit = time.Now()
 
-	if err := ole.RoInitialize(1); err != nil {
-		smtcInitErr = err
-		return nil, err
-	}
+	// smtcLoop has already initialized WinRT on this thread. Calling
+	// RoInitialize again returns S_FALSE, which go-ole reports as an error,
+	// and that made every media read fail.
 	op, err := control.GlobalSystemMediaTransportControlsSessionManagerRequestAsync()
 	if err != nil {
 		smtcInitErr = err
