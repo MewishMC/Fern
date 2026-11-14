@@ -1140,6 +1140,7 @@
             msgSig: "",
             dirtyUntil: 0,
             timer: null,
+            edits: [],
             msgs: null,
             msgsDirty: 0,
             mediaSourcesSig: ""
@@ -1544,11 +1545,16 @@
         }
 
         /* ---------------- config writes ---------------- */
+        // Edits are replayed onto the newest server config until they settle.
+        // Building each push on the server copy alone meant a second edit made
+        // before the first came back sent the old value and undid it.
         function pushConfig(mutate, immediate) {
             const base = config();
             if (!base) return;
+            if (Date.now() >= S.dirtyUntil) S.edits = [];
+            S.edits.push(mutate);
             const next = JSON.parse(JSON.stringify(base));
-            mutate(next);
+            S.edits.forEach((edit) => edit(next));
             S.dirtyUntil = Date.now() + 1400;
             clearTimeout(S.timer);
             if (immediate) {
@@ -1928,6 +1934,7 @@
         $("btnReset").addEventListener("click", () => {
             if (!confirm("Reset every setting back to the defaults?")) return;
             send({ type: "reset" });
+            S.edits = [];
             S.orderSig = "";
             S.msgSig = "";
             S.msgs = null;
