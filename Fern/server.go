@@ -21,9 +21,9 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
-}
+// upgrader keeps gorilla's default origin check: only the page Fern serves
+// may open the socket, so other websites in a browser cannot drive the panel.
+var upgrader = websocket.Upgrader{}
 
 // assetStamp is a short hash of the bundled stylesheets, appended to their URLs
 // by the page. WebView2 happily reuses a cached stylesheet for a whole day
