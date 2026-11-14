@@ -2,8 +2,8 @@ package modules
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
-	"sync"
 	"time"
 	"unsafe"
 
@@ -46,13 +46,12 @@ type smtcListResult struct {
 	err     error
 }
 
+// Everything below is only touched by smtcLoop, so it needs no lock.
 var (
-	smtcMu       sync.Mutex
 	smtcManager  *control.GlobalSystemMediaTransportControlsSessionManager
 	smtcInitErr  error
 	smtcLastInit time.Time
 	smtcQueue    = make(chan smtcRequest, 16)
-	smtcStarted  bool
 )
 
 // awaitAsync blocks until a WinRT async operation finishes and returns its result.
@@ -92,8 +91,8 @@ func winDateTimeToTime(v int64) time.Time {
 	return time.Unix(secs, nanos)
 }
 
-// managerLocked returns a cached session manager, creating it on first use.
-func managerLocked() (*control.GlobalSystemMediaTransportControlsSessionManager, error) {
+// loopManager returns a cached session manager, creating it on first use.
+func loopManager() (*control.GlobalSystemMediaTransportControlsSessionManager, error) {
 	if smtcManager != nil {
 		return smtcManager, nil
 	}
@@ -126,16 +125,16 @@ func managerLocked() (*control.GlobalSystemMediaTransportControlsSessionManager,
 	return smtcManager, nil
 }
 
-// sessionLocked returns the chosen app's session, or the current session when
-// none was chosen. Must hold smtcMu.
-func sessionLocked(preferred string) (*control.GlobalSystemMediaTransportControlsSession, error) {
-	mgr, err := managerLocked()
+// loopSession returns the chosen app's session, or the current session when
+// none was chosen.
+func loopSession(preferred string) (*control.GlobalSystemMediaTransportControlsSession, error) {
+	mgr, err := loopManager()
 	if err != nil {
 		return nil, err
 	}
 	preferred = strings.TrimSpace(preferred)
 	if preferred != "" {
-		if session := findSessionLocked(mgr, preferred); session != nil {
+		if session := loopFindSession(mgr, preferred); session != nil {
 			return session, nil
 		}
 		// Do not quietly show another app: the user picked this one.
@@ -151,8 +150,8 @@ func sessionLocked(preferred string) (*control.GlobalSystemMediaTransportControl
 	return session, nil
 }
 
-// findSessionLocked walks the session list and returns the chosen app, or nil.
-func findSessionLocked(mgr *control.GlobalSystemMediaTransportControlsSessionManager, preferred string) *control.GlobalSystemMediaTransportControlsSession {
+// loopFindSession walks the session list and returns the chosen app, or nil.
+func loopFindSession(mgr *control.GlobalSystemMediaTransportControlsSessionManager, preferred string) *control.GlobalSystemMediaTransportControlsSession {
 	vec, err := mgr.GetSessions()
 	if err != nil || vec == nil {
 		return nil
@@ -184,9 +183,9 @@ func matchesApp(appID, preferred string) bool {
 	return strings.EqualFold(appNameFromID(appID), preferred)
 }
 
-// sessionsLocked lists every media session Windows reports. Must hold smtcMu.
-func sessionsLocked() ([]MediaSource, error) {
-	mgr, err := managerLocked()
+// loopSessions lists every media session Windows reports.
+func loopSessions() ([]MediaSource, error) {
+	mgr, err := loopManager()
 	if err != nil {
 		return nil, err
 	}
@@ -237,9 +236,9 @@ func sessionsLocked() ([]MediaSource, error) {
 	return out, nil
 }
 
-// readLocked samples the chosen media session. Must hold smtcMu.
-func readLocked(preferred string) (rawMedia, error) {
-	session, err := sessionLocked(preferred)
+// loopRead samples the chosen media session.
+func loopRead(preferred string) (rawMedia, error) {
+	session, err := loopSession(preferred)
 	if err != nil {
 		return rawMedia{}, err
 	}
@@ -294,9 +293,9 @@ func readLocked(preferred string) (rawMedia, error) {
 	return out, nil
 }
 
-// controlLocked asks the chosen media app to do something. Must hold smtcMu.
-func controlLocked(action, preferred string) error {
-	session, err := sessionLocked(preferred)
+// loopControl asks the chosen media app to do something.
+func loopControl(action, preferred string) error {
+	session, err := loopSession(preferred)
 	if err != nil {
 		return err
 	}
@@ -328,34 +327,23 @@ func controlLocked(action, preferred string) error {
 	return err
 }
 
-// smtcLoop owns all WinRT calls so COM stays on one goroutine.
+// smtcLoop owns all WinRT calls. COM initialization belongs to an OS thread,
+// not a goroutine, so the loop pins itself to the thread it initialized.
 func smtcLoop() {
+	runtime.LockOSThread()
 	_ = ole.RoInitialize(1)
 	for req := range smtcQueue {
-		smtcMu.Lock()
 		switch req.kind {
 		case "control":
-			err := controlLocked(req.action, req.app)
-			smtcMu.Unlock()
-			req.done <- err
+			req.done <- loopControl(req.action, req.app)
 		case "sessions":
-			sources, err := sessionsLocked()
-			smtcMu.Unlock()
+			sources, err := loopSessions()
 			req.list <- smtcListResult{sources: sources, err: err}
 		default:
-			raw, err := readLocked(req.app)
-			smtcMu.Unlock()
+			raw, err := loopRead(req.app)
 			req.read <- smtcReadResult{raw: raw, err: err}
 		}
 	}
-}
-
-func startSMTCLoop() {
-	if smtcStarted {
-		return
-	}
-	smtcStarted = true
-	go smtcLoop()
 }
 
 func smtcRead(app string) (rawMedia, error) {

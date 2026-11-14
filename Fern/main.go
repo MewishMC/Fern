@@ -4,7 +4,6 @@ import (
 	"Fern/UI"
 	"fmt"
 	"log"
-	"strings"
 	"sync/atomic"
 	"time"
 
@@ -16,8 +15,10 @@ import (
 const appVersion = "2.0"
 
 var (
-	client     *osc.Client
-	clientKey  string
+	client    *osc.Client  // owned by sendLoop
+	clientKey string       // owned by sendLoop
+	oscAddr   atomic.Value // host:port of client, read by the UI server
+
 	sentCount  int64
 	lastSentAt int64
 	startedAt  = time.Now()
@@ -82,11 +83,12 @@ func ensureClient(opts modules.OSCOptions) {
 	}
 	client = osc.NewClient(opts.Host, opts.Port)
 	clientKey = key
+	oscAddr.Store(key)
 }
 
 func oscTarget() string {
-	if clientKey == "" {
-		return "127.0.0.1:9000"
+	if addr, ok := oscAddr.Load().(string); ok {
+		return addr
 	}
-	return strings.TrimSpace(clientKey)
+	return "127.0.0.1:9000"
 }

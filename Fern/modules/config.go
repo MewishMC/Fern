@@ -28,14 +28,13 @@ var DefaultOrder = []string{
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
 }
 
-var knownModules = map[string]bool{
-	ModuleAFK: true, ModuleLoading: true, ModuleTime: true, ModuleText: true,
-	ModuleMemory: true, ModuleCPU: true, ModuleMedia: true, ModuleWindow: true,
-	ModuleLogs: true,
-}
-
-// IsKnownModule reports whether id is a real module identifier.
-func IsKnownModule(id string) bool { return knownModules[id] }
+var knownModules = func() map[string]bool {
+	known := make(map[string]bool, len(DefaultOrder))
+	for _, id := range DefaultOrder {
+		known[id] = true
+	}
+	return known
+}()
 
 // DisplayOptions controls which modules are shown and in what order.
 type DisplayOptions struct {
@@ -81,13 +80,15 @@ type LoadingOptions struct {
 
 // AfkOptions controls the afk timer shown in the chatbox.
 type AfkOptions struct {
-	Bypass     bool    `json:"bypass"`
-	AutoDetect bool    `json:"auto_detect"`
-	Poopyafk   bool    `json:"poopyafk"`
-	AFKTime    float64 `json:"afk_time"`
-	AFKMessage string  `json:"afk_message"`
-	ShowTimer  bool    `json:"show_timer"`
-	TimerStyle string  `json:"timer_style"` // full, short, minutes
+	Bypass     bool `json:"bypass"`
+	AutoDetect bool `json:"auto_detect"`
+	// MovementOnly counts only movement as activity, ignoring voice, input
+	// and window switches. The JSON key predates the name.
+	MovementOnly bool    `json:"poopyafk"`
+	AFKTime      float64 `json:"afk_time"`
+	AFKMessage   string  `json:"afk_message"`
+	ShowTimer    bool    `json:"show_timer"`
+	TimerStyle   string  `json:"timer_style"` // full, short, minutes
 }
 
 // MediaOptions controls how the now playing line is rendered.
@@ -317,9 +318,6 @@ func Load() {
 	NotifyChange()
 }
 
-// ConfigPath returns the file the configuration is stored in.
-func ConfigPath() string { return cfgPath }
-
 // SetConfig replaces the whole configuration after validating it.
 func SetConfig(in Config) {
 	in.sanitize()
@@ -345,32 +343,39 @@ func UpdateConfig(fn func(*Config)) {
 // ResetConfig restores the defaults.
 func ResetConfig() { SetConfig(DefaultConfig()) }
 
+// moduleFlag returns the switch that enables a module, or nil for an unknown id.
+func moduleFlag(d *DisplayOptions, id string) *bool {
+	switch id {
+	case ModuleAFK:
+		return &d.Afk
+	case ModuleLoading:
+		return &d.Loading
+	case ModuleTime:
+		return &d.Time
+	case ModuleText:
+		return &d.Text
+	case ModuleMemory:
+		return &d.Memory
+	case ModuleCPU:
+		return &d.CPU
+	case ModuleMedia:
+		return &d.Media
+	case ModuleWindow:
+		return &d.ActiveWindow
+	case ModuleLogs:
+		return &d.VRChatLogs
+	}
+	return nil
+}
+
 // ToggleModule flips one module on or off.
 func ToggleModule(id string) {
-	if !IsKnownModule(id) {
+	if !knownModules[id] {
 		return
 	}
 	UpdateConfig(func(c *Config) {
-		switch id {
-		case ModuleAFK:
-			c.DisplayOptions.Afk = !c.DisplayOptions.Afk
-		case ModuleLoading:
-			c.DisplayOptions.Loading = !c.DisplayOptions.Loading
-		case ModuleTime:
-			c.DisplayOptions.Time = !c.DisplayOptions.Time
-		case ModuleText:
-			c.DisplayOptions.Text = !c.DisplayOptions.Text
-		case ModuleMemory:
-			c.DisplayOptions.Memory = !c.DisplayOptions.Memory
-		case ModuleCPU:
-			c.DisplayOptions.CPU = !c.DisplayOptions.CPU
-		case ModuleMedia:
-			c.DisplayOptions.Media = !c.DisplayOptions.Media
-		case ModuleWindow:
-			c.DisplayOptions.ActiveWindow = !c.DisplayOptions.ActiveWindow
-		case ModuleLogs:
-			c.DisplayOptions.VRChatLogs = !c.DisplayOptions.VRChatLogs
-		}
+		flag := moduleFlag(&c.DisplayOptions, id)
+		*flag = !*flag
 	})
 }
 
@@ -381,27 +386,8 @@ func SetOrder(order []string) {
 
 // ModuleEnabled reports whether a module should be rendered.
 func ModuleEnabled(id string, d DisplayOptions) bool {
-	switch id {
-	case ModuleAFK:
-		return d.Afk
-	case ModuleLoading:
-		return d.Loading
-	case ModuleTime:
-		return d.Time
-	case ModuleText:
-		return d.Text
-	case ModuleMemory:
-		return d.Memory
-	case ModuleCPU:
-		return d.CPU
-	case ModuleMedia:
-		return d.Media
-	case ModuleWindow:
-		return d.ActiveWindow
-	case ModuleLogs:
-		return d.VRChatLogs
-	}
-	return false
+	flag := moduleFlag(&d, id)
+	return flag != nil && *flag
 }
 
 // EffectiveRateMS is how often the chatbox is actually sent. The spinner needs
@@ -434,27 +420,13 @@ func (c *Config) sanitize() {
 	// the rest, so sending faster does not make the animation smoother: it makes
 	// the dots skip. One dot per second is the pace VRChat can actually show.
 	c.LoadingOptions.RateMS = clampInt(c.LoadingOptions.RateMS, 1000, 3000)
-	if c.LoadingOptions.RateMS == 0 {
-		c.LoadingOptions.RateMS = 1000
-	}
 	// The loading text is one chatbox line: no newlines, no runaway length.
 	trimmed := strings.Join(strings.Fields(c.LoadingOptions.Text), " ")
 	c.LoadingOptions.Text = RuneLimit(strings.TrimRight(trimmed, "."), 40)
 	c.TextOptions.Speed = clampInt(c.TextOptions.Speed, 400, 60000)
-	if c.TextOptions.Speed == 0 {
-		c.TextOptions.Speed = 2500
-	}
 	c.DisplayOptions.MaxChars = clampInt(c.DisplayOptions.MaxChars, 32, 144)
-	if c.DisplayOptions.MaxChars == 0 {
-		c.DisplayOptions.MaxChars = 144
-	}
 	c.DisplayOptions.MaxLines = clampInt(c.DisplayOptions.MaxLines, 1, 9)
-	if c.DisplayOptions.MaxLines == 0 {
-		c.DisplayOptions.MaxLines = 9
-	}
 	switch c.DisplayOptions.Separator {
-	case "", "\n":
-		c.DisplayOptions.Separator = "\n"
 	case " | ", " · ", " — ", " / ", "  ":
 	default:
 		c.DisplayOptions.Separator = "\n"
@@ -487,9 +459,6 @@ func (c *Config) sanitize() {
 	if strings.TrimSpace(c.AfkOptions.AFKMessage) == "" {
 		c.AfkOptions.AFKMessage = "AFK"
 	}
-	if c.DisplayOptions.MaxChars == 0 {
-		c.DisplayOptions.MaxChars = 144
-	}
 
 	switch c.MediaOptions.ProgressStyle {
 	case "bar", "time", "both", "none":
@@ -500,9 +469,6 @@ func (c *Config) sanitize() {
 	c.MediaOptions.PausedIcon = RuneLimit(strings.TrimSpace(c.MediaOptions.PausedIcon), 4)
 	c.MediaOptions.BarWidth = clampInt(c.MediaOptions.BarWidth, 0, 20)
 	c.MediaOptions.MaxChars = clampInt(c.MediaOptions.MaxChars, 4, 144)
-	if c.MediaOptions.MaxChars == 0 {
-		c.MediaOptions.MaxChars = 90
-	}
 	c.MediaOptions.PreferredApp = RuneLimit(strings.TrimSpace(c.MediaOptions.PreferredApp), 128)
 
 	c.MemoryOptions.Label = RuneLimit(strings.TrimSpace(c.MemoryOptions.Label), 16)

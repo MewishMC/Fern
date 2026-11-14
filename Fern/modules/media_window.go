@@ -16,15 +16,8 @@ var (
 
 const processQueryLimitedInformation = 0x1000
 
-type windowInfo struct {
-	hwnd      uintptr
-	title     string
-	processID uint32
-	procPath  string
-}
-
 var (
-	foundSpotifyWindow    *windowInfo
+	spotifyWindowTitle    string
 	spotifyWindowCallback uintptr
 )
 
@@ -69,21 +62,19 @@ func spotifyWindowEnum(hwnd uintptr, _ uintptr) uintptr {
 	if !strings.Contains(strings.ToLower(path), "spotify.exe") {
 		return 1
 	}
-	title, _ := GetWindowText(hwnd)
+	title := windowText(hwnd)
 	if strings.TrimSpace(title) == "" {
 		return 1
 	}
-	foundSpotifyWindow = &windowInfo{hwnd: hwnd, title: title, procPath: path}
+	spotifyWindowTitle = title
 	return 0
 }
 
-func findSpotifyWindow() (*windowInfo, string) {
-	foundSpotifyWindow = nil
+// findSpotifyWindow returns the title of Spotify's main window, if it has one.
+func findSpotifyWindow() (string, bool) {
+	spotifyWindowTitle = ""
 	enumWindowsProc.Call(spotifyWindowCallback, 0)
-	if foundSpotifyWindow == nil {
-		return nil, "Media not found"
-	}
-	return foundSpotifyWindow, ""
+	return spotifyWindowTitle, spotifyWindowTitle != ""
 }
 
 // parseMediaInfo splits Spotify's "Artist - Song" window title.

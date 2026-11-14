@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"io"
@@ -40,13 +39,12 @@ func main() {
 		fmt.Println("No executable provided, using default: " + ExeName)
 	}
 
-	fmt.Println(os.Args[1])
 	defer func() {
 		if r := recover(); r != nil {
 			stackBuf := make([]byte, 2048)
 			stackSize := runtime.Stack(stackBuf, true)
 
-			message := fmt.Sprintf("Panic Occured: %v\n\n%s", r, stackBuf[:stackSize])
+			message := fmt.Sprintf("Panic occurred: %v\n\n%s", r, stackBuf[:stackSize])
 			title := "Whoops, something went wrong!"
 
 			if _, err := MessageBoxW(title, message); err != nil {
@@ -69,29 +67,24 @@ func main() {
 		panic(err)
 	}
 
-	latestVersionHash, err := hashBytes(bytesV)
-	if err != nil {
-		panic(err)
-	}
-	procAttr := new(os.ProcAttr)
-	procAttr.Files = []*os.File{os.Stdout, os.Stdout, os.Stdout}
-	procAttr.Env = os.Environ()
-	procAttr.Dir = filepath.Dir(os.Args[1])
-
-	if latestVersionHash == currentVersionHash {
-		if _, err := os.StartProcess(os.Args[1], append(os.Args[1:], "--launch"), procAttr); err != nil {
+	latestVersionHash := hashBytes(bytesV)
+	if latestVersionHash != currentVersionHash {
+		fmt.Println("Installing latest version...")
+		if err := os.WriteFile(os.Args[1], bytesV, 0755); err != nil {
 			panic(err)
 		}
-		os.Exit(0)
 	}
+	launch(os.Args[1])
+}
 
-	fmt.Println("Installing latest version...")
-	if err := os.WriteFile(os.Args[1], bytesV, 0777); err != nil {
-		panic(err)
+// launch starts Fern with the arguments the updater was given and exits.
+func launch(exe string) {
+	procAttr := &os.ProcAttr{
+		Files: []*os.File{os.Stdin, os.Stdout, os.Stderr},
+		Env:   os.Environ(),
+		Dir:   filepath.Dir(exe),
 	}
-
-	_, err = os.StartProcess(os.Args[1], []string{"--launch"}, procAttr)
-	if err != nil {
+	if _, err := os.StartProcess(exe, append(os.Args[1:], "--launch"), procAttr); err != nil {
 		panic(err)
 	}
 	os.Exit(0)
@@ -112,35 +105,21 @@ func getLatestVersion() (string, error) {
 	return breadcrumbs[len(breadcrumbs)-1], nil
 }
 
-func hashBytes(bytesV []byte) (string, error) {
-	hash := sha256.New()
-
-	if _, err := io.Copy(hash, bytes.NewReader(bytesV)); err != nil {
-		return "", err
-	}
-
-	hashBytes := hash.Sum(nil)
-
-	return fmt.Sprintf("%x", hashBytes), nil
+func hashBytes(data []byte) string {
+	return fmt.Sprintf("%x", sha256.Sum256(data))
 }
 
+// getCurrentHash hashes the installed executable, or returns "none" when there
+// is nothing installed yet so any release counts as newer.
 func getCurrentHash() (string, error) {
-	file, err := os.OpenFile(os.Args[1], os.O_RDONLY, 0777)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return "none", nil
-		}
-		return "", err
+	data, err := os.ReadFile(os.Args[1])
+	if os.IsNotExist(err) {
+		return "none", nil
 	}
-	bytesV, err := io.ReadAll(file)
 	if err != nil {
 		return "", err
 	}
-	fileHash, err := hashBytes(bytesV)
-	if err != nil {
-		return "", err
-	}
-	return fileHash, nil
+	return hashBytes(data), nil
 }
 
 func getLatestVersionBytes(version string) ([]byte, error) {
@@ -155,9 +134,5 @@ func getLatestVersionBytes(version string) ([]byte, error) {
 	if res.StatusCode != 200 {
 		return nil, fmt.Errorf("failed to download latest version - %s", res.Status)
 	}
-	bytesV, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-	return bytesV, nil
+	return io.ReadAll(res.Body)
 }

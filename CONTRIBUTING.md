@@ -26,13 +26,17 @@ run.bat
 
 ```bat
 gofmt -l .
-go vet ./...
-go build ./...
+go vet ./Fern/... ./update/...
+go test ./Fern/... ./update/...
 ```
 
-`go vet` and `go build` compile the WebView package, so they need a working C toolchain.
-Please run the app and exercise the module you touched; most of Fern is visual, and the UI
-is plain HTML/CSS/JS with no test harness.
+The repository is a Go workspace (`go.work`) with no module at the root, so `./...` on its
+own matches nothing; name the two modules as above. `go vet` and `go test` compile the
+WebView package, so they need a working C toolchain.
+
+The tests cover config sanitizing and the local server. Most of Fern is visual and the UI is
+plain HTML/CSS/JS with no test harness, so please also run the app and exercise the module
+you touched.
 
 ## Code layout
 

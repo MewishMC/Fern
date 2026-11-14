@@ -174,7 +174,7 @@ func appNameFromID(id string) string {
 }
 
 func startMediaWorker() {
-	startSMTCLoop()
+	go smtcLoop()
 	go func() {
 		ticker := time.NewTicker(time.Second)
 		defer ticker.Stop()
@@ -244,11 +244,11 @@ func sourcesStale() bool {
 // windowTitleFallback is the legacy "read the Spotify window title" path. It is
 // slower and has no playback position, so it is only used when SMTC is empty.
 func windowTitleFallback() (rawMedia, bool) {
-	win, errText := findSpotifyWindow()
-	if errText != "" {
+	title, found := findSpotifyWindow()
+	if !found {
 		return rawMedia{}, false
 	}
-	artist, song, ok := parseSpotifyTitle(win.title)
+	artist, song, ok := parseSpotifyTitle(title)
 	if !ok {
 		return rawMedia{Available: true, AppID: "Spotify.exe", Status: "paused", Sampled: time.Now()}, true
 	}
@@ -317,11 +317,7 @@ func mediaLine(cfg Config) string {
 	if track == "" {
 		return ""
 	}
-	limit := o.MaxChars
-	if limit <= 0 {
-		limit = 90
-	}
-	track = strings.TrimSpace(RuneLimit(track, limit))
+	track = strings.TrimSpace(RuneLimit(track, o.MaxChars))
 
 	icon := strings.TrimSpace(o.Icon)
 	if !info.Playing {

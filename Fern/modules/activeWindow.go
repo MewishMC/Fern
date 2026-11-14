@@ -19,34 +19,20 @@ var (
 	winAt    time.Time
 )
 
-func GetWindowText(hwnd uintptr) (string, error) {
+// windowText returns a window's title, or "" when it has none.
+func windowText(hwnd uintptr) string {
 	buf := make([]uint16, 512)
-	ret, _, err := getWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), uintptr(len(buf)))
-	if ret == 0 {
-		if err != nil && err.Error() != "The operation completed successfully." {
-			return "", err
-		}
-		return "", nil
-	}
-	return syscall.UTF16ToString(buf[:ret]), nil
-}
-
-func Getforgroundwindow() (uintptr, error) {
-	ret, _, err := getForegroundWindow.Call()
-	if ret == 0 {
-		if err != nil && err.Error() != "The operation completed successfully." {
-			return 0, err
-		}
-		return 0, nil
-	}
-	return ret, nil
+	n, _, _ := getWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), uintptr(len(buf)))
+	return syscall.UTF16ToString(buf[:n])
 }
 
 // foregroundTitle returns the raw title of the active window.
 func foregroundTitle() string {
-	hwnd, _ := Getforgroundwindow()
-	title, _ := GetWindowText(hwnd)
-	return strings.TrimSpace(title)
+	hwnd, _, _ := getForegroundWindow.Call()
+	if hwnd == 0 {
+		return ""
+	}
+	return strings.TrimSpace(windowText(hwnd))
 }
 
 var simplifiedApps = []struct {
