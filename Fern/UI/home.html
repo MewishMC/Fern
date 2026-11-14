@@ -1298,6 +1298,14 @@
             ["npTitle", "npTitle2"].forEach((id) => $(id).textContent = title);
             ["npSub", "npSub2"].forEach((id) => $(id).textContent = sub || (m.app || ""));
             ["npArt", "npArt2"].forEach((id) => paintArt($(id), has, m));
+            // The button offers the opposite of what is happening now.
+            document.querySelectorAll('[data-media="playpause"]').forEach((button) => {
+                const icon = button.querySelector("i");
+                icon.classList.toggle("fa-play", !m.playing);
+                icon.classList.toggle("fa-pause", !!m.playing);
+                button.title = m.playing ? "Pause" : "Play";
+                button.setAttribute("aria-label", button.title);
+            });
 
             const dur = m.durationMs || 0;
             paintProgress(Math.min(m.positionMs || 0, dur), dur);
