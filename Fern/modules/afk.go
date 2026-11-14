@@ -103,7 +103,7 @@ func handlePackage(pkt osc.Packet) {
 	}
 	switch pk := pkt.(type) {
 	case *osc.Message:
-		if cfg.AfkOptions.Poopyafk && !containsAny(pk.Address, "/Velocity", "/AngularY") {
+		if cfg.AfkOptions.MovementOnly && !containsAny(pk.Address, "/Velocity", "/AngularY") {
 			return
 		}
 		if isActivityAddress(pk.Address) {
@@ -116,7 +116,7 @@ func handlePackage(pkt osc.Packet) {
 		}
 	case *osc.Bundle:
 		for _, m := range pk.Messages {
-			if cfg.AfkOptions.Poopyafk && !containsAny(m.Address, "/Velocity", "/AngularY") {
+			if cfg.AfkOptions.MovementOnly && !containsAny(m.Address, "/Velocity", "/AngularY") {
 				continue
 			}
 			if isActivityAddress(m.Address) {
@@ -184,7 +184,7 @@ func watchWindowActivity() {
 	defer ticker.Stop()
 	for range ticker.C {
 		cfg := GetConfig()
-		if cfg.AfkOptions.Bypass || cfg.AfkOptions.Poopyafk || !cfg.AfkOptions.AutoDetect {
+		if cfg.AfkOptions.Bypass || cfg.AfkOptions.MovementOnly || !cfg.AfkOptions.AutoDetect {
 			continue
 		}
 		title := foregroundTitle()

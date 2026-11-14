@@ -80,13 +80,15 @@ type LoadingOptions struct {
 
 // AfkOptions controls the afk timer shown in the chatbox.
 type AfkOptions struct {
-	Bypass     bool    `json:"bypass"`
-	AutoDetect bool    `json:"auto_detect"`
-	Poopyafk   bool    `json:"poopyafk"`
-	AFKTime    float64 `json:"afk_time"`
-	AFKMessage string  `json:"afk_message"`
-	ShowTimer  bool    `json:"show_timer"`
-	TimerStyle string  `json:"timer_style"` // full, short, minutes
+	Bypass     bool `json:"bypass"`
+	AutoDetect bool `json:"auto_detect"`
+	// MovementOnly counts only movement as activity, ignoring voice, input
+	// and window switches. The JSON key predates the name.
+	MovementOnly bool    `json:"poopyafk"`
+	AFKTime      float64 `json:"afk_time"`
+	AFKMessage   string  `json:"afk_message"`
+	ShowTimer    bool    `json:"show_timer"`
+	TimerStyle   string  `json:"timer_style"` // full, short, minutes
 }
 
 // MediaOptions controls how the now playing line is rendered.
