@@ -2023,3 +2023,41 @@ html.glass.has-bg {
     margin: 0 0 12px;
     border-bottom: 1px solid var(--border-subtle);
 }
+
+/* ---------------- SteamVR battery and performance ---------------- */
+
+.vr-device .row-main {
+    flex: 0 1 200px;
+}
+
+.vr-device .vr-name {
+    flex: 1 1 140px;
+}
+
+.vr-batt {
+    flex: 0 0 auto;
+    min-width: 64px;
+    text-align: right;
+    font-size: .74rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-primary);
+}
+
+.vr-batt.low {
+    color: var(--red);
+}
+
+.vr-batt.off {
+    color: var(--text-faint);
+}
+
+.vr-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    margin-top: 10px;
+}
+
+#batteryTemplate {
+    width: 260px;
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: .74rem;
+}
