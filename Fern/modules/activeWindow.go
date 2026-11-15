@@ -2,6 +2,7 @@ package modules
 
 import (
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"sync"
@@ -162,7 +163,7 @@ func windowDisplay(fg foreground, o WindowOptions) string {
 			break
 		}
 	}
-	if (o.OnlyListed && !ruled) || show == WindowShowHide {
+	if (o.OnlyListed && !ruled) || show == WindowShowHide || titleHidden(fg.Title, o.HideTitles) {
 		return o.HiddenText
 	}
 	detected := appName(fg)
@@ -191,16 +192,82 @@ func windowDisplay(fg foreground, o WindowOptions) string {
 	}
 }
 
+var (
+	patternMu    sync.Mutex
+	patternCache = map[string]*regexp.Regexp{}
+)
+
+// titlePattern compiles a hide entry: /regex/ as written, anything else as
+// a case-insensitive piece of text.
+func titlePattern(entry string) (*regexp.Regexp, error) {
+	patternMu.Lock()
+	defer patternMu.Unlock()
+	if re, ok := patternCache[entry]; ok {
+		return re, nil
+	}
+	expr := "(?i)" + regexp.QuoteMeta(entry)
+	if len(entry) > 2 && strings.HasPrefix(entry, "/") && strings.HasSuffix(entry, "/") {
+		expr = "(?i)" + entry[1:len(entry)-1]
+	}
+	re, err := regexp.Compile(expr)
+	if err != nil {
+		return nil, err
+	}
+	if len(patternCache) > 200 {
+		patternCache = map[string]*regexp.Regexp{}
+	}
+	patternCache[entry] = re
+	return re, nil
+}
+
+// titleHidden reports whether a window title matches any hide entry.
+func titleHidden(title string, entries []string) bool {
+	if title == "" {
+		return false
+	}
+	for _, e := range entries {
+		if re, err := titlePattern(e); err == nil && re.MatchString(title) {
+			return true
+		}
+	}
+	return false
+}
+
+// withMode puts "In VR" or "On desktop" in front of the app.
+func withMode(o WindowOptions, vr bool, text string) string {
+	if !o.ShowMode {
+		return text
+	}
+	mode := o.DeskText
+	if vr {
+		mode = o.VRText
+	}
+	switch {
+	case mode == "":
+		return text
+	case text == "":
+		return mode
+	case o.Connector == "":
+		return mode + " " + text
+	default:
+		return mode + " " + o.Connector + " " + text
+	}
+}
+
 // windowLine renders the active window line with its optional label and limit.
 func windowLine(cfg Config) string {
-	text := strings.TrimSpace(windowDisplay(currentForeground(), cfg.WindowOptions))
+	o := cfg.WindowOptions
+	text := strings.TrimSpace(windowDisplay(currentForeground(), o))
+	if limit := o.MaxChars; limit > 0 && text != "" {
+		text = RuneLimit(text, limit)
+	}
+	if o.ShowMode {
+		text = withMode(o, inVR(o.CountOculus), text)
+	}
 	if text == "" {
 		return ""
 	}
-	if limit := cfg.WindowOptions.MaxChars; limit > 0 {
-		text = RuneLimit(text, limit)
-	}
-	return withLabel(cfg.WindowOptions.Label, text)
+	return withLabel(o.Label, text)
 }
 
 // currentForeground returns the focused app, cached for a moment so several

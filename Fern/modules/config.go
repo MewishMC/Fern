@@ -57,12 +57,18 @@ type DisplayOptions struct {
 
 // WindowOptions controls how the active window title is shortened.
 type WindowOptions struct {
-	Simplified bool         `json:"simplified"`  // apps without a rule show their name, not the title
-	Label      string       `json:"label"`       // optional prefix
-	MaxChars   int          `json:"max_chars"`   // 0 means no limit
-	OnlyListed bool         `json:"only_listed"` // apps without a rule are treated as hidden
-	HiddenText string       `json:"hidden_text"` // shown for hidden apps; empty drops the line
-	Rules      []WindowRule `json:"rules"`
+	Simplified  bool         `json:"simplified"`  // apps without a rule show their name, not the title
+	Label       string       `json:"label"`       // optional prefix
+	MaxChars    int          `json:"max_chars"`   // 0 means no limit
+	OnlyListed  bool         `json:"only_listed"` // apps without a rule are treated as hidden
+	HiddenText  string       `json:"hidden_text"` // shown for hidden apps; empty drops the line
+	Rules       []WindowRule `json:"rules"`
+	HideTitles  []string     `json:"hide_titles"` // words, or /regex/, that hide a window by its title
+	ShowMode    bool         `json:"show_mode"`   // prefix the line with VRText or DesktopText
+	VRText      string       `json:"vr_text"`
+	DeskText    string       `json:"desktop_text"`
+	Connector   string       `json:"connector"`    // between the mode and the app
+	CountOculus bool         `json:"count_oculus"` // treat the Oculus runtime as VR too
 }
 
 // WindowRule changes how one app appears on the window line.
@@ -220,6 +226,10 @@ func DefaultConfig() Config {
 			Simplified: true,
 			Label:      "",
 			MaxChars:   60,
+			HideTitles: []string{"incognito", "inprivate", "private browsing"},
+			VRText:     "In VR",
+			DeskText:   "On desktop",
+			Connector:  "·",
 		},
 		TextOptions: TextOptions{
 			Cycle:   true,
@@ -292,6 +302,7 @@ func (c Config) clone() Config {
 	out.DisplayOptions.Order = append([]string{}, c.DisplayOptions.Order...)
 	out.TextMessages = append([]string{}, c.TextMessages...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
+	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	return out
 }
 
@@ -593,6 +604,21 @@ func (c *Config) sanitize() {
 		rules = append(rules, r)
 	}
 	c.WindowOptions.Rules = rules
+	hide := make([]string, 0, len(c.WindowOptions.HideTitles))
+	for _, h := range c.WindowOptions.HideTitles {
+		h = RuneLimit(strings.TrimSpace(h), 100)
+		if h == "" || len(hide) >= 50 {
+			continue
+		}
+		if _, err := titlePattern(h); err != nil {
+			continue
+		}
+		hide = append(hide, h)
+	}
+	c.WindowOptions.HideTitles = hide
+	c.WindowOptions.VRText = RuneLimit(strings.TrimSpace(c.WindowOptions.VRText), 24)
+	c.WindowOptions.DeskText = RuneLimit(strings.TrimSpace(c.WindowOptions.DeskText), 24)
+	c.WindowOptions.Connector = RuneLimit(strings.TrimSpace(c.WindowOptions.Connector), 16)
 	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)

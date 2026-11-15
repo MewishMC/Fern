@@ -1204,6 +1204,14 @@ select option {
     border-color: var(--accent-border);
 }
 
+#windowHideTitles {
+    width: 260px;
+    min-height: 64px;
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: .74rem;
+    resize: vertical;
+}
+
 .window-add {
     display: flex;
     gap: 8px;

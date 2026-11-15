@@ -38,6 +38,47 @@ func TestWindowDisplayRules(t *testing.T) {
 	}
 }
 
+func TestWindowTitleFilters(t *testing.T) {
+	o := WindowOptions{Simplified: true, HiddenText: "private", HideTitles: []string{"incognito", `/^secret \d+/`}}
+	cases := []struct {
+		title string
+		want  string
+	}{
+		{"New Incognito Tab - Google Chrome", "private"},
+		{"secret 42 - Notepad", "private"},
+		{"not secret 42 - Notepad", "Notepad"},
+		{"Fern - Notepad", "Notepad"},
+	}
+	for _, c := range cases {
+		if got := windowDisplay(foreground{Title: c.title, Exe: "notepad.exe"}, o); got != c.want {
+			t.Errorf("%q: got %q, want %q", c.title, got, c.want)
+		}
+	}
+}
+
+func TestWindowMode(t *testing.T) {
+	o := WindowOptions{ShowMode: true, VRText: "In VR", DeskText: "On desktop", Connector: "·"}
+	if got := withMode(o, true, "Chrome"); got != "In VR · Chrome" {
+		t.Errorf("vr: got %q", got)
+	}
+	if got := withMode(o, false, ""); got != "On desktop" {
+		t.Errorf("hidden app: got %q", got)
+	}
+	o.Connector = ""
+	if got := withMode(o, false, "Chrome"); got != "On desktop Chrome" {
+		t.Errorf("no connector: got %q", got)
+	}
+	if !vrRuntimeRunning(map[string]bool{"vrserver.exe": true}, false) {
+		t.Error("SteamVR should count as VR")
+	}
+	if vrRuntimeRunning(map[string]bool{"ovrserver_x64.exe": true}, false) || !vrRuntimeRunning(map[string]bool{"ovrserver_x64.exe": true}, true) {
+		t.Error("Oculus should count only when asked")
+	}
+	if len(runningProcesses()) == 0 {
+		t.Error("process list is empty")
+	}
+}
+
 func TestSanitizeWindowRules(t *testing.T) {
 	c := DefaultConfig()
 	c.WindowOptions.Rules = []WindowRule{
@@ -45,7 +86,11 @@ func TestSanitizeWindowRules(t *testing.T) {
 		{App: "chrome.exe", Show: WindowShowHide}, // duplicate
 		{App: "", Show: WindowShowHide},
 	}
+	c.WindowOptions.HideTitles = []string{" ok ", "", "/[unclosed/"}
 	c.sanitize()
+	if h := c.WindowOptions.HideTitles; len(h) != 1 || h[0] != "ok" {
+		t.Errorf("hide titles: got %q", h)
+	}
 	r := c.WindowOptions.Rules
 	if len(r) != 1 || r[0].App != "chrome.exe" || r[0].Show != WindowShowName {
 		t.Errorf("got %+v", r)

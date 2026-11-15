@@ -55,6 +55,7 @@ type uiState struct {
 	Media     modules.MediaInfo     `json:"media"`
 	Sources   []modules.MediaSource `json:"mediaSources"`
 	Apps      []modules.WindowApp   `json:"windowApps"`
+	InVR      bool                  `json:"inVR"`
 	Afk       afkState              `json:"afk"`
 	Perf      perfState             `json:"perf"`
 	Logs      logsState             `json:"logs"`
@@ -372,6 +373,7 @@ func buildState() uiState {
 		Media:   modules.CurrentMedia(),
 		Sources: orEmpty(modules.MediaSources()),
 		Apps:    orEmpty(modules.RecentWindowApps()),
+		InVR:    modules.InVR(),
 		Afk: afkState{
 			Active:  active,
 			IdleMS:  idle.Milliseconds(),

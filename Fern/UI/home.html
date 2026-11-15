@@ -1011,6 +1011,15 @@
                         </div>
                         <div class="field-control"><input type="text" id="windowHiddenText" placeholder="drop the line" maxlength="40" autocomplete="off"></div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Hide windows whose title contains</b>
+                            <span>One per line, any case. Wrap in slashes for a regular expression, e.g. <code>/^secret \d+/</code>. Saved when you click away.</span>
+                        </div>
+                        <div class="field-control">
+                            <textarea id="windowHideTitles" rows="3" spellcheck="false" placeholder="incognito"></textarea>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="section-title">Apps <span class="badge" id="windowRuleCount">0</span></div>
@@ -1021,6 +1030,49 @@
                 </div>
                 <div class="list" id="windowRules"></div>
                 <div class="hint">Rename an app, show its window title, or hide it. Apps you focus while Fern runs appear in the picker.</div>
+
+                <div class="section-title">VR or desktop <span class="badge" id="windowVrBadge">—</span></div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Say whether you're in VR</b>
+                            <span>Starts the line with “In VR” while SteamVR runs, “On desktop” otherwise</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="windowShowMode"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>VR text</b>
+                            <span>Leave empty to show nothing in VR</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="windowVrText" placeholder="In VR" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Desktop text</b>
+                            <span>Leave empty to show nothing on desktop</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="windowDeskText" placeholder="On desktop" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between mode and app</b>
+                            <span>e.g. · or “using”</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="windowConnector" placeholder="·" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Count Oculus as VR</b>
+                            <span>The Oculus app keeps running without a headset on, so this is off by default</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="windowCountOculus"><span></span></label>
+                        </div>
+                    </div>
+                </div>
             </section>
             <!-- ================= OUTPUT ================= -->
             <section class="page" id="page-output">
@@ -1493,6 +1545,12 @@
             const known = {};
             apps.forEach((a) => { known[a.app] = a; });
             $("windowNow").textContent = (st.samples && st.samples.window) || "(nothing)";
+            $("windowVrBadge").textContent = st.inVR ? "in VR now" : "desktop now";
+            const hideBox = $("windowHideTitles");
+            if (document.activeElement !== hideBox) {
+                const text = (o.hide_titles || []).join("\n");
+                if (hideBox.value !== text) hideBox.value = text;
+            }
             $("windowRuleCount").textContent = rules.length;
 
             const ruled = {};
@@ -1569,6 +1627,15 @@
                 toast("Added " + app);
             }
         }
+        $("windowHideTitles").addEventListener("change", (ev) => {
+            const entries = ev.target.value.split("\n").map((t) => t.trim()).filter(Boolean);
+            const bad = entries.filter((t) => {
+                if (!(t.length > 2 && t.startsWith("/") && t.endsWith("/"))) return false;
+                try { new RegExp(t.slice(1, -1)); return false; } catch (e) { return true; }
+            });
+            if (bad.length) toast("Not a valid pattern, skipped: " + bad.join(", "), true);
+            if (pushConfigNow((c) => { c.WindowOptions.hide_titles = entries.filter((t) => !bad.includes(t)); })) toast("Title filters saved");
+        });
         $("windowAddBtn").addEventListener("click", addWindowApp);
         $("windowAddApp").addEventListener("keydown", (ev) => { if (ev.key === "Enter") addWindowApp(); });
         $("windowRules").addEventListener("input", (ev) => {
@@ -1873,6 +1940,8 @@
             ["afkShowTimer", ["AfkOptions", "show_timer"]],
             ["windowSimplified", ["WindowOptions", "simplified"]],
             ["windowOnlyListed", ["WindowOptions", "only_listed"]],
+            ["windowShowMode", ["WindowOptions", "show_mode"]],
+            ["windowCountOculus", ["WindowOptions", "count_oculus"]],
             ["logsJoin", ["LogsOptions", "show_join"]],
             ["logsLeave", ["LogsOptions", "show_leave"]],
             ["memUsed", ["MemoryOptions", "show_used"]],
@@ -1916,6 +1985,9 @@
             ["mediaBarRight", ["MediaOptions", "bar_right"], 2],
             ["windowLabel", ["WindowOptions", "label"], 16],
             ["windowHiddenText", ["WindowOptions", "hidden_text"], 40],
+            ["windowVrText", ["WindowOptions", "vr_text"], 24],
+            ["windowDeskText", ["WindowOptions", "desktop_text"], 24],
+            ["windowConnector", ["WindowOptions", "connector"], 16],
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
@@ -1934,6 +2006,10 @@
             ["mediaBarHead", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarLeft", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarRight", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["windowVrText", (c) => c.WindowOptions.show_mode],
+            ["windowDeskText", (c) => c.WindowOptions.show_mode],
+            ["windowConnector", (c) => c.WindowOptions.show_mode],
+            ["windowCountOculus", (c) => c.WindowOptions.show_mode],
             ["afkMovementOnly", (c) => c.AfkOptions.auto_detect],
             ["afkTime", (c) => c.AfkOptions.auto_detect],
             ["afkMessage", (c) => c.AfkOptions.auto_detect],
