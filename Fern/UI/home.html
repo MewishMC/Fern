@@ -1449,6 +1449,7 @@
             const parts = [];
             if (fit.dropped && fit.dropped.length) parts.push("Dropped to fit: " + names(fit.dropped));
             if (fit.shrunk && fit.shrunk.length) parts.push((fit.cut ? "Cut: " : "Shortened: ") + names(fit.shrunk));
+            if (fit.hidden && fit.hidden.length) parts.push((st.inVR ? "Hidden in VR: " : "Hidden on desktop: ") + names(fit.hidden));
             const text = parts.join(" · ");
             const el = $("fitInfo");
             if (el.textContent !== text) el.textContent = text;
@@ -1809,6 +1810,7 @@
         function fitFlag(st, id) {
             const fit = st.fit || {};
             if (!st.modules || !st.modules[id] || fit.hold) return "";
+            if ((fit.hidden || []).includes(id)) return ' <span class="row-flag">' + (st.inVR ? "hidden in VR" : "hidden on desktop") + "</span>";
             if ((fit.dropped || []).includes(id)) return ' <span class="row-flag warn">dropped to fit</span>';
             if ((fit.shrunk || []).includes(id)) return ' <span class="row-flag">' + (fit.cut ? "cut to fit" : "shortened") + "</span>";
             return "";
@@ -1816,7 +1818,13 @@
 
         function fitFlagSig(st) {
             const fit = st.fit || {};
-            return JSON.stringify([fit.dropped, fit.shrunk, fit.cut, fit.hold]);
+            return JSON.stringify([fit.dropped, fit.shrunk, fit.cut, fit.hold, fit.hidden, st.inVR]);
+        }
+
+        // Per line: show always, only in VR or only on desktop.
+        const VISIBILITY = [["always", "Always"], ["vr", "VR only"], ["desktop", "Desktop only"]];
+        function lineVisibility(st, id) {
+            return (st.config.display_options.visibility || {})[id] || "always";
         }
 
         function renderDropOrder(st) {
@@ -1858,7 +1866,8 @@
 
         function renderOrder(st) {
             const order = st.order || [];
-            const sig = order.join(",") + "|" + JSON.stringify(st.modules) + "|" + fitFlagSig(st);
+            const sig = order.join(",") + "|" + JSON.stringify(st.modules) + "|" + fitFlagSig(st) +
+                "|" + JSON.stringify(st.config.display_options.visibility || {});
             if (sig === S.orderSig) return;
             S.orderSig = sig;
 
@@ -1877,6 +1886,9 @@
                     '<div class="row-main"><div class="row-name">' + (MODULE_NAME[id] || id) + fitFlag(st, id) +
                     '</div><span class="row-desc">' + (MODULE_DESC[id] || "") + "</span></div>" +
                     '<div class="row-actions">' +
+                    '<select class="compact vis-pick" data-vis="' + id + '" title="When this line shows" aria-label="When ' + (MODULE_NAME[id] || id) + ' shows">' +
+                    VISIBILITY.map(([v, label]) => '<option value="' + v + '"' + (lineVisibility(st, id) === v ? " selected" : "") + ">" + label + "</option>").join("") +
+                    "</select>" +
                     '<button class="chev" data-open="' + id + '" title="Settings" aria-label="' + (MODULE_NAME[id] || id) + ' settings"><i class="fa fa-gear" aria-hidden="true"></i></button>' +
                     '<button class="chev" data-move="up" title="Move up" aria-label="Move ' + (MODULE_NAME[id] || id) + ' up"' + (index === 0 ? " disabled" : "") + '>▲</button>' +
                     '<button class="chev" data-move="down" title="Move down" aria-label="Move ' + (MODULE_NAME[id] || id) + ' down"' + (index === order.length - 1 ? " disabled" : "") + '>▼</button>' +
@@ -2356,6 +2368,22 @@
                 if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
                 toggleModule(id, toggle.checked);
             }
+        });
+
+        $("orderList").addEventListener("change", (ev) => {
+            const pick = ev.target.closest("select[data-vis]");
+            if (!pick || !S.state) return;
+            const id = pick.dataset.vis, value = pick.value;
+            const apply = (c) => {
+                const vis = Object.assign({}, c.display_options.visibility || {});
+                if (value === "always") delete vis[id]; else vis[id] = value;
+                c.display_options.visibility = vis;
+            };
+            if (!pushConfigNow(apply)) return;
+            apply(S.state.config);
+            pick.blur();
+            const label = VISIBILITY.find(([v]) => v === value)[1];
+            toast((MODULE_NAME[id] || id) + ": " + (value === "always" ? "shows always" : label));
         });
 
         // Flip a module locally right away, then tell the server.

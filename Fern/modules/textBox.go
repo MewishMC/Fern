@@ -146,13 +146,29 @@ func ModuleSamples(cfg Config) map[string]string {
 	return samples
 }
 
+// lineVisible reports whether a line's VR / desktop setting lets it show.
+func lineVisible(id string, d DisplayOptions, vr bool) bool {
+	switch d.Visibility[id] {
+	case ShowVR:
+		return vr
+	case ShowDesktop:
+		return !vr
+	}
+	return true
+}
+
 // buildLines renders every enabled module in the configured order, with the
-// shorter forms used to fit the chatbox.
-func buildLines(cfg Config) []FitLine {
+// shorter forms used to fit the chatbox. hidden lists enabled lines left out
+// by their VR / desktop setting.
+func buildLines(cfg Config, vr bool) (lines []FitLine, hidden []string) {
 	d := cfg.DisplayOptions
-	lines := make([]FitLine, 0, len(d.Order))
+	lines = make([]FitLine, 0, len(d.Order))
 	for _, id := range d.Order {
 		if !ModuleEnabled(id, d) {
+			continue
+		}
+		if !lineVisible(id, d, vr) {
+			hidden = append(hidden, id)
 			continue
 		}
 		line := FitLine{ID: id}
@@ -169,13 +185,14 @@ func buildLines(cfg Config) []FitLine {
 		}
 		lines = append(lines, line)
 	}
-	return lines
+	return lines, hidden
 }
 
 // Chatbox is what the chatbox shows right now and how it was fitted.
 type Chatbox struct {
 	Fit
-	Hold bool `json:"hold"` // a sent message is showing instead of the lines
+	Hold   bool     `json:"hold"`   // a sent message is showing instead of the lines
+	Hidden []string `json:"hidden"` // enabled lines hidden by their VR / desktop setting
 }
 
 // sendLimit is the longest text Fern sends. VRChat takes 144 characters and
@@ -199,9 +216,15 @@ func ComposeChatbox() Chatbox {
 	if !d.Show {
 		return Chatbox{}
 	}
-	fit := FitLines(buildLines(cfg), d.DropOrder, d.Separator, "", "", sendLimit(d), d.MaxLines)
+	// Looking for a VR runtime lists processes, so only when a line asks.
+	vr := false
+	if len(d.Visibility) > 0 {
+		vr = InVR()
+	}
+	lines, hidden := buildLines(cfg, vr)
+	fit := FitLines(lines, d.DropOrder, d.Separator, "", "", sendLimit(d), d.MaxLines)
 	fit.Text = strings.TrimSpace(fit.Text)
-	return Chatbox{Fit: fit}
+	return Chatbox{Fit: fit, Hidden: hidden}
 }
 
 // PreviewText is what the chatbox will show, without VRChat's marker.

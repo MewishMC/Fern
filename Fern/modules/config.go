@@ -55,7 +55,17 @@ type DisplayOptions struct {
 	MaxLines     int      `json:"max_lines"`
 	// DropOrder is which line goes first when the chatbox is too long.
 	DropOrder []string `json:"drop_order"`
+	// Visibility limits a line to VR or desktop: "vr" or "desktop" per id.
+	// Missing ids show always.
+	Visibility map[string]string `json:"visibility"`
 }
+
+// Values of DisplayOptions.Visibility.
+const (
+	ShowAlways  = "always"
+	ShowVR      = "vr"
+	ShowDesktop = "desktop"
+)
 
 // WindowOptions controls how the active window title is shortened.
 type WindowOptions struct {
@@ -223,6 +233,7 @@ func DefaultConfig() Config {
 			MaxChars:     144,
 			MaxLines:     9,
 			DropOrder:    append([]string{}, DefaultDropOrder...),
+			Visibility:   map[string]string{},
 		},
 		TextMessages: []string{"♡ hi there", "♡ have a good day", "♡ be kind"},
 		WindowOptions: WindowOptions{
@@ -304,6 +315,10 @@ func (c Config) clone() Config {
 	out := c
 	out.DisplayOptions.Order = append([]string{}, c.DisplayOptions.Order...)
 	out.DisplayOptions.DropOrder = append([]string{}, c.DisplayOptions.DropOrder...)
+	out.DisplayOptions.Visibility = make(map[string]string, len(c.DisplayOptions.Visibility))
+	for id, v := range c.DisplayOptions.Visibility {
+		out.DisplayOptions.Visibility[id] = v
+	}
 	out.TextMessages = append([]string{}, c.TextMessages...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
@@ -576,6 +591,13 @@ func (c *Config) sanitize() {
 	}
 	c.DisplayOptions.Order = order
 	c.DisplayOptions.DropOrder = knownIDs(c.DisplayOptions.DropOrder, DefaultDropOrder)
+	visibility := make(map[string]string, len(c.DisplayOptions.Visibility))
+	for id, v := range c.DisplayOptions.Visibility {
+		if knownModules[id] && (v == ShowVR || v == ShowDesktop) {
+			visibility[id] = v
+		}
+	}
+	c.DisplayOptions.Visibility = visibility
 
 	if c.AfkOptions.AFKTime < 0 {
 		c.AfkOptions.AFKTime = 0
