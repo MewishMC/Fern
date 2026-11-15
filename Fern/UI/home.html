@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="/assets/theme.css?v={{ASSET_STAMP}}" />
     <!-- Monochrome emoji, the same font family VRChat's chatbox falls back to. -->
     <link rel="stylesheet" href="/assets/fonts/noto-emoji.css?v={{ASSET_STAMP}}" />
+    <!-- The interface font picked on the Appearance page, applied before first paint. -->
+    <script src="/assets/font.js?v={{ASSET_STAMP}}"></script>
     <script>
         /* Paint the saved accent before the first frame. */
         try {
@@ -1122,7 +1124,7 @@
                 <div class="page-head">
                     <div>
                         <h2>Appearance</h2>
-                        <p>Sidebar side, backdrop, glass and colour &mdash; how Fern looks to you</p>
+                        <p>Sidebar side, colour, font, backdrop and glass &mdash; how Fern looks to you</p>
                     </div>
                 </div>
 
@@ -1163,6 +1165,47 @@
                             <label class="switch"><input type="checkbox" id="neutralSwitch"><span></span></label>
                         </div>
                     </div>
+                </div>
+
+                <div class="card" style="margin-top:12px" id="fontCard">
+                    <div class="card-head"><h3>Typography</h3></div>
+                    <div class="field font-field" id="fontField">
+                        <div class="field-label">
+                            <b>Interface font</b>
+                            <span id="fontStatus">Any font installed on this PC, or one you upload</span>
+                        </div>
+                        <div class="field-control">
+                            <div class="font-pick">
+                                <button type="button" class="font-pick-btn" id="fontPickBtn" aria-haspopup="listbox" aria-expanded="false" aria-controls="fontPop">
+                                    <span id="fontPickLabel">Default</span>
+                                    <i class="fa fa-chevron-down" aria-hidden="true"></i>
+                                </button>
+                                <div class="font-pop" id="fontPop" hidden>
+                                    <label class="mod-search">
+                                        <i class="fa fa-magnifying-glass" aria-hidden="true"></i>
+                                        <input type="search" id="fontSearch" placeholder="Search fonts" autocomplete="off" spellcheck="false" aria-label="Search fonts" aria-controls="fontList">
+                                    </label>
+                                    <div class="font-list" id="fontList" role="listbox" aria-label="Fonts"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Your own font</b>
+                            <span id="fontUploadName">A .ttf, .otf, .woff or .woff2 file, up to 32 MB</span>
+                        </div>
+                        <div class="field-control" style="gap:8px">
+                            <button class="btn ghost" type="button" id="fontUpload">Upload font&hellip;</button>
+                            <button class="btn ghost" type="button" id="fontUploadClear" hidden>Remove</button>
+                        </div>
+                    </div>
+                    <div class="font-preview" id="fontPreview">
+                        <div class="font-preview-name" id="fontPreviewName">Default</div>
+                        <div class="font-preview-text" contenteditable="plaintext-only" spellcheck="false" aria-label="Font preview, editable">The quick brown fox jumps over the lazy dog</div>
+                        <div class="font-preview-sub">AaBbCcDdEe 0123456789 &mdash; &laquo;Fern&raquo; &amp; friends?!</div>
+                    </div>
+                    <input type="file" id="fontFile" accept=".ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2" hidden>
                 </div>
 
                 <div class="card" style="margin-top:12px">
@@ -2782,6 +2825,382 @@
                 fileInput.value = "";
             });
 
+            /* ---------------- interface font ----------------
+               font.js in <head> applies the saved choice before first paint;
+               this part is the picker. Installed families come from Fern
+               (/fonts/system), the uploaded file is kept by Fern too
+               (/fonts/custom), and only the choice sits in localStorage. */
+            const F = window.fernFont;
+            const MAX_FONT_BYTES = 32 * 1024 * 1024;
+            const fontField = document.getElementById("fontField");
+            const fontCard = document.getElementById("fontCard");
+            const fontPickBtn = document.getElementById("fontPickBtn");
+            const fontPop = document.getElementById("fontPop");
+            const fontSearch = document.getElementById("fontSearch");
+            const fontList = document.getElementById("fontList");
+            const fontPreview = document.getElementById("fontPreview");
+            const fontUploadBtn = document.getElementById("fontUpload");
+            const fontUploadClear = document.getElementById("fontUploadClear");
+            const fontFile = document.getElementById("fontFile");
+            let systemFamilies = null; // null until Fern answers
+            let symbolFamilies = new Set();
+            let systemLoading = null;
+            let fontOptions = [];
+            let fontActive = -1;
+
+            const fontSize = (bytes) => bytes >= 1048576
+                ? (bytes / 1048576).toFixed(1) + " MB"
+                : Math.max(1, Math.round(bytes / 1024)) + " KB";
+
+            function fontName(setting) {
+                const upload = F.readUpload();
+                if (setting.source === "system" && setting.family) return setting.family;
+                if (setting.source === "upload" && upload) return upload.name;
+                return "Default";
+            }
+            function optionStack(opt) {
+                if (opt.kind === "system") return F.stack(opt.family);
+                if (opt.kind === "upload") return F.stack(F.UPLOAD_FAMILY);
+                return F.baseStack();
+            }
+            function isChosen(opt, setting) {
+                if (opt.kind === "system") return setting.source === "system" && setting.family === opt.family;
+                if (opt.kind === "upload") return setting.source === "upload";
+                return setting.source !== "system" && !(setting.source === "upload" && F.readUpload());
+            }
+
+            // With no option given the preview shows the font in use.
+            function previewFont(opt) {
+                fontPreview.style.fontFamily = opt ? optionStack(opt) : "";
+                document.getElementById("fontPreviewName").textContent = opt ? opt.label : fontName(F.read());
+            }
+
+            function renderFontState() {
+                const setting = F.read();
+                const upload = F.readUpload();
+                document.getElementById("fontPickLabel").textContent = fontName(setting);
+                document.getElementById("fontStatus").textContent =
+                    setting.source === "system" ? "Installed on this PC"
+                        : setting.source === "upload" && upload ? "Your uploaded font"
+                            : "Fern's own font \u2014 Segoe UI";
+                document.getElementById("fontUploadName").textContent = upload
+                    ? upload.name + " \u00b7 " + fontSize(upload.size || 0)
+                    : "A .ttf, .otf, .woff or .woff2 file, up to 32 MB";
+                fontUploadBtn.textContent = upload ? "Replace\u2026" : "Upload font\u2026";
+                fontUploadClear.hidden = !upload;
+                previewFont(null);
+            }
+
+            function chooseFont(setting) {
+                write(F.KEY, JSON.stringify(setting));
+                F.apply(setting);
+                renderFontState();
+            }
+
+            // Windows lists some families under names the browser can't match
+            // (style names on variable fonts, icon-only fonts). If a family
+            // draws exactly like both generic fallbacks, nothing was found.
+            const measure = document.createElement("canvas").getContext("2d");
+            const MEASURE_TEXT = "mmmmmmmmmmlli WW@#123 abcxyz";
+            const widthIn = (stack) => {
+                measure.font = "40px " + stack;
+                return measure.measureText(MEASURE_TEXT).width;
+            };
+            let genericWidths = null;
+            function drawable(family) {
+                if (!genericWidths) genericWidths = [widthIn("monospace"), widthIn("serif")];
+                const name = F.quote(family);
+                return widthIn(name + ", monospace") !== genericWidths[0] || widthIn(name + ", serif") !== genericWidths[1];
+            }
+
+            function loadSystemFonts() {
+                if (systemLoading) return systemLoading;
+                systemLoading = fetch("/fonts/system")
+                    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+                    .then((data) => {
+                        const families = Array.isArray(data.families) ? data.families : [];
+                        symbolFamilies = new Set(Array.isArray(data.symbol) ? data.symbol : []);
+                        systemFamilies = families.filter(drawable);
+                    })
+                    .catch(() => {
+                        systemFamilies = [];
+                        systemLoading = null; // try again next time the list opens
+                        toast("Couldn't list the fonts installed on this PC", true);
+                    });
+                return systemLoading;
+            }
+
+            function setActive(index, scroll) {
+                const items = fontList.querySelectorAll(".font-opt");
+                items.forEach((el, i) => el.classList.toggle("active", i === index));
+                fontActive = index;
+                const el = items[index];
+                if (el) {
+                    fontSearch.setAttribute("aria-activedescendant", el.id);
+                    if (scroll) el.scrollIntoView({ block: "nearest" });
+                    previewFont(fontOptions[index]);
+                } else {
+                    fontSearch.removeAttribute("aria-activedescendant");
+                    previewFont(null);
+                }
+            }
+
+            function renderFontList() {
+                const query = fontSearch.value.trim().toLowerCase();
+                const matches = (name) => !query || name.toLowerCase().includes(query);
+                const setting = F.read();
+                const upload = F.readUpload();
+                const frag = document.createDocumentFragment();
+                fontOptions = [];
+                let chosen = -1;
+
+                const group = (text, cls) => {
+                    const el = document.createElement("div");
+                    el.className = cls || "font-group";
+                    el.textContent = text;
+                    frag.appendChild(el);
+                };
+                const add = (opt) => {
+                    const el = document.createElement("div");
+                    el.className = "font-opt";
+                    el.id = "fontOpt" + fontOptions.length;
+                    el.setAttribute("role", "option");
+                    el.dataset.index = fontOptions.length;
+                    const name = document.createElement("span");
+                    name.textContent = opt.label;
+                    // Each entry is drawn in its own face, except picture
+                    // fonts, whose names would be unreadable; their sample is.
+                    if (opt.symbol) {
+                        const sample = document.createElement("small");
+                        sample.className = "font-sample";
+                        sample.textContent = "Abc";
+                        sample.style.fontFamily = optionStack(opt);
+                        el.append(name, sample);
+                    } else {
+                        name.style.fontFamily = optionStack(opt);
+                        el.appendChild(name);
+                    }
+                    if (opt.tag) {
+                        const tag = document.createElement("small");
+                        tag.textContent = opt.tag;
+                        el.appendChild(tag);
+                    }
+                    const selected = isChosen(opt, setting);
+                    el.classList.toggle("selected", selected);
+                    el.setAttribute("aria-selected", selected ? "true" : "false");
+                    if (selected) chosen = fontOptions.length;
+                    fontOptions.push(opt);
+                    frag.appendChild(el);
+                };
+
+                if (matches("Default")) add({ kind: "default", label: "Default", tag: "Theme" });
+                if (upload && matches(upload.name)) add({ kind: "upload", label: upload.name, tag: "Uploaded" });
+                if (systemFamilies === null) {
+                    group("Loading installed fonts\u2026", "font-empty");
+                } else {
+                    const hits = systemFamilies.filter(matches);
+                    if (hits.length) group("Installed \u00b7 " + hits.length);
+                    hits.forEach((family) => add({ kind: "system", family: family, label: family, symbol: symbolFamilies.has(family) }));
+                    if (!fontOptions.length) group("No font matches \u201c" + fontSearch.value.trim() + "\u201d", "font-empty");
+                }
+
+                fontList.textContent = "";
+                fontList.appendChild(frag);
+                setActive(query ? (fontOptions.length ? 0 : -1) : chosen, true);
+            }
+
+            const fontOpen = () => !fontPop.hidden;
+            function openFontList() {
+                fontPop.hidden = false;
+                fontPickBtn.setAttribute("aria-expanded", "true");
+                fontField.classList.add("open");
+                fontCard.classList.add("font-open");
+                fontSearch.value = "";
+                renderFontList();
+                fontSearch.focus();
+                fontPop.scrollIntoView({ block: "nearest" });
+                if (systemFamilies === null) {
+                    loadSystemFonts().then(() => { if (fontOpen()) renderFontList(); });
+                }
+            }
+            function closeFontList(refocus) {
+                if (!fontOpen()) return;
+                fontPop.hidden = true;
+                fontPickBtn.setAttribute("aria-expanded", "false");
+                fontField.classList.remove("open");
+                fontCard.classList.remove("font-open");
+                previewFont(null);
+                if (refocus) fontPickBtn.focus();
+            }
+            function pickFontOption(opt) {
+                if (opt.kind === "system") chooseFont({ source: "system", family: opt.family });
+                else if (opt.kind === "upload") chooseFont({ source: "upload" });
+                else chooseFont({ source: "default" });
+                closeFontList(true);
+            }
+
+            fontPickBtn.addEventListener("click", () => (fontOpen() ? closeFontList(false) : openFontList()));
+            fontSearch.addEventListener("input", renderFontList);
+            fontSearch.addEventListener("keydown", (ev) => {
+                const last = fontOptions.length - 1;
+                if (ev.key === "ArrowDown") {
+                    ev.preventDefault();
+                    setActive(Math.min(last, fontActive + 1), true);
+                } else if (ev.key === "ArrowUp") {
+                    ev.preventDefault();
+                    setActive(Math.max(0, fontActive - 1), true);
+                } else if (ev.key === "PageDown" || ev.key === "PageUp") {
+                    ev.preventDefault();
+                    const step = ev.key === "PageDown" ? 8 : -8;
+                    setActive(Math.max(0, Math.min(last, fontActive + step)), true);
+                } else if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    if (fontOptions[fontActive]) pickFontOption(fontOptions[fontActive]);
+                } else if (ev.key === "Escape") {
+                    ev.preventDefault();
+                    closeFontList(true);
+                } else if (ev.key === "Tab") {
+                    closeFontList(false);
+                }
+            });
+            fontList.addEventListener("mousemove", (ev) => {
+                const el = ev.target.closest(".font-opt");
+                if (el && Number(el.dataset.index) !== fontActive) setActive(Number(el.dataset.index), false);
+            });
+            // mousedown keeps focus in the search box while picking.
+            fontList.addEventListener("mousedown", (ev) => ev.preventDefault());
+            fontList.addEventListener("click", (ev) => {
+                const el = ev.target.closest(".font-opt");
+                if (el) pickFontOption(fontOptions[Number(el.dataset.index)]);
+            });
+            document.addEventListener("mousedown", (ev) => {
+                if (fontOpen() && !fontField.contains(ev.target)) closeFontList(false);
+            });
+
+            // Checks a font file in the page, stores it with Fern and switches
+            // to it. Shared by the upload button and appearance import.
+            async function installFont(blob, name) {
+                if (blob.size > MAX_FONT_BYTES) {
+                    toast("That font is " + fontSize(blob.size) + "; Fern keeps fonts up to 32 MB", true);
+                    return false;
+                }
+                try {
+                    const probe = new FontFace("Fern Font Check", await blob.arrayBuffer());
+                    await probe.load();
+                } catch (e) {
+                    toast("That file isn't a font Fern can read, or it is damaged", true);
+                    return false;
+                }
+                let response;
+                try {
+                    response = await fetch("/fonts/custom", { method: "PUT", body: blob });
+                } catch (e) {
+                    response = null;
+                }
+                if (!response || !response.ok) {
+                    const reason = response ? (await response.text()).trim() : "";
+                    toast("Couldn't save the font" + (reason ? ": " + reason : ""), true);
+                    return false;
+                }
+                write(F.UPLOAD_KEY, JSON.stringify({ name: name, size: blob.size, v: Date.now() }));
+                try {
+                    await F.loadUpload();
+                } catch (e) {
+                    toast("The font was saved but couldn't be loaded back", true);
+                }
+                chooseFont({ source: "upload" });
+                return true;
+            }
+
+            fontUploadBtn.addEventListener("click", () => fontFile.click());
+            fontFile.addEventListener("change", async () => {
+                const file = fontFile.files && fontFile.files[0];
+                fontFile.value = "";
+                if (!file) return;
+                if (!/\.(ttf|otf|woff2?)$/i.test(file.name)) {
+                    toast("Fern can use .ttf, .otf, .woff and .woff2 fonts", true);
+                    return;
+                }
+                const name = file.name.replace(/\.[^.]+$/, "") || "Uploaded font";
+                fontUploadBtn.disabled = true;
+                fontUploadBtn.textContent = "Uploading\u2026";
+                const ok = await installFont(file, name);
+                fontUploadBtn.disabled = false;
+                renderFontState();
+                if (ok) toast("Now using " + name);
+            });
+
+            fontUploadClear.addEventListener("click", async () => {
+                try {
+                    const response = await fetch("/fonts/custom", { method: "DELETE" });
+                    if (!response.ok) throw new Error(response.status);
+                } catch (e) {
+                    toast("Couldn't remove the uploaded font", true);
+                    return;
+                }
+                try { localStorage.removeItem(F.UPLOAD_KEY); } catch (e) { }
+                if (F.read().source === "upload") chooseFont({ source: "default" });
+                else renderFontState();
+                toast("Uploaded font removed");
+            });
+
+            // The editor window and this one share the setting; keep the
+            // labels right if it changes elsewhere.
+            window.addEventListener("storage", (ev) => {
+                if (ev.key === F.KEY || ev.key === F.UPLOAD_KEY) renderFontState();
+            });
+
+            renderFontState();
+            if (F.read().source === "upload" && F.readUpload()) {
+                F.loadUpload().catch(() => {
+                    document.getElementById("fontStatus").textContent = "Uploaded font is missing \u2014 showing the default";
+                    toast("Your uploaded font couldn't be loaded, so Fern is using its default", true);
+                });
+            }
+
+            // For appearance export: the choice, plus the uploaded file as a
+            // data URL so the export works on another PC.
+            async function fontExport() {
+                const setting = F.read();
+                const out = { font: setting.source === "system" ? { source: "system", family: setting.family } : { source: setting.source === "upload" ? "upload" : "default" } };
+                const upload = F.readUpload();
+                if (upload) {
+                    try {
+                        const response = await fetch("/fonts/custom");
+                        if (!response.ok) throw new Error(response.status);
+                        const blob = await response.blob();
+                        const data = await new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.onload = () => resolve(reader.result);
+                            reader.onerror = () => reject(reader.error);
+                            reader.readAsDataURL(blob);
+                        });
+                        out.fontUpload = { name: upload.name, data: data };
+                    } catch (e) {
+                        // Leave the file out; the rest of the export still works.
+                    }
+                }
+                return out;
+            }
+
+            async function fontImport(data) {
+                const font = data.font && typeof data.font === "object" ? data.font : {};
+                const upload = data.fontUpload;
+                if (upload && typeof upload.data === "string" && upload.data.startsWith("data:")) {
+                    const blob = await (await fetch(upload.data)).blob();
+                    const name = typeof upload.name === "string" && upload.name ? upload.name.slice(0, 80) : "Uploaded font";
+                    const ok = await installFont(blob, name);
+                    if (ok && font.source === "upload") return;
+                }
+                if (font.source === "system" && typeof font.family === "string" && font.family) {
+                    chooseFont({ source: "system", family: font.family.slice(0, 200) });
+                } else if (font.source === "upload" && F.readUpload()) {
+                    chooseFont({ source: "upload" });
+                } else {
+                    chooseFont({ source: "default" });
+                }
+            }
+
             /* ---------------- custom CSS ---------------- */
             const CSS_KEY = "fern_custom_css";
             const cssStyle = document.createElement("style");
@@ -2840,7 +3259,8 @@
                     side: app.classList.contains("side-right") ? "right" : "left",
                     glass: root.classList.contains("glass"),
                     background: read(KEYS.image, ""),
-                    css: read(CSS_KEY, "")
+                    css: read(CSS_KEY, ""),
+                    font: F.read()
                 };
             }
 
@@ -2865,10 +3285,13 @@
                 const css = typeof data.css === "string" ? data.css : "";
                 applyCustomCss(css);
                 write(CSS_KEY, css);
+                // The font may need uploading first, so it settles last.
+                return fontImport(data);
             }
 
-            document.getElementById("appearanceExport").addEventListener("click", () => {
-                const blob = new Blob([JSON.stringify(snapshot(), null, 2)], { type: "application/json" });
+            document.getElementById("appearanceExport").addEventListener("click", async () => {
+                const data = Object.assign(snapshot(), await fontExport());
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement("a");
                 link.href = url;
@@ -2886,13 +3309,20 @@
                 const file = appearanceFile.files && appearanceFile.files[0];
                 if (!file) return;
                 const reader = new FileReader();
-                reader.onload = () => {
+                reader.onload = async () => {
+                    let settled;
                     try {
-                        applyAll(JSON.parse(reader.result));
-                        document.getElementById("ioStatus").textContent = "Loaded " + file.name;
-                        toast("Appearance imported");
+                        settled = applyAll(JSON.parse(reader.result));
                     } catch (e) {
                         toast("That file is not a Fern appearance export");
+                        return;
+                    }
+                    document.getElementById("ioStatus").textContent = "Loaded " + file.name;
+                    try {
+                        await settled;
+                        toast("Appearance imported");
+                    } catch (e) {
+                        toast("Appearance imported, but its font couldn't be restored", true);
                     }
                 };
                 reader.readAsText(file);

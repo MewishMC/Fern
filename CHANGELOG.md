@@ -20,6 +20,9 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
   optionally Oculus), with your own wording.
 - Apps without a custom name show their real product name (from the executable) instead of
   the window title.
+- Appearance has a font picker: search the fonts installed on your PC (each shown in its own
+  face) or upload a .ttf, .otf, .woff or .woff2 file, with a live preview. Uploaded fonts are
+  kept in `%LOCALAPPDATA%\Fern\fonts` and included in appearance exports.
 
 ## v2.2 - Custom bars
 

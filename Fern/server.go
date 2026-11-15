@@ -32,7 +32,7 @@ var upgrader = websocket.Upgrader{}
 var assetStamp = func() string {
 	hash := sha1.New()
 	if assets := UI.Assets(); assets != nil {
-		for _, name := range []string{"theme.css", "fonts/noto-emoji.css"} {
+		for _, name := range []string{"theme.css", "fonts/noto-emoji.css", "font.js"} {
 			if data, err := fs.ReadFile(assets, name); err == nil {
 				_, _ = hash.Write(data)
 			}
@@ -170,6 +170,8 @@ func StartServer(listener net.Listener) {
 		w.Header().Set("Cache-Control", "no-store")
 		_, _ = w.Write(cover.Data)
 	})
+	mux.HandleFunc("/fonts/system", handleSystemFonts)
+	mux.HandleFunc("/fonts/custom", handleCustomFont)
 	mux.HandleFunc("/ws", handleSocket)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
