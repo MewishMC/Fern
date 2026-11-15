@@ -21,12 +21,18 @@ const (
 	ModuleMedia   = "media"
 	ModuleWindow  = "window"
 	ModuleLogs    = "logs"
+
+	ModuleDiscord  = "discord"
+	ModuleTwitch   = "twitch"
+	ModuleSoundpad = "soundpad"
+	ModuleVoicemod = "voicemod"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
 	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
+	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 }
 
 var knownModules = func() map[string]bool {
@@ -49,6 +55,10 @@ type DisplayOptions struct {
 	ActiveWindow bool     `json:"active_window"`
 	CPU          bool     `json:"cpu"`
 	VRChatLogs   bool     `json:"vr_chat_logs"`
+	Discord      bool     `json:"discord"`
+	Twitch       bool     `json:"twitch"`
+	Soundpad     bool     `json:"soundpad"`
+	Voicemod     bool     `json:"voicemod"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -170,6 +180,73 @@ type LogsOptions struct {
 	MaxChars  int    `json:"max_chars"`
 }
 
+// DiscordOptions controls Rich Presence and the voice channel line. Both talk
+// to the Discord client through the user's own Discord application, whose
+// client secret lives in secrets.dat, not here.
+type DiscordOptions struct {
+	ClientID    string `json:"client_id"`    // the Discord application ID
+	RedirectURI string `json:"redirect_uri"` // one of the app's OAuth2 redirects
+	// Rich Presence
+	Presence     bool   `json:"presence"`
+	OnlyInVRChat bool   `json:"only_in_vrchat"`
+	Details      string `json:"details"`
+	State        string `json:"state"`
+	LargeImage   string `json:"large_image"` // art asset key or https image URL
+	LargeText    string `json:"large_text"`
+	ShowElapsed  bool   `json:"show_elapsed"`
+	JoinButton   bool   `json:"join_button"` // public instances only
+	JoinLabel    string `json:"join_label"`
+	ButtonLabel  string `json:"button_label"`
+	ButtonURL    string `json:"button_url"`
+	// Voice line
+	Template    string `json:"template"`
+	QuietText   string `json:"quiet_text"`
+	NotInVCText string `json:"not_in_vc_text"` // empty hides the line outside a call
+	MaxSpeakers int    `json:"max_speakers"`
+	HideSelf    bool   `json:"hide_self"`
+	CountOnly   bool   `json:"count_only"`
+	DebounceMS  int    `json:"debounce_ms"`
+	ShowMute    bool   `json:"show_mute"`
+	MuteText    string `json:"mute_text"`
+	DeafText    string `json:"deaf_text"`
+}
+
+// TwitchOptions controls the stream status line.
+type TwitchOptions struct {
+	ClientID      string `json:"client_id"`
+	Channel       string `json:"channel"` // empty means the signed-in account
+	IntervalSec   int    `json:"interval_sec"`
+	ShowLive      bool   `json:"show_live"`
+	LiveText      string `json:"live_text"`
+	OfflineText   string `json:"offline_text"` // empty hides the line while offline
+	ShowViewers   bool   `json:"show_viewers"`
+	ViewerLabel   string `json:"viewer_label"`
+	ShowGame      bool   `json:"show_game"`
+	GamePrefix    string `json:"game_prefix"`
+	ShowTitle     bool   `json:"show_title"`
+	ShowFollowers bool   `json:"show_followers"`
+	FollowerLabel string `json:"follower_label"`
+	Compact       bool   `json:"compact"` // 1.2k instead of 1234
+	Separator     string `json:"separator"`
+	Template      string `json:"template"` // replaces the toggles when set
+}
+
+// SoundpadOptions controls the last-played Soundpad sound line.
+type SoundpadOptions struct {
+	Icon        string `json:"icon"`
+	DurationSec int    `json:"duration_sec"`
+}
+
+// VoicemodOptions controls the Voicemod connection and its line.
+type VoicemodOptions struct {
+	Enabled        bool   `json:"enabled"` // connect, for the panel soundboard
+	AnnounceSounds bool   `json:"announce_sounds"`
+	SoundSec       int    `json:"sound_sec"`
+	AnnounceVoice  bool   `json:"announce_voice"`
+	SoundIcon      string `json:"sound_icon"`
+	VoiceIcon      string `json:"voice_icon"`
+}
+
 // OSCOptions is where chatbox messages are sent.
 type OSCOptions struct {
 	Host string `json:"host"`
@@ -191,6 +268,12 @@ type Config struct {
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
+
+	// App integrations
+	DiscordOptions  DiscordOptions  `json:"DiscordOptions"`
+	TwitchOptions   TwitchOptions   `json:"TwitchOptions"`
+	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
+	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
 }
 
 var (
@@ -288,6 +371,45 @@ func DefaultConfig() Config {
 			ShowJoin:  true,
 			ShowLeave: true,
 			MaxChars:  80,
+		},
+		DiscordOptions: DiscordOptions{
+			RedirectURI:  "http://localhost",
+			OnlyInVRChat: true,
+			Details:      "In {world}",
+			State:        "{type} • {count} players",
+			LargeText:    "VRChat",
+			ShowElapsed:  true,
+			JoinLabel:    "Join World",
+			Template:     "🔊 {channel} ({count}) | 🎙️ {speaking}",
+			QuietText:    "Quiet...",
+			MaxSpeakers:  2,
+			DebounceMS:   500,
+			ShowMute:     true,
+			MuteText:     "ᵐᵘᵗᵉᵈ",
+			DeafText:     "ᵈᵉᵃᶠᵉⁿ",
+		},
+		TwitchOptions: TwitchOptions{
+			IntervalSec:   60,
+			ShowLive:      true,
+			LiveText:      "🔴 LIVE",
+			ShowViewers:   true,
+			ViewerLabel:   "viewers",
+			ShowGame:      true,
+			GamePrefix:    "playing",
+			FollowerLabel: "followers",
+			Compact:       true,
+			Separator:     " | ",
+		},
+		SoundpadOptions: SoundpadOptions{
+			Icon:        "🎶",
+			DurationSec: 8,
+		},
+		VoicemodOptions: VoicemodOptions{
+			AnnounceSounds: true,
+			SoundSec:       8,
+			AnnounceVoice:  true,
+			SoundIcon:      "🎶",
+			VoiceIcon:      "🎙️",
 		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
@@ -464,6 +586,14 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.ActiveWindow
 	case ModuleLogs:
 		return &d.VRChatLogs
+	case ModuleDiscord:
+		return &d.Discord
+	case ModuleTwitch:
+		return &d.Twitch
+	case ModuleSoundpad:
+		return &d.Soundpad
+	case ModuleVoicemod:
+		return &d.Voicemod
 	}
 	return nil
 }
@@ -631,6 +761,8 @@ func (c *Config) sanitize() {
 	default:
 		c.AfkOptions.TimerStyle = "full"
 	}
+
+	c.sanitizeSocial()
 
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"

@@ -8,5 +8,9 @@ func StartWorkers() {
 	startMediaWorker()
 	startLogWorker()
 	startSpecsWorker()
+	startDiscordWorker()
+	startTwitchWorker()
+	startSoundpadWorker()
+	startVoicemodWorker()
 	go watchVRChatProcess()
 }

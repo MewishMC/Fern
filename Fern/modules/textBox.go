@@ -97,6 +97,14 @@ func moduleText(id string, cfg Config) string {
 		return windowLine(cfg)
 	case ModuleLogs:
 		return logsLine(cfg)
+	case ModuleDiscord:
+		return discordLine(cfg)
+	case ModuleTwitch:
+		return twitchLine(cfg)
+	case ModuleSoundpad:
+		return soundpadLine(cfg)
+	case ModuleVoicemod:
+		return voicemodLine(cfg)
 	}
 	return ""
 }

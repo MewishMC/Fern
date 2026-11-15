@@ -123,6 +123,7 @@ func scanLog() {
 }
 
 func parseLogLine(line string) {
+	parseWorldLine(line)
 	switch {
 	case strings.Contains(line, "OnPlayerJoined"):
 		name := playerName(line, "OnPlayerJoined")

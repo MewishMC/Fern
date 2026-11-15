@@ -64,8 +64,31 @@ func StartWebview(url string) {
 
 const repoPages = "https://github.com/MewishMC/Fern/"
 
+// integrationPages are the sign-in and setup pages the app integrations link
+// to. Each prefix includes a path, so the host cannot be swapped out.
+var integrationPages = []string{
+	"https://www.twitch.tv/activate",
+	"https://dev.twitch.tv/console/apps",
+	"https://discord.com/developers/applications",
+}
+
+func allowedExternal(link string) bool {
+	if strings.HasPrefix(link, repoPages) {
+		return true
+	}
+	if strings.ContainsAny(link, " \t\r\n\"") {
+		return false
+	}
+	for _, prefix := range integrationPages {
+		if link == prefix || strings.HasPrefix(link, prefix+"/") || strings.HasPrefix(link, prefix+"?") {
+			return true
+		}
+	}
+	return false
+}
+
 func openExternal(link string) {
-	if !strings.HasPrefix(link, repoPages) {
+	if !allowedExternal(link) {
 		return
 	}
 	_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", link).Start()

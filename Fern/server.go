@@ -68,6 +68,8 @@ type uiState struct {
 	OSC       string                `json:"osc"`
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
+
+	Social modules.SocialInfo `json:"social"`
 }
 
 type afkState struct {
@@ -281,6 +283,29 @@ func handleCommand(cmd command) {
 		_ = modules.SaveNow()
 	case "update":
 		go startUpdate()
+	case "secret":
+		// The value is never echoed or logged; the panel only learns it is set.
+		_ = modules.SetPanelSecret(cmd.Module, cmd.Text)
+	case "discord":
+		switch cmd.Action {
+		case "authorize":
+			modules.DiscordAuthorize()
+		case "signout":
+			modules.DiscordSignOut()
+		}
+	case "twitch":
+		switch cmd.Action {
+		case "signin":
+			modules.TwitchStartSignIn()
+		case "cancel":
+			modules.TwitchCancelSignIn()
+		case "signout":
+			modules.TwitchSignOut()
+		case "refresh":
+			modules.TwitchRefreshNow()
+		}
+	case "voicemod":
+		modules.VoicemodCommand(cmd.Action, cmd.Text)
 	}
 }
 
@@ -367,6 +392,11 @@ func buildState() uiState {
 			modules.ModuleMedia:   d.Media,
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
+
+			modules.ModuleDiscord:  d.Discord,
+			modules.ModuleTwitch:   d.Twitch,
+			modules.ModuleSoundpad: d.Soundpad,
+			modules.ModuleVoicemod: d.Voicemod,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -400,6 +430,7 @@ func buildState() uiState {
 		OSC:       oscTarget(),
 		Version:   appVersion,
 		Update:    currentUpdate(),
+		Social:    modules.CurrentSocial(cfg),
 	}
 }
 
