@@ -299,17 +299,27 @@ func NotifyChange() {
 // so they survive replacing or moving the executable. It falls back to the
 // folder Fern runs from if no per-user folder can be created.
 func configPath() string {
+	if dir := DataDir(); dir != "" {
+		return filepath.Join(dir, "config.json")
+	}
+	return "config.json"
+}
+
+// DataDir is Fern's per-user folder, %LOCALAPPDATA%\Fern, created on first
+// use. It returns "" when no such folder can be made.
+func DataDir() string {
 	base := os.Getenv("LOCALAPPDATA")
 	if base == "" {
 		base, _ = os.UserConfigDir()
 	}
-	if base != "" {
-		dir := filepath.Join(base, "Fern")
-		if err := os.MkdirAll(dir, 0o755); err == nil {
-			return filepath.Join(dir, "config.json")
-		}
+	if base == "" {
+		return ""
 	}
-	return "config.json"
+	dir := filepath.Join(base, "Fern")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return ""
+	}
+	return dir
 }
 
 // legacyConfigPaths are where versions up to 2.1 kept config.json: next to the
