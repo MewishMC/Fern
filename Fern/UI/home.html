@@ -2385,7 +2385,7 @@
             applySide(read(KEYS.side, "left"));
             applyImage(read(KEYS.image, ""));
             applyGlass(read(KEYS.glass, "0") === "1");
-            applyNeutral(read(KEYS.neutral, "0") === "1");
+            applyNeutral(read(KEYS.neutral, "1") === "1");
 
             document.getElementById("sideSeg").addEventListener("click", (ev) => {
                 const btn = ev.target.closest("button[data-side]");

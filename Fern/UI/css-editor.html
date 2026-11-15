@@ -15,7 +15,7 @@
         try {
             const hue = localStorage.getItem("fern_accent_hue");
             if (hue !== null) document.documentElement.style.setProperty("--hue", hue);
-            if (localStorage.getItem("fern_neutral") === "1") document.documentElement.style.setProperty("--tint", "0");
+            document.documentElement.style.setProperty("--tint", localStorage.getItem("fern_neutral") === "0" ? "1" : "0");
         } catch (e) { }
     </script>
     <style>

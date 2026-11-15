@@ -28,8 +28,9 @@
     /* --hue is the single knob the accent colour is built from. The sidebar
        slider rewrites it on :root, and every accent token follows. */
     --hue: 268;
-    /* 1 = follow the hue, 0 = neutral grey. Set by the Appearance page. */
-    --tint: 1;
+    /* 1 = follow the hue, 0 = neutral grey (the default). Set by the
+       Appearance page. */
+    --tint: 0;
     --accent: hsl(var(--hue) calc(82% * var(--tint)) 74%);
     --accent-light: hsl(var(--hue) calc(92% * var(--tint)) 87%);
     --accent-fill: hsl(var(--hue) calc(62% * var(--tint)) 56%);
