@@ -274,7 +274,7 @@
                     <div class="field">
                         <div class="field-label">
                             <b>Update rate</b>
-                            <span>Only matters when the Loading line is off</span>
+                            <span>How often the chatbox is sent. Smooth loading animation can send faster.</span>
                         </div>
                         <div class="field-control">
                             <input type="range" id="rateRange" min="250" max="10000" step="250">
@@ -547,17 +547,8 @@
                 <div class="card">
                     <div class="field">
                         <div class="field-label">
-                            <b>Show playback time</b>
-                            <span>Elapsed and total, like 1:24/3:18</span>
-                        </div>
-                        <div class="field-control">
-                            <label class="switch"><input type="checkbox" id="progressSwitch"><span></span></label>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>Progress style</b>
-                            <span>Bar, clock, both, or just the song</span>
+                            <b>Playback progress</b>
+                            <span>A bar, the time like 1:24/3:18, both, or just the song</span>
                         </div>
                         <div class="field-control">
                             <div class="seg" id="styleSeg">
@@ -780,7 +771,7 @@
                     <div class="field">
                         <div class="field-label">
                             <b>Hide AM/PM</b>
-                            <span>Shows 3:04 instead of 3:04 PM. Ignored in 24 hour mode.</span>
+                            <span>Shows 3:04 instead of 3:04 PM</span>
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="clockNoAmPm"><span></span></label>
@@ -849,12 +840,20 @@
                     <div class="field">
                         <div class="field-label">
                             <b>Smooth animation</b>
-                            <span>One dot per update. VRChat only shows about one update per second.</span>
+                            <span>Sends faster than the update rate so the dots grow one at a time</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="spinFast"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Animation step</b>
+                            <span>Time between dots. VRChat only shows about one update per second.</span>
                         </div>
                         <div class="field-control">
                             <input type="range" id="spinRate" min="1000" max="3000" step="100">
                             <span class="val" id="spinRateVal">1000ms</span>
-                            <label class="switch"><input type="checkbox" id="spinFast"><span></span></label>
                         </div>
                     </div>
                 </div>
@@ -885,8 +884,8 @@
                 <div class="card">
                     <div class="field">
                         <div class="field-label">
-                            <b>Auto detect</b>
-                            <span>Uses OSC movement and active window changes</span>
+                            <b>Detect AFK</b>
+                            <span>Counts idle time from VRChat's OSC (movement, voice, input) and window changes</span>
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="afkAuto"><span></span></label>
@@ -894,20 +893,11 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
-                            <b>Ignore activity</b>
-                            <span>Never show the AFK timer</span>
-                        </div>
-                        <div class="field-control">
-                            <label class="switch"><input type="checkbox" id="afkBypass"><span></span></label>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
                             <b>Only OSC movement</b>
-                            <span>Ignores window switching</span>
+                            <span>Ignores voice, input and window switching</span>
                         </div>
                         <div class="field-control">
-                            <label class="switch"><input type="checkbox" id="afkPoopy"><span></span></label>
+                            <label class="switch"><input type="checkbox" id="afkMovementOnly"><span></span></label>
                         </div>
                     </div>
                     <div class="field">
@@ -1482,13 +1472,17 @@
             RANGES.forEach(([, path, labelId, format]) => { $(labelId).textContent = format(field(c, path)); });
             $("windowBadge").textContent = d.active_window ? "on" : "off";
 
-            const style = c.MediaOptions.progress_style || "both";
+            const style = c.MediaOptions.show_progress ? (c.MediaOptions.progress_style || "both") : "none";
             document.querySelectorAll("#styleSeg button").forEach((b) => {
                 b.classList.toggle("on", b.dataset.style === style);
             });
             const sample = c.TimeOptions.use_24h ? "15:04" : "3:04 PM";
             $("clockBadge").textContent = (c.TimeOptions.label ? c.TimeOptions.label + " " : "") + sample;
             $("configPath").textContent = "saved to config.json";
+            if (!locked) {
+                $("afkAuto").checked = !!c.AfkOptions.auto_detect && !c.AfkOptions.bypass;
+                applyDepends(c);
+            }
         }
 
         function renderOrder(st) {
@@ -1618,6 +1612,7 @@
             S.edits.push(mutate);
             const next = JSON.parse(JSON.stringify(base));
             S.edits.forEach((edit) => edit(next));
+            applyDepends(next);
             S.dirtyUntil = Date.now() + 1400;
             clearTimeout(S.timer);
             if (immediate) return send({ type: "config", config: next });
@@ -1643,16 +1638,13 @@
             ["loadDots", ["LoadingOptions", "show_dots"]],
             ["cycleSwitch", ["TextOptions", "cycle"]],
             ["shuffleSwitch", ["TextOptions", "shuffle"]],
-            ["progressSwitch", ["MediaOptions", "show_progress"]],
             ["pausedSwitch", ["MediaOptions", "show_when_paused"]],
             ["mediaArtist", ["MediaOptions", "show_artist"]],
             ["mediaAlbum", ["MediaOptions", "show_album"]],
             ["clock24", ["TimeOptions", "use_24h"]],
             ["clockSeconds", ["TimeOptions", "seconds"]],
             ["clockNoAmPm", ["TimeOptions", "no_am_pm"]],
-            ["afkAuto", ["AfkOptions", "auto_detect"]],
-            ["afkBypass", ["AfkOptions", "bypass"]],
-            ["afkPoopy", ["AfkOptions", "poopyafk"]],
+            ["afkMovementOnly", ["AfkOptions", "poopyafk"]],
             ["afkShowTimer", ["AfkOptions", "show_timer"]],
             ["windowSimplified", ["WindowOptions", "simplified"]],
             ["logsJoin", ["LogsOptions", "show_join"]],
@@ -1698,6 +1690,41 @@
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
         ];
+
+        // Settings that do nothing given another setting are dimmed and locked:
+        // [control id, is it in effect for this config].
+        const DEPENDS = [
+            ["clockNoAmPm", (c) => !c.TimeOptions.use_24h],
+            ["loadDotsRange", (c) => c.LoadingOptions.show_dots],
+            ["spinRate", (c) => c.LoadingOptions.fast],
+            ["mediaBarWidth", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["afkMovementOnly", (c) => c.AfkOptions.auto_detect],
+            ["afkTime", (c) => c.AfkOptions.auto_detect],
+            ["afkMessage", (c) => c.AfkOptions.auto_detect],
+            ["afkShowTimer", (c) => c.AfkOptions.auto_detect],
+            ["afkTimerStyle", (c) => c.AfkOptions.auto_detect && c.AfkOptions.show_timer],
+            ["memDecimals", (c) => c.MemoryOptions.show_used || c.MemoryOptions.show_total],
+            ["cpuDecimals", (c) => c.CPUOptions.show_usage],
+        ];
+        function applyDepends(c) {
+            if (!c) return;
+            DEPENDS.forEach(([id, active]) => {
+                const on = !!active(c);
+                const row = $(id).closest(".field");
+                row.classList.toggle("inactive", !on);
+                row.querySelectorAll("input, select, button").forEach((el) => { el.disabled = !on; });
+            });
+        }
+
+        // One switch for AFK. Turning detection on also clears the old
+        // "ignore activity" flag, which silently did the same as turning it off.
+        $("afkAuto").addEventListener("change", (ev) => {
+            const on = ev.target.checked;
+            pushConfigNow((c) => {
+                c.AfkOptions.auto_detect = on;
+                if (on) c.AfkOptions.bypass = false;
+            });
+        });
 
         CHECKS.forEach(([id, path]) => {
             $(id).addEventListener("change", (ev) => {
@@ -1972,7 +1999,11 @@
         $("styleSeg").addEventListener("click", (ev) => {
             const button = ev.target.closest("button[data-style]");
             if (!button) return;
-            if (!pushConfigNow((c) => { c.MediaOptions.progress_style = button.dataset.style; })) return;
+            const style = button.dataset.style;
+            if (!pushConfigNow((c) => {
+                c.MediaOptions.show_progress = style !== "none";
+                if (style !== "none") c.MediaOptions.progress_style = style;
+            })) return;
             S.dirtyUntil = 0;
             toast("Progress style: " + button.dataset.style);
         });

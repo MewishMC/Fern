@@ -1227,6 +1227,15 @@ select option {
     min-width: 0;
 }
 
+.field.inactive .field-label,
+.field.inactive .field-control {
+    opacity: .45;
+}
+
+.field.inactive .field-control * {
+    cursor: not-allowed;
+}
+
 .field:last-child {
     margin-bottom: 0;
 }
