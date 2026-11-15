@@ -1204,6 +1204,39 @@ select option {
     border-color: var(--accent-border);
 }
 
+.window-add {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.window-add input {
+    flex: 1;
+    min-width: 0;
+}
+
+.window-rule .row-main {
+    flex: 0 1 180px;
+}
+
+.window-rule .window-name {
+    flex: 1 1 140px;
+}
+
+.window-rule .window-name:disabled {
+    opacity: .4;
+}
+
+.window-now {
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: .74rem;
+    color: var(--text-primary);
+    max-width: 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .mini-x {
     border: 0;
     background: transparent;

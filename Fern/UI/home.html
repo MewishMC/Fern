@@ -944,7 +944,7 @@
                 <div class="page-head">
                     <div>
                         <h2>Window</h2>
-                        <p>Shows the title of whatever you have focused</p>
+                        <p>Shows the app you have focused, renamed or hidden however you like</p>
                     </div>
                     <span class="badge" id="windowBadge">—</span>
                 </div>
@@ -964,8 +964,15 @@
                 <div class="card">
                     <div class="field">
                         <div class="field-label">
+                            <b>Now showing</b>
+                            <span>What the window line sends for the app you have focused</span>
+                        </div>
+                        <div class="field-control"><code class="window-now" id="windowNow">—</code></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Simplify app names</b>
-                            <span>“Chrome” instead of the full page title</span>
+                            <span>“Chrome” instead of the full page title, for apps not in the list below</span>
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="windowSimplified"><span></span></label>
@@ -988,7 +995,32 @@
                             <span class="val" id="windowMaxCharsVal">60</span>
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Only show listed apps</b>
+                            <span>Apps not in the list below are treated as hidden</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="windowOnlyListed"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Text for hidden apps</b>
+                            <span>Sent instead of a hidden app. Leave empty to drop the line.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="windowHiddenText" placeholder="drop the line" maxlength="40" autocomplete="off"></div>
+                    </div>
                 </div>
+
+                <div class="section-title">Apps <span class="badge" id="windowRuleCount">0</span></div>
+                <div class="window-add">
+                    <input type="text" id="windowAddApp" list="windowAppOptions" placeholder="Pick a recent app or type its .exe" autocomplete="off" aria-label="App to add">
+                    <datalist id="windowAppOptions"></datalist>
+                    <button class="btn" id="windowAddBtn"><i class="fa fa-plus" aria-hidden="true"></i> Add app</button>
+                </div>
+                <div class="list" id="windowRules"></div>
+                <div class="hint">Rename an app, show its window title, or hide it. Apps you focus while Fern runs appear in the picker.</div>
             </section>
             <!-- ================= OUTPUT ================= -->
             <section class="page" id="page-output">
@@ -1311,6 +1343,7 @@
             renderPreview(st);
             renderMedia(st);
             renderMediaSources(st);
+            renderWindowRules(st);
             renderStats(st);
             renderFooter(st);
             syncControls(st);
@@ -1446,6 +1479,130 @@
                 select.value = saved;
             });
         }
+
+        /* Window rules: one row per app with a custom name and how to show it.
+           Rows are rebuilt only when the rules change and nobody is typing in
+           them, so a state push never steals the cursor. */
+        const WINDOW_SHOW = [["name", "App name"], ["title", "Window title"], ["both", "Name + title"], ["hide", "Hidden"]];
+        function renderWindowRules(st, force) {
+            const o = st.config.WindowOptions || {};
+            // While an edit is on its way to Fern, draw the local copy so rows
+            // and their indexes match what was just changed.
+            const rules = (lockForms() && S.windowRules) || o.rules || [];
+            const apps = st.windowApps || [];
+            const known = {};
+            apps.forEach((a) => { known[a.app] = a; });
+            $("windowNow").textContent = (st.samples && st.samples.window) || "(nothing)";
+            $("windowRuleCount").textContent = rules.length;
+
+            const ruled = {};
+            rules.forEach((r) => { ruled[r.app] = true; });
+            const optSig = JSON.stringify(apps.map((a) => [a.app, a.name])) + JSON.stringify(Object.keys(ruled));
+            if (optSig !== S.windowOptSig) {
+                S.windowOptSig = optSig;
+                $("windowAppOptions").replaceChildren(...apps.filter((a) => !ruled[a.app]).map((a) => {
+                    const option = document.createElement("option");
+                    option.value = a.app;
+                    option.label = a.name + (a.title && a.title !== a.name ? " — " + a.title : "");
+                    return option;
+                }));
+            }
+
+            const list = $("windowRules");
+            const sig = JSON.stringify(rules) + JSON.stringify(apps.map((a) => [a.app, a.name]));
+            if (!force && (sig === S.windowRuleSig || list.contains(document.activeElement))) return;
+            S.windowRuleSig = sig;
+            list.replaceChildren();
+            if (!rules.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No apps yet. Every app follows the settings above.";
+                list.appendChild(empty);
+                return;
+            }
+            rules.forEach((r, index) => {
+                const base = r.app.replace(/\.exe$/i, "");
+                const detected = known[r.app] ? known[r.app].name : base.charAt(0).toUpperCase() + base.slice(1);
+                const row = document.createElement("div");
+                row.className = "row window-rule";
+                row.innerHTML =
+                    '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                    '<input class="msg-input window-name" type="text" maxlength="40" autocomplete="off" aria-label="Custom name">' +
+                    '<select class="compact window-show" aria-label="Show"></select>' +
+                    '<button class="mini-x" title="Remove" aria-label="Remove">✕</button>';
+                row.dataset.index = String(index);
+                row.querySelector(".row-name").textContent = detected;
+                row.querySelector(".row-desc").textContent = r.app;
+                const name = row.querySelector(".window-name");
+                name.value = r.name || "";
+                name.placeholder = "Show as " + detected;
+                name.disabled = r.show === "hide";
+                const show = row.querySelector(".window-show");
+                WINDOW_SHOW.forEach(([value, label]) => show.add(new Option(label, value)));
+                show.value = r.show || "name";
+                list.appendChild(row);
+            });
+        }
+
+        // Applies an edit to the rules. Structural edits (now) redraw the
+        // list at once; typing a name doesn't, so the cursor stays put.
+        function editWindowRules(mutate, now) {
+            if (!S.state) return false;
+            const current = (lockForms() && S.windowRules) || S.state.config.WindowOptions.rules || [];
+            const next = current.map((r) => Object.assign({}, r));
+            mutate(next);
+            const ok = (now ? pushConfigNow : pushConfig)((c) => { c.WindowOptions.rules = next.map((r) => Object.assign({}, r)); });
+            if (!ok) return false;
+            S.windowRules = next;
+            if (now) renderWindowRules(S.state, true);
+            return true;
+        }
+
+        function addWindowApp() {
+            let app = $("windowAddApp").value.trim().toLowerCase();
+            if (!app) { $("windowAddApp").focus(); return; }
+            if (!/\.exe$/.test(app)) app += ".exe";
+            const rules = (lockForms() && S.windowRules) || (S.state && S.state.config.WindowOptions.rules) || [];
+            if (rules.some((r) => r.app === app)) { toast(app + " is already in the list", true); return; }
+            if (editWindowRules((list) => { list.push({ app: app, name: "", show: "name" }); }, true)) {
+                $("windowAddApp").value = "";
+                toast("Added " + app);
+            }
+        }
+        $("windowAddBtn").addEventListener("click", addWindowApp);
+        $("windowAddApp").addEventListener("keydown", (ev) => { if (ev.key === "Enter") addWindowApp(); });
+        $("windowRules").addEventListener("input", (ev) => {
+            if (!ev.target.classList.contains("window-name")) return;
+            const index = +ev.target.closest(".window-rule").dataset.index;
+            const value = Array.from(ev.target.value).slice(0, 40).join("");
+            editWindowRules((list) => { if (list[index]) list[index].name = value; });
+        });
+        $("windowRules").addEventListener("change", (ev) => {
+            if (!ev.target.classList.contains("window-show")) return;
+            const row = ev.target.closest(".window-rule");
+            const index = +row.dataset.index;
+            const value = ev.target.value;
+            row.querySelector(".window-name").disabled = value === "hide";
+            editWindowRules((list) => { if (list[index]) list[index].show = value; }, true);
+        });
+        $("windowRules").addEventListener("focusout", () => {
+            // Repaint once the user is done editing a row.
+            setTimeout(() => { if (S.state) renderWindowRules(S.state); }, 0);
+        });
+        $("windowRules").addEventListener("click", (ev) => {
+            const button = ev.target.closest(".mini-x");
+            if (!button) return;
+            const index = +button.closest(".window-rule").dataset.index;
+            const rules = (lockForms() && S.windowRules) || S.state.config.WindowOptions.rules || [];
+            const removed = rules[index];
+            if (!removed) return;
+            if (editWindowRules((list) => { list.splice(index, 1); }, true)) {
+                toast("Removed " + removed.app, false, {
+                    label: "Undo",
+                    run: () => editWindowRules((list) => { list.splice(Math.min(index, list.length), 0, removed); }, true),
+                });
+            }
+        });
 
         function mediaSourceLabel(src) {
             const name = src.app || src.appId || "Media";
@@ -1715,6 +1872,7 @@
             ["afkMovementOnly", ["AfkOptions", "poopyafk"]],
             ["afkShowTimer", ["AfkOptions", "show_timer"]],
             ["windowSimplified", ["WindowOptions", "simplified"]],
+            ["windowOnlyListed", ["WindowOptions", "only_listed"]],
             ["logsJoin", ["LogsOptions", "show_join"]],
             ["logsLeave", ["LogsOptions", "show_leave"]],
             ["memUsed", ["MemoryOptions", "show_used"]],
@@ -1757,6 +1915,7 @@
             ["mediaBarLeft", ["MediaOptions", "bar_left"], 2],
             ["mediaBarRight", ["MediaOptions", "bar_right"], 2],
             ["windowLabel", ["WindowOptions", "label"], 16],
+            ["windowHiddenText", ["WindowOptions", "hidden_text"], 40],
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],

@@ -54,6 +54,7 @@ type uiState struct {
 	Config    modules.Config        `json:"config"`
 	Media     modules.MediaInfo     `json:"media"`
 	Sources   []modules.MediaSource `json:"mediaSources"`
+	Apps      []modules.WindowApp   `json:"windowApps"`
 	Afk       afkState              `json:"afk"`
 	Perf      perfState             `json:"perf"`
 	Logs      logsState             `json:"logs"`
@@ -370,6 +371,7 @@ func buildState() uiState {
 		Config:  cfg,
 		Media:   modules.CurrentMedia(),
 		Sources: orEmpty(modules.MediaSources()),
+		Apps:    orEmpty(modules.RecentWindowApps()),
 		Afk: afkState{
 			Active:  active,
 			IdleMS:  idle.Milliseconds(),

@@ -57,10 +57,28 @@ type DisplayOptions struct {
 
 // WindowOptions controls how the active window title is shortened.
 type WindowOptions struct {
-	Simplified bool   `json:"simplified"`
-	Label      string `json:"label"`     // optional prefix
-	MaxChars   int    `json:"max_chars"` // 0 means no limit
+	Simplified bool         `json:"simplified"`  // apps without a rule show their name, not the title
+	Label      string       `json:"label"`       // optional prefix
+	MaxChars   int          `json:"max_chars"`   // 0 means no limit
+	OnlyListed bool         `json:"only_listed"` // apps without a rule are treated as hidden
+	HiddenText string       `json:"hidden_text"` // shown for hidden apps; empty drops the line
+	Rules      []WindowRule `json:"rules"`
 }
+
+// WindowRule changes how one app appears on the window line.
+type WindowRule struct {
+	App  string `json:"app"`  // executable name, e.g. chrome.exe
+	Name string `json:"name"` // custom display name; empty uses the detected name
+	Show string `json:"show"` // name, title, both or hide
+}
+
+// Ways a WindowRule can show its app.
+const (
+	WindowShowName  = "name"
+	WindowShowTitle = "title"
+	WindowShowBoth  = "both"
+	WindowShowHide  = "hide"
+)
 
 // TextOptions controls the rotating custom messages.
 type TextOptions struct {
@@ -273,6 +291,7 @@ func (c Config) clone() Config {
 	out := c
 	out.DisplayOptions.Order = append([]string{}, c.DisplayOptions.Order...)
 	out.TextMessages = append([]string{}, c.TextMessages...)
+	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	return out
 }
 
@@ -555,6 +574,25 @@ func (c *Config) sanitize() {
 	c.CPUOptions.Decimals = clampInt(c.CPUOptions.Decimals, 0, 2)
 	c.WindowOptions.Label = RuneLimit(strings.TrimSpace(c.WindowOptions.Label), 16)
 	c.WindowOptions.MaxChars = clampInt(c.WindowOptions.MaxChars, 0, 144)
+	c.WindowOptions.HiddenText = RuneLimit(strings.TrimSpace(c.WindowOptions.HiddenText), 40)
+	rules := make([]WindowRule, 0, len(c.WindowOptions.Rules))
+	seenApps := map[string]bool{}
+	for _, r := range c.WindowOptions.Rules {
+		r.App = strings.ToLower(strings.TrimSpace(r.App))
+		if r.App == "" || seenApps[r.App] || len(rules) >= 100 {
+			continue
+		}
+		seenApps[r.App] = true
+		r.App = RuneLimit(r.App, 64)
+		r.Name = RuneLimit(strings.TrimSpace(r.Name), 40)
+		switch r.Show {
+		case WindowShowName, WindowShowTitle, WindowShowBoth, WindowShowHide:
+		default:
+			r.Show = WindowShowName
+		}
+		rules = append(rules, r)
+	}
+	c.WindowOptions.Rules = rules
 	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)

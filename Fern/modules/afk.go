@@ -192,7 +192,7 @@ func watchWindowActivity() {
 		if cfg.AfkOptions.Bypass || cfg.AfkOptions.MovementOnly || !cfg.AfkOptions.AutoDetect {
 			continue
 		}
-		title := foregroundTitle()
+		title := currentForeground().Title
 		activityMu.Lock()
 		changed := title != "" && title != prevWindowTitle
 		if changed {
