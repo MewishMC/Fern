@@ -97,6 +97,7 @@ func isActivityAddress(address string) bool {
 }
 
 func handlePackage(pkt osc.Packet) {
+	noteMuteSelf(pkt)
 	cfg := GetConfig()
 	if cfg.AfkOptions.Bypass {
 		return

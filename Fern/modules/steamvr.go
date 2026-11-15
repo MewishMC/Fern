@@ -281,8 +281,8 @@ func readVRDevices(s *openvr.Session) []VRDevice {
 	return out
 }
 
-// oneLine keeps chatbox settings on a single line.
-func oneLine(s string) string {
+// vrOneLine keeps chatbox settings on a single line.
+func vrOneLine(s string) string {
 	return strings.NewReplacer("\r", " ", "\n", " ", "\t", " ").Replace(s)
 }
 
@@ -291,18 +291,18 @@ func (c *Config) sanitizeSteamVR() {
 	def := DefaultConfig()
 	b := &c.BatteryOptions
 	b.Label = RuneLimit(strings.TrimSpace(b.Label), 16)
-	b.Template = RuneLimit(strings.TrimSpace(oneLine(b.Template)), 80)
+	b.Template = RuneLimit(strings.TrimSpace(vrOneLine(b.Template)), 80)
 	if b.Template == "" {
 		b.Template = def.BatteryOptions.Template
 	}
-	b.Separator = RuneLimit(oneLine(b.Separator), 8)
+	b.Separator = RuneLimit(vrOneLine(b.Separator), 8)
 	if b.Separator == "" {
 		b.Separator = def.BatteryOptions.Separator
 	}
 	for _, s := range []*string{&b.HeadsetIcon, &b.ControllerIcon, &b.TrackerIcon, &b.ChargingMark} {
-		*s = RuneLimit(strings.TrimSpace(oneLine(*s)), 4)
+		*s = RuneLimit(strings.TrimSpace(vrOneLine(*s)), 4)
 	}
-	b.LowTag = RuneLimit(strings.TrimSpace(oneLine(b.LowTag)), 12)
+	b.LowTag = RuneLimit(strings.TrimSpace(vrOneLine(b.LowTag)), 12)
 	b.LowThreshold = clampInt(b.LowThreshold, 1, 100)
 	switch b.Sort {
 	case BatterySortDetected, BatterySortName, BatterySortLow, BatterySortHigh, BatterySortType:
@@ -318,8 +318,8 @@ func (c *Config) sanitizeSteamVR() {
 			continue
 		}
 		seen[d.Serial] = true
-		d.Name = RuneLimit(strings.TrimSpace(oneLine(d.Name)), 32)
-		d.Model = RuneLimit(strings.TrimSpace(oneLine(d.Model)), 64)
+		d.Name = RuneLimit(strings.TrimSpace(vrOneLine(d.Name)), 32)
+		d.Model = RuneLimit(strings.TrimSpace(vrOneLine(d.Model)), 64)
 		if _, ok := kindOrder[d.Kind]; !ok {
 			d.Kind = KindController
 		}
@@ -329,7 +329,7 @@ func (c *Config) sanitizeSteamVR() {
 
 	p := &c.VRPerfOptions
 	p.Label = RuneLimit(strings.TrimSpace(p.Label), 16)
-	p.Separator = RuneLimit(oneLine(p.Separator), 8)
+	p.Separator = RuneLimit(vrOneLine(p.Separator), 8)
 	if p.Separator == "" {
 		p.Separator = def.VRPerfOptions.Separator
 	}

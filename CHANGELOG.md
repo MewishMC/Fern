@@ -43,6 +43,17 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
   toggle or pulse, and a connected flag, all with editable names.
 - The heart rate page shows the connection status, the live bpm and a five-minute sparkline.
   Tokens and keys are masked and never appear in logs or messages.
+- AI tools under Send now: fix spelling and grammar, shorten to fit, rewrite in a style,
+  translate, suggest a reply or a conversation starter. Works with any OpenAI-compatible
+  server (OpenAI, Ollama, LM Studio and others) or Anthropic, with your own key, which is
+  stored encrypted for your Windows account. Results are shown for you to edit and accept
+  before anything is sent, with the tokens each request used.
+- Text to speech with the Windows voices, no download needed: pick a voice, speed, volume
+  and output device (such as a virtual cable), read out sent messages, cut off the previous
+  one, and optionally open your VRChat mic over OSC while it speaks.
+- Dictation: hold or click the mic button next to Send now, with a microphone picker, noise
+  gate with a live level meter and silence timeout. Speech is transcribed by an
+  OpenAI-compatible endpoint, can be translated, and can be sent straight away.
 
 ## v2.2 - Custom bars
 
