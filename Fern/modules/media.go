@@ -316,49 +316,68 @@ func isSpotifyBranding(title string) bool {
 
 // mediaLine renders the now playing module for the chatbox.
 func mediaLine(cfg Config) string {
-	o := cfg.MediaOptions
-	info := CurrentMedia()
+	return formatMediaLine(cfg.MediaOptions, CurrentMedia())
+}
+
+// Playback states the media line tells apart.
+const (
+	mediaPlaying = "playing"
+	mediaPaused  = "paused"
+	mediaStopped = "stopped"
+)
+
+// mediaState folds the session status into playing, paused or stopped.
+// Anything Windows can't name counts as paused, as it always has.
+func mediaState(info MediaInfo) string {
+	switch {
+	case info.Playing:
+		return mediaPlaying
+	case info.Status == mediaStopped:
+		return mediaStopped
+	}
+	return mediaPaused
+}
+
+// formatMediaLine builds the media line from a snapshot, so it can be tested
+// without a media session.
+func formatMediaLine(o MediaOptions, info MediaInfo) string {
 	if !info.Available {
 		return ""
 	}
-	if !info.Playing && !o.ShowWhenPaused {
+	state := mediaState(info)
+	if (state == mediaPaused && !o.ShowWhenPaused) || (state == mediaStopped && !o.ShowWhenStopped) {
 		return ""
 	}
 
-	track := strings.TrimSpace(info.Title)
-	if artist := strings.TrimSpace(info.Artist); o.ShowArtist && artist != "" {
-		if track != "" {
-			track = track + " — " + artist
-		} else {
-			track = artist
-		}
-	}
-	if album := strings.TrimSpace(info.Album); o.ShowAlbum && album != "" {
-		if track != "" {
-			track = track + " · " + album
-		} else {
-			track = album
-		}
-	}
+	track := mediaTrack(o, info.Title, info.Artist, info.Album)
 	if track == "" {
 		return ""
 	}
-	track = strings.TrimSpace(RuneLimit(track, o.MaxChars))
 
-	icon := strings.TrimSpace(o.Icon)
-	if !info.Playing {
-		icon = strings.TrimSpace(o.PausedIcon)
+	icon, words := o.Icon, o.PlayingText
+	switch state {
+	case mediaPaused:
+		icon, words = o.PausedIcon, o.PausedText
+	case mediaStopped:
+		icon, words = o.StoppedIcon, o.StoppedText
+	}
+	if o.Uppercase {
+		words = strings.ToUpper(words)
 	}
 
 	// The progress switch wins over the style: with it off the line is just
-	// the track, which is what the switch promises in the UI.
+	// the track, which is what the switch promises in the UI. A stopped player
+	// has no meaningful position.
 	detail := ""
-	if o.ShowProgress && info.DurationMS > 0 {
+	if o.ShowProgress && info.DurationMS > 0 && state != mediaStopped {
 		pos := time.Duration(info.PositionMS) * time.Millisecond
 		dur := time.Duration(info.DurationMS) * time.Millisecond
 		clock := ""
 		if o.ProgressStyle == "time" || o.ProgressStyle == "both" {
 			clock = shortClock(pos) + "/" + shortClock(dur)
+			if o.SuperscriptTime {
+				clock = superscriptClock(clock)
+			}
 		}
 		bar := ""
 		if o.ProgressStyle == "bar" || o.ProgressStyle == "both" {
@@ -367,14 +386,66 @@ func mediaLine(cfg Config) string {
 		detail = strings.TrimSpace(strings.Join([]string{bar, clock}, " "))
 	}
 
-	line := track
-	if detail != "" {
-		line = track + " " + detail
+	return joinNonEmpty(" ", strings.TrimSpace(icon), strings.TrimSpace(words), track, detail)
+}
+
+// mediaTrack joins the title, artist and album as configured and shortens the
+// result to the track length limit.
+func mediaTrack(o MediaOptions, title, artist, album string) string {
+	sep := o.Separator
+	if sep == "" {
+		sep = " — "
 	}
-	if icon != "" {
-		line = icon + " " + line
+	track := strings.TrimSpace(title)
+	if artist = strings.TrimSpace(artist); o.ShowArtist && artist != "" {
+		if track != "" {
+			track = track + sep + artist
+		} else {
+			track = artist
+		}
 	}
-	return line
+	if album = strings.TrimSpace(album); o.ShowAlbum && album != "" {
+		if track != "" {
+			track = track + " · " + album
+		} else {
+			track = album
+		}
+	}
+	if o.Uppercase {
+		track = strings.ToUpper(track)
+	}
+	return strings.TrimSpace(RuneLimit(track, o.MaxChars))
+}
+
+// joinNonEmpty joins the parts that are not empty.
+func joinNonEmpty(sep string, parts ...string) string {
+	kept := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if p != "" {
+			kept = append(kept, p)
+		}
+	}
+	return strings.Join(kept, sep)
+}
+
+// superscriptClock writes a playback time like 1:24/3:18 in small raised
+// characters, which still cost one chatbox character each.
+func superscriptClock(s string) string {
+	digits := []rune("⁰¹²³⁴⁵⁶⁷⁸⁹")
+	var b strings.Builder
+	for _, r := range s {
+		switch {
+		case r >= '0' && r <= '9':
+			b.WriteRune(digits[r-'0'])
+		case r == ':':
+			b.WriteRune('˸')
+		case r == '/':
+			b.WriteRune('ᐟ')
+		default:
+			b.WriteRune(r)
+		}
+	}
+	return b.String()
 }
 
 func shortClock(d time.Duration) string {

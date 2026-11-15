@@ -560,6 +560,74 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Playing text</b>
+                            <span>Words before the track, like “Listening to”. Empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="mediaPlayingText" placeholder="Listening to" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Paused text</b>
+                            <span>Used instead while paused, like “Paused”</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="mediaPausedText" placeholder="Paused" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Keep showing when stopped</b>
+                            <span>Some players report stopped rather than paused. Off hides the line then.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaStopped"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Stopped icon and text</b>
+                            <span>Shown before the track while stopped</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="mediaStoppedIcon" placeholder="⏹" maxlength="4" autocomplete="off" style="width:64px" aria-label="Stopped icon">
+                            <input type="text" id="mediaStoppedText" placeholder="Stopped" maxlength="24" autocomplete="off" aria-label="Stopped text">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Artist separator</b>
+                            <span>Between the title and the artist. Spaces count, so “ ᵇʸ ” reads Song ᵇʸ Artist.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="mediaSeparator" list="mediaSeparatorList" maxlength="8" autocomplete="off" placeholder=" — ">
+                            <datalist id="mediaSeparatorList">
+                                <option value=" — "></option>
+                                <option value=" ᵇʸ "></option>
+                                <option value=" by "></option>
+                                <option value=" - "></option>
+                                <option value=" · "></option>
+                                <option value=" | "></option>
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Uppercase</b>
+                            <span>SONG — ARTIST. Progress and icons stay as they are.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaUpper"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Small playback time</b>
+                            <span>Writes the time raised, like ¹˸²⁴ᐟ³˸¹⁸, so it stands apart from the title</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaSuperTime"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Show artist</b>
                             <span>Track — artist instead of the track alone</span>
                         </div>
@@ -1933,6 +2001,9 @@
             ["pausedSwitch", ["MediaOptions", "show_when_paused"]],
             ["mediaArtist", ["MediaOptions", "show_artist"]],
             ["mediaAlbum", ["MediaOptions", "show_album"]],
+            ["mediaStopped", ["MediaOptions", "show_when_stopped"]],
+            ["mediaUpper", ["MediaOptions", "uppercase"]],
+            ["mediaSuperTime", ["MediaOptions", "superscript_time"]],
             ["clock24", ["TimeOptions", "use_24h"]],
             ["clockSeconds", ["TimeOptions", "seconds"]],
             ["clockNoAmPm", ["TimeOptions", "no_am_pm"]],
@@ -1978,6 +2049,11 @@
             ["mediaFilter", ["MediaOptions", "app_filter"], Infinity],
             ["mediaIcon", ["MediaOptions", "icon"], 4],
             ["mediaPausedIcon", ["MediaOptions", "paused_icon"], 4],
+            ["mediaPlayingText", ["MediaOptions", "playing_text"], 24],
+            ["mediaPausedText", ["MediaOptions", "paused_text"], 24],
+            ["mediaStoppedIcon", ["MediaOptions", "stopped_icon"], 4],
+            ["mediaStoppedText", ["MediaOptions", "stopped_text"], 24],
+            ["mediaSeparator", ["MediaOptions", "separator"], 8],
             ["mediaBarFilled", ["MediaOptions", "bar_filled"], 2],
             ["mediaBarEmpty", ["MediaOptions", "bar_empty"], 2],
             ["mediaBarHead", ["MediaOptions", "bar_head"], 2],
@@ -2006,6 +2082,9 @@
             ["mediaBarHead", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarLeft", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarRight", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaPausedText", (c) => c.MediaOptions.show_when_paused],
+            ["mediaStoppedIcon", (c) => c.MediaOptions.show_when_stopped],
+            ["mediaSuperTime", (c) => c.MediaOptions.show_progress && ["time", "both"].includes(c.MediaOptions.progress_style)],
             ["windowVrText", (c) => c.WindowOptions.show_mode],
             ["windowDeskText", (c) => c.WindowOptions.show_mode],
             ["windowConnector", (c) => c.WindowOptions.show_mode],

@@ -134,6 +134,15 @@ type MediaOptions struct {
 	BarRight       string `json:"bar_right"`     // optional cap after the bar, e.g. ]
 	MaxChars       int    `json:"max_chars"`     // limit for the track part
 	PreferredApp   string `json:"preferred_app"` // session to read; empty follows the current one
+	// State words in front of the track, e.g. "Listening to"; empty for none.
+	PlayingText     string `json:"playing_text"`
+	PausedText      string `json:"paused_text"`
+	StoppedText     string `json:"stopped_text"`
+	StoppedIcon     string `json:"stopped_icon"`
+	ShowWhenStopped bool   `json:"show_when_stopped"`
+	Separator       string `json:"separator"` // between the title and the artist
+	Uppercase       bool   `json:"uppercase"`
+	SuperscriptTime bool   `json:"superscript_time"` // ¹˸²⁴ᐟ³˸¹⁸ instead of 1:24/3:18
 }
 
 // TimeOptions controls the clock line.
@@ -264,6 +273,8 @@ func DefaultConfig() Config {
 			BarEmpty:       "▱",
 			MaxChars:       90,
 			PreferredApp:   "",
+			StoppedIcon:    "⏹",
+			Separator:      " — ",
 		},
 		TimeOptions: TimeOptions{
 			Use24h: false,
@@ -578,6 +589,15 @@ func (c *Config) sanitize() {
 	}
 	c.MediaOptions.MaxChars = clampInt(c.MediaOptions.MaxChars, 4, 144)
 	c.MediaOptions.PreferredApp = RuneLimit(strings.TrimSpace(c.MediaOptions.PreferredApp), 128)
+	for _, s := range []*string{&c.MediaOptions.PlayingText, &c.MediaOptions.PausedText, &c.MediaOptions.StoppedText} {
+		*s = RuneLimit(strings.Join(strings.Fields(*s), " "), 24)
+	}
+	c.MediaOptions.StoppedIcon = RuneLimit(strings.TrimSpace(c.MediaOptions.StoppedIcon), 4)
+	// The separator keeps its spaces (" ᵇʸ " needs them) but stays on one line.
+	c.MediaOptions.Separator = RuneLimit(strings.ReplaceAll(c.MediaOptions.Separator, "\n", " "), 8)
+	if strings.TrimSpace(c.MediaOptions.Separator) == "" {
+		c.MediaOptions.Separator = " — "
+	}
 
 	c.MemoryOptions.Label = RuneLimit(strings.TrimSpace(c.MemoryOptions.Label), 16)
 	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)
