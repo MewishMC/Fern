@@ -6,6 +6,7 @@ dist/
 
 # Local runtime state
 config.json
+config.json.old
 *.log
 
 # Editor and OS clutter
