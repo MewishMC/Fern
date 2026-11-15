@@ -2023,3 +2023,229 @@ html.glass.has-bg {
     margin: 0 0 12px;
     border-bottom: 1px solid var(--border-subtle);
 }
+
+/* ---------------- app integrations ---------------- */
+
+input[type="password"] {
+    font: inherit;
+    font-size: .8rem;
+    width: 100%;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: .5rem .7rem;
+    outline: none;
+    transition: border-color .15s;
+}
+
+input[type="password"]:focus {
+    border-color: var(--accent-border);
+}
+
+.badge[data-state="waiting"] {
+    color: var(--amber);
+    border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+}
+
+.badge[data-state="error"] {
+    color: var(--red);
+    border-color: color-mix(in srgb, var(--red) 50%, transparent);
+}
+
+.link-status {
+    font-size: 11.5px;
+    color: var(--text-desc);
+    padding: 8px 2px 2px;
+    overflow-wrap: anywhere;
+}
+
+.link-status[data-state="connected"] {
+    color: var(--green);
+}
+
+.link-status[data-state="waiting"] {
+    color: var(--amber);
+}
+
+.link-status[data-state="error"] {
+    color: var(--red);
+}
+
+.howto {
+    margin: 4px 0 10px;
+    padding-left: 18px;
+    font-size: 11.5px;
+    line-height: 1.6;
+    color: var(--text-desc);
+}
+
+.howto b {
+    color: var(--text-secondary);
+}
+
+.howto code,
+.field-label code,
+.hint code {
+    font-size: 10.5px;
+    padding: 0 4px;
+    border-radius: 4px;
+    background: var(--bg-hover-2);
+    color: var(--text-secondary);
+}
+
+.field-control.secret-control {
+    gap: 6px;
+}
+
+.field-control.secret-control input[type="password"] {
+    width: 170px;
+}
+
+.field-control.pair,
+.field-control.check-text {
+    gap: 8px;
+}
+
+.field-control.pair input[type="text"] {
+    width: 120px;
+}
+
+.field-control.check-text input[type="text"] {
+    width: 110px;
+}
+
+.field-control.stack {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    width: 260px;
+}
+
+.field-control.stack input[type="text"] {
+    width: 100%;
+}
+
+.btn-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.btn-row [hidden] {
+    display: none;
+}
+
+.device-box {
+    margin: 4px 0 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-border2);
+    background: var(--accent-soft);
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.device-box[data-state="error"] {
+    border-color: color-mix(in srgb, var(--red) 50%, transparent);
+    background: var(--bg-input);
+    color: var(--red);
+}
+
+.device-code {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent-light);
+    margin: 4px 0 2px;
+    user-select: all;
+}
+
+.voice-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.voice-chip {
+    font: inherit;
+    font-size: 11.5px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.voice-chip:hover:not(:disabled) {
+    background: var(--bg-hover-2);
+}
+
+.voice-chip.on {
+    color: var(--accent-light);
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+}
+
+.voice-chip:disabled,
+.sound:disabled {
+    opacity: .45;
+    cursor: default;
+}
+
+.sound-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 6px;
+    margin-top: 10px;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.sound {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    font: inherit;
+    font-size: 11.5px;
+    text-align: left;
+    padding: 7px 9px;
+    border-radius: 7px;
+    border: 1px solid var(--border-default);
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background .15s, border-color .15s;
+}
+
+.sound span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sound i {
+    font-size: 9px;
+    color: var(--text-dim);
+}
+
+.sound:hover:not(:disabled) {
+    background: var(--bg-hover-2);
+    border-color: var(--border-focus);
+}
+
+.sound.played {
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
+}
+
+.empty-note {
+    font-size: 11.5px;
+    color: var(--text-dim);
+    padding: 4px 2px;
+}
