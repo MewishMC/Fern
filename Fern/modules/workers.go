@@ -8,5 +8,6 @@ func StartWorkers() {
 	startMediaWorker()
 	startLogWorker()
 	startSpecsWorker()
+	startHeartWorker()
 	go watchVRChatProcess()
 }

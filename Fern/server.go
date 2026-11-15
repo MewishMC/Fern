@@ -68,7 +68,10 @@ type uiState struct {
 	OSC       string                `json:"osc"`
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
+	HeartRate heartState            `json:"heartRate"`
 }
+
+type heartState = modules.HeartRateStatus
 
 type afkState struct {
 	Active  bool  `json:"active"`
@@ -281,6 +284,8 @@ func handleCommand(cmd command) {
 		_ = modules.SaveNow()
 	case "update":
 		go startUpdate()
+	case "heartReset":
+		modules.ResetHeartStats()
 	}
 }
 
@@ -367,6 +372,7 @@ func buildState() uiState {
 			modules.ModuleMedia:   d.Media,
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
+			modules.ModuleHeart:   d.HeartRate,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -400,6 +406,7 @@ func buildState() uiState {
 		OSC:       oscTarget(),
 		Version:   appVersion,
 		Update:    currentUpdate(),
+		HeartRate: modules.CurrentHeartRate(),
 	}
 }
 
