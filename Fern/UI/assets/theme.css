@@ -1104,6 +1104,21 @@ select option {
     text-overflow: ellipsis;
 }
 
+/* Extra OSC outputs: host, port and a switch on one row. */
+.out-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.out-control input[type="text"] {
+    width: 150px;
+}
+
+.out-control input[type="number"] {
+    width: 86px;
+}
+
 /* Fitting the chatbox: which lines are dropped or shortened right now. */
 .row-flag {
     display: inline-block;

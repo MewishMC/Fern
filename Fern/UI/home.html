@@ -1139,6 +1139,37 @@
                     </div>
                 </div>
 
+                <div class="section-title">More outputs</div>
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Extra destinations</h3>
+                        <span class="badge" id="outBadge">off</span>
+                    </div>
+                    <div class="hint" style="margin-top:0">Send the same chatbox to up to two more places, such as a second VRChat client or an OSC router.</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Output 2</b>
+                            <span>Host and port</span>
+                        </div>
+                        <div class="field-control out-control">
+                            <input type="text" id="out0Host" autocomplete="off" aria-label="Output 2 host" placeholder="127.0.0.1">
+                            <input type="number" id="out0Port" min="1" max="65535" aria-label="Output 2 port">
+                            <label class="switch" title="Send to output 2"><input type="checkbox" id="out0On" aria-label="Send to output 2"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Output 3</b>
+                            <span>Host and port</span>
+                        </div>
+                        <div class="field-control out-control">
+                            <input type="text" id="out1Host" autocomplete="off" aria-label="Output 3 host" placeholder="127.0.0.1">
+                            <input type="number" id="out1Port" min="1" max="65535" aria-label="Output 3 port">
+                            <label class="switch" title="Send to output 3"><input type="checkbox" id="out1On" aria-label="Send to output 3"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="hint">Every change is saved to <code>%LOCALAPPDATA%\Fern\config.json</code> as you make it.</div>
             </section>
 
@@ -1757,6 +1788,9 @@
         function renderFooter(st) {
             $("oscLabel").textContent = st.osc;
             $("oscBadge").textContent = st.osc;
+            const extraOn = (st.config.OSC.extra || []).filter((o) => o.enabled).length;
+            $("outBadge").textContent = extraOn ? extraOn + " on" : "off";
+            $("outBadge").classList.toggle("on", extraOn > 0);
             const vr = vrchatLink(st.vrchat || {});
             $("vrLabel").textContent = "VRChat: " + vr.text;
             $("vrLabel").title = vr.detail;
@@ -1795,6 +1829,10 @@
                 const typing = document.activeElement;
                 if (typing !== $("oscHost")) $("oscHost").value = c.OSC.host;
                 if (typing !== $("oscPort")) $("oscPort").value = c.OSC.port;
+                (c.OSC.extra || []).forEach((out, i) => {
+                    if (typing !== $("out" + i + "Host")) $("out" + i + "Host").value = out.host;
+                    if (typing !== $("out" + i + "Port")) $("out" + i + "Port").value = out.port;
+                });
                 if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
@@ -2032,6 +2070,8 @@
         // [checkbox id, config path] — saved immediately on change.
         const CHECKS = [
             ["masterSwitch", ["display_options", "show"]],
+            ["out0On", ["OSC", "extra", 0, "enabled"]],
+            ["out1On", ["OSC", "extra", 1, "enabled"]],
             ["spinFast", ["LoadingOptions", "fast"]],
             ["loadDots", ["LoadingOptions", "show_dots"]],
             ["cycleSwitch", ["TextOptions", "cycle"]],
@@ -2670,6 +2710,14 @@
             const n = Number(v);
             return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : null;
         }, (c, v) => { c.OSC.port = v; }, "OSC port must be a whole number from 1 to 65535");
+        [0, 1].forEach((i) => {
+            commitField($("out" + i + "Host"), (v) => v.trim() || null,
+                (c, v) => { c.OSC.extra[i].host = v; }, "Output " + (i + 2) + " host can't be empty");
+            commitField($("out" + i + "Port"), (v) => {
+                const n = Number(v);
+                return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : null;
+            }, (c, v) => { c.OSC.extra[i].port = v; }, "Output " + (i + 2) + " port must be a whole number from 1 to 65535");
+        });
         commitField($("afkTime"), (v) => {
             const n = Number(v);
             return v.trim() !== "" && Number.isFinite(n) && n >= 0 && n <= 3600 ? Math.round(n) : null;

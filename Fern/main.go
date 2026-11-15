@@ -18,10 +18,6 @@ import (
 var appVersion = "2.0"
 
 var (
-	client    *osc.Client  // owned by sendLoop
-	clientKey string       // owned by sendLoop
-	oscAddr   atomic.Value // host:port of client, read by the UI server
-
 	sentCount  int64
 	lastSentAt int64
 	startedAt  = time.Now()
@@ -49,19 +45,19 @@ func main() {
 func sendLoop() {
 	for {
 		cfg := modules.GetConfig()
-		ensureClient(cfg.OSCOptions)
+		oscClients(cfg.OSCOptions)
 
 		if cfg.DisplayOptions.Show {
 			if cfg.DisplayOptions.Loading {
 				modules.AdvanceLoading(int(modules.EffectiveRateMS(cfg)))
 			}
 			body, payload := modules.BuildPayload()
-			if body != "" && client != nil {
+			if body != "" {
 				// Third argument false: do not play the notification sound on every
 				// update. While the loading animation is on this fires about once a
 				// second, which would ding everyone nearby non-stop.
 				msg := osc.NewMessage("/chatbox/input", payload, true, false)
-				if err := client.Send(msg); err == nil {
+				if sendOSC(cfg.OSCOptions, msg) > 0 {
 					atomic.AddInt64(&sentCount, 1)
 					atomic.StoreInt64(&lastSentAt, time.Now().UnixMilli())
 					modules.AddHistory(body)
@@ -78,21 +74,4 @@ func sendLoop() {
 		case <-time.After(timeout):
 		}
 	}
-}
-
-func ensureClient(opts modules.OSCOptions) {
-	key := fmt.Sprintf("%s:%d", opts.Host, opts.Port)
-	if client != nil && clientKey == key {
-		return
-	}
-	client = osc.NewClient(opts.Host, opts.Port)
-	clientKey = key
-	oscAddr.Store(key)
-}
-
-func oscTarget() string {
-	if addr, ok := oscAddr.Load().(string); ok {
-		return addr
-	}
-	return "127.0.0.1:9000"
 }

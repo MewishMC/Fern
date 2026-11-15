@@ -188,6 +188,23 @@ type LogsOptions struct {
 type OSCOptions struct {
 	Host string `json:"host"`
 	Port int    `json:"port"`
+	// Extra are more places that get the same chatbox, e.g. a second VRChat
+	// or an OSC router. Always ExtraOutputs entries.
+	Extra []OSCTarget `json:"extra"`
+}
+
+// OSCTarget is one more OSC destination.
+type OSCTarget struct {
+	Enabled bool   `json:"enabled"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+}
+
+// ExtraOutputs is how many OSC destinations can be added to the main one.
+const ExtraOutputs = 2
+
+func defaultExtraOutput(i int) OSCTarget {
+	return OSCTarget{Host: "127.0.0.1", Port: 9002 + i}
 }
 
 // Config is the persisted application configuration.
@@ -306,8 +323,9 @@ func DefaultConfig() Config {
 			MaxChars:  80,
 		},
 		OSCOptions: OSCOptions{
-			Host: "127.0.0.1",
-			Port: 9000,
+			Host:  "127.0.0.1",
+			Port:  9000,
+			Extra: []OSCTarget{defaultExtraOutput(0), defaultExtraOutput(1)},
 		},
 		TimeoutMS: 2500,
 	}
@@ -322,6 +340,7 @@ func (c Config) clone() Config {
 		out.DisplayOptions.Visibility[id] = v
 	}
 	out.TextMessages = append([]string{}, c.TextMessages...)
+	out.OSCOptions.Extra = append([]OSCTarget{}, c.OSCOptions.Extra...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	return out
@@ -696,6 +715,21 @@ func (c *Config) sanitize() {
 	if c.OSCOptions.Port < 1 || c.OSCOptions.Port > 65535 {
 		c.OSCOptions.Port = 9000
 	}
+	extra := make([]OSCTarget, ExtraOutputs)
+	for i := range extra {
+		extra[i] = defaultExtraOutput(i)
+		if i < len(c.OSCOptions.Extra) {
+			t := c.OSCOptions.Extra[i]
+			extra[i].Enabled = t.Enabled
+			if host := RuneLimit(strings.TrimSpace(t.Host), 253); host != "" {
+				extra[i].Host = host
+			}
+			if t.Port >= 1 && t.Port <= 65535 {
+				extra[i].Port = t.Port
+			}
+		}
+	}
+	c.OSCOptions.Extra = extra
 
 	// Keep messages exactly as typed, blanks included. Editing a message briefly
 	// empties it, and dropping blank entries here made rows vanish mid-edit and
