@@ -92,9 +92,11 @@ type perfState struct {
 }
 
 type logsState struct {
-	Join     []modules.LogEvent `json:"join"`
-	Leave    []modules.LogEvent `json:"leave"`
-	Activity []modules.LogEvent `json:"activity"`
+	Join     []modules.LogEvent   `json:"join"`
+	Leave    []modules.LogEvent   `json:"leave"`
+	Activity []modules.LogEvent   `json:"activity"`
+	World    *modules.WorldInfo   `json:"world"` // null when not in an instance
+	Session  modules.SessionStats `json:"session"`
 }
 
 type holdState struct {
@@ -376,6 +378,7 @@ func buildState() uiState {
 			modules.ModuleLogs:    d.VRChatLogs,
 			modules.ModuleNetwork: d.Network,
 			modules.ModuleGPU:     d.GPU,
+			modules.ModuleWorld:   d.World,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -399,6 +402,8 @@ func buildState() uiState {
 			Join:     orEmpty(modules.JoinLogs()),
 			Leave:    orEmpty(modules.LeaveLogs()),
 			Activity: orEmpty(modules.ActivityFeed()),
+			World:    currentWorld(),
+			Session:  modules.Session(),
 		},
 		History:   orEmpty(modules.History()),
 		Hold:      holdState{Text: holdText, Until: holdUntil, Pinned: holdPinned},
@@ -412,6 +417,13 @@ func buildState() uiState {
 		Network:   currentNetwork(),
 		GPUs:      orEmpty(modules.GPUs()),
 	}
+}
+
+func currentWorld() *modules.WorldInfo {
+	if w, ok := modules.CurrentWorld(); ok {
+		return &w
+	}
+	return nil
 }
 
 func currentNetwork() networkState {

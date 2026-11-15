@@ -23,13 +23,14 @@ const (
 	ModuleLogs    = "logs"
 	ModuleNetwork = "network"
 	ModuleGPU     = "gpu"
+	ModuleWorld   = "world"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
 	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
-	ModuleNetwork, ModuleGPU,
+	ModuleNetwork, ModuleGPU, ModuleWorld,
 }
 
 var knownModules = func() map[string]bool {
@@ -54,6 +55,7 @@ type DisplayOptions struct {
 	VRChatLogs   bool     `json:"vr_chat_logs"`
 	Network      bool     `json:"network"`
 	GPU          bool     `json:"gpu"`
+	World        bool     `json:"world"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -199,10 +201,27 @@ type NetworkOptions struct {
 
 // LogsOptions controls the VRChat log line.
 type LogsOptions struct {
-	Label     string `json:"label"`
-	ShowJoin  bool   `json:"show_join"`
-	ShowLeave bool   `json:"show_leave"`
-	MaxChars  int    `json:"max_chars"`
+	Label          string `json:"label"`
+	ShowJoin       bool   `json:"show_join"`
+	ShowLeave      bool   `json:"show_leave"`
+	ShowScreenshot bool   `json:"show_screenshot"`
+	ShowLoaded     bool   `json:"show_loaded"`     // "Loaded <world> in 12s"
+	MarkSeenAgain  bool   `json:"mark_seen_again"` // "<name> joined again" for players met earlier
+	HideAfter      int    `json:"hide_after"`      // seconds an event stays; 0 keeps it until the next
+	MaxChars       int    `json:"max_chars"`
+}
+
+// WorldOptions controls the VRChat world and instance line.
+type WorldOptions struct {
+	Label      string `json:"label"`
+	ShowName   bool   `json:"show_name"`
+	ShowCount  bool   `json:"show_count"`
+	ShowPeak   bool   `json:"show_peak"`
+	ShowType   bool   `json:"show_type"`
+	ShowRegion bool   `json:"show_region"`
+	ShowTime   bool   `json:"show_time"`  // time in this instance
+	ShowStats  bool   `json:"show_stats"` // worlds visited and players met this session
+	MaxChars   int    `json:"max_chars"`  // limit for the world name; 0 means none
 }
 
 // OSCOptions is where chatbox messages are sent.
@@ -226,6 +245,7 @@ type Config struct {
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	NetworkOptions NetworkOptions `json:"NetworkOptions"`
 	GPUOptions     GPUOptions     `json:"GPUOptions"`
+	WorldOptions   WorldOptions   `json:"WorldOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -321,10 +341,20 @@ func DefaultConfig() Config {
 			Decimals:  0,
 		},
 		LogsOptions: LogsOptions{
-			Label:     "",
-			ShowJoin:  true,
-			ShowLeave: true,
-			MaxChars:  80,
+			Label:          "",
+			ShowJoin:       true,
+			ShowLeave:      true,
+			ShowScreenshot: true,
+			ShowLoaded:     true,
+			MarkSeenAgain:  true,
+			MaxChars:       80,
+		},
+		WorldOptions: WorldOptions{
+			ShowName:   true,
+			ShowCount:  true,
+			ShowType:   true,
+			ShowRegion: true,
+			MaxChars:   40,
 		},
 		GPUOptions: GPUOptions{
 			Label:         "ᵍᵖᵘ",
@@ -518,6 +548,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.Network
 	case ModuleGPU:
 		return &d.GPU
+	case ModuleWorld:
+		return &d.World
 	}
 	return nil
 }
@@ -679,6 +711,9 @@ func (c *Config) sanitize() {
 	c.WindowOptions.Connector = RuneLimit(strings.TrimSpace(c.WindowOptions.Connector), 16)
 	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
+	c.LogsOptions.HideAfter = clampInt(c.LogsOptions.HideAfter, 0, 3600)
+	c.WorldOptions.Label = RuneLimit(strings.TrimSpace(c.WorldOptions.Label), 16)
+	c.WorldOptions.MaxChars = clampInt(c.WorldOptions.MaxChars, 0, 144)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
 	c.NetworkOptions.Label = RuneLimit(strings.TrimSpace(c.NetworkOptions.Label), 16)
 	c.NetworkOptions.Adapter = RuneLimit(strings.TrimSpace(c.NetworkOptions.Adapter), 256)

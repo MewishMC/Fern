@@ -906,7 +906,7 @@
                     <div class="field">
                         <div class="field-label">
                             <b>Show the VRChat log line</b>
-                            <span>Latest join or leave, straight from the VRChat log</span>
+                            <span>Latest join, leave, screenshot or world load, straight from the VRChat log</span>
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" data-module-toggle="logs"><span></span></label>
@@ -942,6 +942,43 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Show screenshots</b>
+                            <span>“Took a screenshot” when you take a photo in VRChat</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="logsScreenshot"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show world loads</b>
+                            <span>“Loaded &lt;world&gt; in 14s · 230 MB” once a world has downloaded and loaded</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="logsLoaded"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Mark players seen again</b>
+                            <span>“X joined again” for someone you already met this session</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="logsSeenAgain"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Hide events after</b>
+                            <span>The line goes quiet once the newest event is this old. Never keeps it until the next one.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="logsHideAfter" min="0" max="120" step="5">
+                            <span class="val" id="logsHideAfterVal"></span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Line length limit</b>
                             <span>0 keeps the whole event</span>
                         </div>
@@ -949,6 +986,19 @@
                             <input type="range" id="logsMaxChars" min="0" max="144" step="4">
                             <span class="val" id="logsMaxCharsVal">80</span>
                         </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>This session</h3>
+                        <span class="count" id="sessionSince"></span>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="sessWorld">—</b><span id="sessInstance">Not in a world</span></div>
+                        <div class="stat"><b id="sessPlayers">0</b><span>Players here · peak</span></div>
+                        <div class="stat"><b id="sessWorlds">0</b><span>Worlds visited</span></div>
+                        <div class="stat"><b id="sessMet">0</b><span>Players met · most at once</span></div>
                     </div>
                 </div>
 
@@ -983,6 +1033,125 @@
                             <span class="count" id="historyCount">0</span>
                         </div>
                         <div class="log-list" id="historyList"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= WORLD ================= -->
+            <section class="page" id="page-world">
+                <div class="page-head">
+                    <div>
+                        <h2>VRChat world</h2>
+                        <p>The world and instance you are in, read from the VRChat log</p>
+                    </div>
+                    <span class="badge" id="worldBadge">not in a world</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the world line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="world"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Right now</h3>
+                        <span class="count" id="worldId"></span>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="worldNowName">—</b><span>World</span></div>
+                        <div class="stat"><b id="worldNowInst">—</b><span>Instance and region</span></div>
+                        <div class="stat"><b id="worldNowPlayers">—</b><span>Players · peak</span></div>
+                        <div class="stat"><b id="worldNowTime">—</b><span>Time here</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the world. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="worldLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the world name</b>
+                            <span>As VRChat names it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="worldName"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>World name limit</b>
+                            <span>0 keeps the whole name</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="worldMaxChars" min="0" max="80" step="4">
+                            <span class="val" id="worldMaxCharsVal"></span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show player count</b>
+                            <span>Everyone in the instance, you included</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="worldCount"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the peak</b>
+                            <span>Most players at once in this instance, when it was higher</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="worldPeak"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show instance type</b>
+                            <span>Public, Friends+, Invite, Group+ and so on</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="worldType"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show region</b>
+                            <span>US West, US East, EU or JP</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="worldRegion"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show time here</b>
+                            <span>How long you have been in this instance</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="worldTime"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show session stats</b>
+                            <span>Worlds visited and players met since Fern started</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="worldStats"><span></span></label>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -1510,7 +1679,8 @@
         ];
         const MODULES = [
             { id: "afk", name: "AFK", icon: "fa-moon", category: "vrchat", desc: "AFK timer since last activity", keywords: "idle away" },
-            { id: "logs", name: "VRChat log", icon: "fa-scroll", category: "vrchat", desc: "Latest VRChat join / leave", keywords: "players join leave instance" },
+            { id: "logs", name: "VRChat log", icon: "fa-scroll", category: "vrchat", desc: "Latest join, leave, screenshot or world load", keywords: "players join leave instance screenshot photo download" },
+            { id: "world", name: "VRChat world", icon: "fa-earth-americas", category: "vrchat", desc: "World, players and instance type", keywords: "instance region players count session stats" },
             { id: "media", name: "Media", icon: "fa-music", category: "media", desc: "Now playing track with playback time", keywords: "spotify song music now playing" },
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
             { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
@@ -2230,14 +2400,33 @@
 
         function renderLogs(st) {
             const logs = st.logs || {};
-            paintLog($("joinList"), logs.join, (e) => "joined · " + e.text);
+            paintLog($("joinList"), logs.join, (e) => "joined · " + e.text + (e.again ? " · seen again" : ""));
             paintLog($("leaveList"), logs.leave, (e) => "left · " + e.text);
-            paintLog($("activityList"), logs.activity, (e) => e.text);
+            paintLog($("activityList"), logs.activity, (e) => e.text + (e.again ? " · seen again" : ""));
             paintLog($("historyList"), st.history, (e) => e.text);
             $("joinCount").textContent = (logs.join || []).length;
             $("leaveCount").textContent = (logs.leave || []).length;
             $("activityCount").textContent = (logs.activity || []).length;
             $("historyCount").textContent = (st.history || []).length;
+            renderWorld(logs.world, logs.session || {});
+        }
+
+        function renderWorld(w, s) {
+            const inst = w ? [w.type, w.region].filter(Boolean).join(" · ") : "";
+            const name = w ? (w.name || (w.loading ? "Loading…" : "Unknown world")) : "—";
+            $("sessWorld").textContent = name;
+            $("sessInstance").textContent = w ? inst || "Instance" : "Not in a world";
+            $("sessPlayers").textContent = w ? w.players + " · " + w.peak : "0";
+            $("sessWorlds").textContent = s.worlds || 0;
+            $("sessMet").textContent = (s.players || 0) + " · " + (s.peak || 0);
+            $("sessionSince").textContent = s.since ? "since " + fmtAgo(s.since) : "";
+            $("worldNowName").textContent = name;
+            $("worldNowInst").textContent = w ? inst || "—" : "—";
+            $("worldNowPlayers").textContent = w ? w.players + " · " + w.peak : "—";
+            $("worldNowTime").textContent = w && w.joinedAt ? fmtDuration(Math.max(0, Math.floor((Date.now() - w.joinedAt) / 1000))) : "—";
+            $("worldId").textContent = w ? w.id : "";
+            $("worldBadge").textContent = w ? (w.loading ? "loading" : "in a world") : "not in a world";
+            $("worldBadge").classList.toggle("on", !!w);
         }
 
         function paintLog(container, events, format) {
@@ -2342,6 +2531,16 @@
             ["gpuVramTotal", ["GPUOptions", "show_vram_total"]],
             ["gpuTemp", ["GPUOptions", "show_temp"]],
             ["gpuFahrenheit", ["GPUOptions", "fahrenheit"]],
+            ["logsScreenshot", ["LogsOptions", "show_screenshot"]],
+            ["logsLoaded", ["LogsOptions", "show_loaded"]],
+            ["logsSeenAgain", ["LogsOptions", "mark_seen_again"]],
+            ["worldName", ["WorldOptions", "show_name"]],
+            ["worldCount", ["WorldOptions", "show_count"]],
+            ["worldPeak", ["WorldOptions", "show_peak"]],
+            ["worldType", ["WorldOptions", "show_type"]],
+            ["worldRegion", ["WorldOptions", "show_region"]],
+            ["worldTime", ["WorldOptions", "show_time"]],
+            ["worldStats", ["WorldOptions", "show_stats"]],
         ];
 
         const asIs = (v) => String(v);
@@ -2360,6 +2559,8 @@
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
             ["cpuDecimals", ["CPUOptions", "decimals"], "cpuDecimalsVal", asIs],
+            ["logsHideAfter", ["LogsOptions", "hide_after"], "logsHideAfterVal", (v) => (v ? v + "s" : "never")],
+            ["worldMaxChars", ["WorldOptions", "max_chars"], "worldMaxCharsVal", (v) => (v ? String(v) : "no limit")],
         ];
 
         // [text input id, config path, max length] — debounced.
@@ -2387,6 +2588,7 @@
             ["gpuLabel", ["GPUOptions", "label"], 16],
             ["gpuCustomName", ["GPUOptions", "custom_name"], 40],
             ["cpuCustomName", ["CPUOptions", "custom_name"], 40],
+            ["worldLabel", ["WorldOptions", "label"], 16],
         ];
 
         // Settings that do nothing given another setting are dimmed and locked:
@@ -2418,6 +2620,9 @@
             ["cpuCustomName", (c) => c.CPUOptions.show_name],
             ["gpuVramTotal", (c) => c.GPUOptions.show_vram],
             ["gpuFahrenheit", (c) => c.GPUOptions.show_temp],
+            ["logsSeenAgain", (c) => c.LogsOptions.show_join],
+            ["worldMaxChars", (c) => c.WorldOptions.show_name],
+            ["worldPeak", (c) => c.WorldOptions.show_count],
         ];
         function applyDepends(c) {
             if (!c) return;
