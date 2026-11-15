@@ -21,12 +21,15 @@ const (
 	ModuleMedia   = "media"
 	ModuleWindow  = "window"
 	ModuleLogs    = "logs"
+	ModuleBattery = "battery"
+	ModuleVRPerf  = "vrperf"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
 	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
+	ModuleBattery, ModuleVRPerf,
 }
 
 var knownModules = func() map[string]bool {
@@ -49,6 +52,8 @@ type DisplayOptions struct {
 	ActiveWindow bool     `json:"active_window"`
 	CPU          bool     `json:"cpu"`
 	VRChatLogs   bool     `json:"vr_chat_logs"`
+	Battery      bool     `json:"battery"`
+	VRPerf       bool     `json:"vr_perf"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -170,6 +175,65 @@ type LogsOptions struct {
 	MaxChars  int    `json:"max_chars"`
 }
 
+// BatteryOptions controls the SteamVR tracker battery line.
+type BatteryOptions struct {
+	Label           string          `json:"label"`
+	Template        string          `json:"template"` // per device; see batteryEntry
+	Separator       string          `json:"separator"`
+	ShowHeadset     bool            `json:"show_headset"`
+	ShowControllers bool            `json:"show_controllers"`
+	ShowTrackers    bool            `json:"show_trackers"`
+	HeadsetIcon     string          `json:"headset_icon"`
+	ControllerIcon  string          `json:"controller_icon"`
+	TrackerIcon     string          `json:"tracker_icon"`
+	ChargingMark    string          `json:"charging_mark"` // {charging}; added at the end when the template has none
+	LowThreshold    int             `json:"low_threshold"` // percent at or below which a device is low
+	LowTag          string          `json:"low_tag"`       // {low}
+	OnlyLow         bool            `json:"only_low"`      // leave out devices that are not low
+	OnlyLowest      bool            `json:"only_lowest"`   // show just the emptiest device
+	Sort            string          `json:"sort"`          // detected, name, low, high, type
+	MaxDevices      int             `json:"max_devices"`   // 0 means all
+	Devices         []BatteryDevice `json:"devices"`       // remembered by serial
+}
+
+// BatteryDevice is a device Fern has seen, so a name or hide choice sticks.
+type BatteryDevice struct {
+	Serial string `json:"serial"`
+	Name   string `json:"name"`   // the user's name; empty uses the detected one
+	Kind   string `json:"kind"`   // headset, left, right, controller or tracker, as last seen
+	Model  string `json:"model"`  // as SteamVR reports it
+	Hidden bool   `json:"hidden"` // never shown on the line
+}
+
+// Ways the battery line can be sorted.
+const (
+	BatterySortDetected = "detected"
+	BatterySortName     = "name"
+	BatterySortLow      = "low"
+	BatterySortHigh     = "high"
+	BatterySortType     = "type"
+)
+
+// VRPerfOptions controls the SteamVR performance line.
+type VRPerfOptions struct {
+	Label            string `json:"label"`
+	ShowFPS          bool   `json:"show_fps"`
+	ShowHz           bool   `json:"show_hz"`
+	ShowReprojection bool   `json:"show_reprojection"`
+	ShowDropped      bool   `json:"show_dropped"`
+	ShowGPU          bool   `json:"show_gpu"`
+	ShowCPU          bool   `json:"show_cpu"`
+	ShowBudget       bool   `json:"show_budget"`
+	ShowSmoothing    bool   `json:"show_smoothing"`
+	SmallUnits       bool   `json:"small_units"` // superscript labels, e.g. 90ᶠᵖˢ
+	Separator        string `json:"separator"`
+	OnlyWhenBad      bool   `json:"only_when_bad"`
+	BadReprojection  int    `json:"bad_reprojection"`    // percent of frames reprojected; 0 ignores it
+	BadDroppedPerMin int    `json:"bad_dropped_per_min"` // dropped frames in the last minute; 0 ignores it
+	BadFPSPercent    int    `json:"bad_fps_percent"`     // fps below this share of the refresh rate; 0 ignores it
+	ClearSeconds     int    `json:"clear_seconds"`       // how long it must run well before it counts as fine again
+}
+
 // OSCOptions is where chatbox messages are sent.
 type OSCOptions struct {
 	Host string `json:"host"`
@@ -189,6 +253,8 @@ type Config struct {
 	MemoryOptions  MemoryOptions  `json:"MemoryOptions"`
 	CPUOptions     CPUOptions     `json:"CPUOptions"`
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
+	BatteryOptions BatteryOptions `json:"BatteryOptions"`
+	VRPerfOptions  VRPerfOptions  `json:"VRPerfOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -216,6 +282,8 @@ func DefaultConfig() Config {
 			ActiveWindow: false,
 			CPU:          false,
 			VRChatLogs:   false,
+			Battery:      false,
+			VRPerf:       false,
 			Order:        append([]string{}, DefaultOrder...),
 			Separator:    "\n",
 			MaxChars:     144,
@@ -289,6 +357,30 @@ func DefaultConfig() Config {
 			ShowLeave: true,
 			MaxChars:  80,
 		},
+		BatteryOptions: BatteryOptions{
+			Template:        "{icon} {name} {batt}%{charging} {low}",
+			Separator:       " | ",
+			ShowHeadset:     true,
+			ShowControllers: true,
+			ShowTrackers:    true,
+			HeadsetIcon:     "🥽",
+			ControllerIcon:  "🎮",
+			TrackerIcon:     "📍",
+			ChargingMark:    "⚡",
+			LowThreshold:    20,
+			LowTag:          "LOW",
+			Sort:            BatterySortDetected,
+		},
+		VRPerfOptions: VRPerfOptions{
+			ShowFPS:          true,
+			ShowReprojection: true,
+			SmallUnits:       true,
+			Separator:        " ¦ ",
+			BadReprojection:  10,
+			BadDroppedPerMin: 5,
+			BadFPSPercent:    90,
+			ClearSeconds:     5,
+		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
 			Port: 9000,
@@ -303,6 +395,7 @@ func (c Config) clone() Config {
 	out.TextMessages = append([]string{}, c.TextMessages...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
+	out.BatteryOptions.Devices = append([]BatteryDevice{}, c.BatteryOptions.Devices...)
 	return out
 }
 
@@ -464,6 +557,10 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.ActiveWindow
 	case ModuleLogs:
 		return &d.VRChatLogs
+	case ModuleBattery:
+		return &d.Battery
+	case ModuleVRPerf:
+		return &d.VRPerf
 	}
 	return nil
 }
@@ -631,6 +728,8 @@ func (c *Config) sanitize() {
 	default:
 		c.AfkOptions.TimerStyle = "full"
 	}
+
+	c.sanitizeSteamVR()
 
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"

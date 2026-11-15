@@ -97,6 +97,10 @@ func moduleText(id string, cfg Config) string {
 		return windowLine(cfg)
 	case ModuleLogs:
 		return logsLine(cfg)
+	case ModuleBattery:
+		return batteryLine(cfg)
+	case ModuleVRPerf:
+		return vrPerfLine(cfg)
 	}
 	return ""
 }
