@@ -299,11 +299,40 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
-                            <b>Random order</b>
-                            <span>Shuffle instead of going down the list</span>
+                            <b>Order</b>
+                            <span>Weighted brings back the messages you haven't seen for longest</span>
                         </div>
                         <div class="field-control">
-                            <label class="switch"><input type="checkbox" id="shuffleSwitch"><span></span></label>
+                            <select id="textOrder" style="width:190px">
+                                <option value="list">Down the list</option>
+                                <option value="shuffle">Shuffle</option>
+                                <option value="weighted">Weighted shuffle</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Cycle through</b>
+                            <span>Every hearted message, or only one group</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="textGroup" style="width:190px"></select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Icons</b>
+                            <span>Put in front of each message, the next one each time it changes. Separate with spaces.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="textIcons" placeholder="none, e.g. ✦ ♡ ☾" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Shuffle icons</b>
+                            <span>Pick the icons at random instead of in turn</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="textIconsRandom"><span></span></label>
                         </div>
                     </div>
                     <div class="field">
@@ -318,9 +347,18 @@
                     </div>
                 </div>
 
+                <div class="section-title">Groups</div>
+                <div class="card">
+                    <div class="text-groups" id="textGroups"></div>
+                    <div class="window-add">
+                        <input type="text" id="textGroupName" maxlength="24" placeholder="New group, like Night or Busy" autocomplete="off" aria-label="Group name">
+                        <button class="btn" id="textGroupAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add group</button>
+                    </div>
+                </div>
+
                 <div class="section-title">Messages <span class="badge" id="msgCount">0</span></div>
                 <div class="list" id="msgList"></div>
-                <div class="hint">Drag the handle to reorder. Empty messages are ignored.</div>
+                <div class="hint" id="msgHint">Drag the handle to reorder. The heart puts a message in the rotation; empty messages are ignored.</div>
             </section>
 
             <!-- ================= MEMORY ================= -->
@@ -1918,22 +1956,115 @@
             S.msgsDirty = Date.now() + 2500;
         }
 
+        // Messages are { text, on, group }. Old Fern versions sent plain
+        // strings; treat those as hearted messages in no group.
+        const asMessage = (m) => (typeof m === "string" ? { text: m, on: true, group: "" } : { text: m.text || "", on: m.on !== false, group: m.group || "" });
+
         function syncMessages(st) {
-            const server = (st.config.TextMessages || []).slice();
+            const server = (st.config.TextMessages || []).map(asMessage);
+            const groups = st.config.TextOptions.groups || [];
             const active = document.activeElement;
-            const editing = !!(active && active.classList && active.classList.contains("msg-input"));
-            const sig = server.join("\u0001");
+            const editing = !!(active && active.closest && active.closest("#msgList"));
+            const sig = JSON.stringify(server) + "|" + groups.join("\u0001");
 
             if (!S.msgs || (!editing && Date.now() > S.msgsDirty && sig !== S.msgSig)) {
                 S.msgs = server;
                 S.msgSig = sig;
+                S.msgGroups = groups;
                 paintMessages();
             }
-            $("msgCount").textContent = (S.msgs || []).length;
+            renderTextOptions(st);
+            markCurrentMessage(st.textIndex);
+        }
+
+        // Which messages the rotation can show, matching inRotation in Texts.go.
+        function rotationCount(messages, group) {
+            return messages.filter((m) => m.on && m.text.trim() && (!group || m.group.toLowerCase() === group.toLowerCase())).length;
+        }
+
+        function markCurrentMessage(index) {
+            $("msgList").querySelectorAll(".row").forEach((row) => {
+                row.classList.toggle("current", Number(row.dataset.index) === index);
+            });
+        }
+
+        function groupOptions(select, groups, blank) {
+            select.innerHTML = "";
+            [["", blank]].concat(groups.map((g) => [g, g])).forEach(([value, label]) => {
+                const option = document.createElement("option");
+                option.value = value;
+                option.textContent = label;
+                select.appendChild(option);
+            });
+        }
+
+        function renderTextOptions(st) {
+            const o = st.config.TextOptions;
+            const groups = o.groups || [];
+            const messages = S.msgs || [];
+            const locked = lockForms();
+            const groupsSig = groups.join("\u0001");
+            if (S.textGroupsSig !== groupsSig) {
+                S.textGroupsSig = groupsSig;
+                groupOptions($("textGroup"), groups, "All hearted messages");
+                S.groupChipsSig = "";
+            }
+            if (!locked) {
+                $("textOrder").value = !o.shuffle ? "list" : (o.weighted ? "weighted" : "shuffle");
+                $("textGroup").value = o.group || "";
+                if (document.activeElement !== $("textIcons")) $("textIcons").value = (o.icons || []).join(" ");
+            }
+            $("textIconsRandom").closest(".field").classList.toggle("inactive", (o.icons || []).length < 2);
+
+            const counts = {};
+            messages.forEach((m) => { if (m.group) counts[m.group.toLowerCase()] = (counts[m.group.toLowerCase()] || 0) + 1; });
+            const chipsSig = groupsSig + "|" + JSON.stringify(counts) + "|" + (o.group || "");
+            if (S.groupChipsSig !== chipsSig) {
+                S.groupChipsSig = chipsSig;
+                const box = $("textGroups");
+                box.innerHTML = "";
+                if (!groups.length) {
+                    const empty = document.createElement("span");
+                    empty.className = "row-desc";
+                    empty.textContent = "No groups yet. Groups let you cycle through just one set, like daytime or busy messages.";
+                    box.appendChild(empty);
+                }
+                groups.forEach((g) => {
+                    const chip = document.createElement("span");
+                    chip.className = "text-group" + (g.toLowerCase() === (o.group || "").toLowerCase() ? " on" : "");
+                    const name = document.createElement("button");
+                    name.type = "button";
+                    name.dataset.groupPick = g;
+                    name.title = "Cycle through only this group";
+                    name.textContent = g;
+                    const count = document.createElement("b");
+                    count.textContent = counts[g.toLowerCase()] || 0;
+                    name.appendChild(count);
+                    const del = document.createElement("button");
+                    del.type = "button";
+                    del.className = "mini-x";
+                    del.dataset.groupDel = g;
+                    del.title = "Remove group";
+                    del.setAttribute("aria-label", "Remove group " + g);
+                    del.textContent = "✕";
+                    chip.appendChild(name);
+                    chip.appendChild(del);
+                    box.appendChild(chip);
+                });
+            }
+
+            const live = rotationCount(messages, o.group);
+            $("msgCount").textContent = live + " / " + messages.length;
+            $("msgCount").title = live + " in the rotation, " + messages.length + " in all";
+            $("msgHint").textContent = messages.length && !live
+                ? "Nothing is in the rotation: heart a message" + (o.group ? " in " + o.group + ", or cycle through all messages." : ".")
+                : "Drag the handle to reorder. The heart puts a message in the rotation; empty messages are ignored.";
+            $("msgHint").classList.toggle("warn", !!(messages.length && !live));
         }
 
         function paintMessages() {
             const messages = S.msgs || [];
+            const groups = S.msgGroups || [];
             const list = $("msgList");
             list.innerHTML = "";
             if (!messages.length) {
@@ -1945,15 +2076,27 @@
             }
             messages.forEach((message, index) => {
                 const row = document.createElement("div");
-                row.className = "row";
+                row.className = "row msg-row" + (message.on ? "" : " off");
                 row.dataset.index = String(index);
                 row.innerHTML =
                     '<span class="grip" draggable="true" title="Drag to reorder">⠿</span>' +
-                    '<input class="msg-input" type="text" data-msg="' + index + '" placeholder="empty — ignored" maxlength="144">' +
-                    '<button class="mini-x" data-del="' + index + '" title="Remove">✕</button>';
-                row.querySelector(".msg-input").value = message;
+                    '<button class="heart" type="button" data-heart="' + index + '"></button>' +
+                    '<input class="msg-input" type="text" data-msg="' + index + '" placeholder="empty — ignored" maxlength="144" aria-label="Message ' + (index + 1) + '">' +
+                    '<select class="msg-group" data-group="' + index + '" aria-label="Group of message ' + (index + 1) + '"></select>' +
+                    '<button class="mini-x" data-del="' + index + '" title="Remove" aria-label="Remove message ' + (index + 1) + '">✕</button>';
+                row.querySelector(".msg-input").value = message.text;
+                const heart = row.querySelector(".heart");
+                heart.textContent = message.on ? "♥" : "♡";
+                heart.title = message.on ? "In the rotation" : "Left out of the rotation";
+                heart.setAttribute("aria-pressed", message.on ? "true" : "false");
+                heart.setAttribute("aria-label", "Message " + (index + 1) + " in the rotation");
+                const select = row.querySelector(".msg-group");
+                groupOptions(select, groups, "No group");
+                select.value = message.group;
+                select.hidden = !groups.length;
                 list.appendChild(row);
             });
+            if (S.state) markCurrentMessage(S.state.textIndex);
         }
 
         function renderLogs(st) {
@@ -2033,7 +2176,7 @@
             ["spinFast", ["LoadingOptions", "fast"]],
             ["loadDots", ["LoadingOptions", "show_dots"]],
             ["cycleSwitch", ["TextOptions", "cycle"]],
-            ["shuffleSwitch", ["TextOptions", "shuffle"]],
+            ["textIconsRandom", ["TextOptions", "icons_random"]],
             ["pausedSwitch", ["MediaOptions", "show_when_paused"]],
             ["mediaArtist", ["MediaOptions", "show_artist"]],
             ["mediaAlbum", ["MediaOptions", "show_album"]],
@@ -2481,10 +2624,8 @@
         });
 
         dragTarget($("msgList"), (rows) => {
-            S.msgs = rows.map((row) => {
-                const input = row.querySelector(".msg-input");
-                return input ? input.value : "";
-            });
+            const before = S.msgs || [];
+            S.msgs = rows.map((row) => before[Number(row.dataset.index)]).filter(Boolean);
             markMsgsDirty();
             paintMessages();
             pushMessages(true);
@@ -2496,7 +2637,9 @@
         });
         $("btnAddMsg").addEventListener("click", () => {
             if (!S.msgs) S.msgs = [];
-            S.msgs.push("");
+            // While the rotation is limited to a group, new messages join it.
+            const c = config();
+            S.msgs.push({ text: "", on: true, group: (c && c.TextOptions.group) || "" });
             markMsgsDirty();
             paintMessages();
             pushMessages(true);
@@ -2511,22 +2654,115 @@
         });
 
         function pushMessages(now) {
-            const messages = (S.msgs || []).slice();
-            S.msgSig = messages.join("\u0001");
+            const messages = (S.msgs || []).map((m) => Object.assign({}, m));
+            S.msgSig = JSON.stringify(messages) + "|" + (S.msgGroups || []).join("\u0001");
             markMsgsDirty();
             return pushConfig(function (c) { c.TextMessages = messages; }, now);
         }
+
+        $("msgList").addEventListener("change", (ev) => {
+            const select = ev.target.closest("[data-group]");
+            if (!select || !S.msgs) return;
+            const message = S.msgs[num(select.dataset.group, -1)];
+            if (!message) return;
+            message.group = select.value;
+            pushMessages(true);
+        });
+
+        $("textOrder").addEventListener("change", (ev) => {
+            const v = ev.target.value;
+            pushConfigNow((c) => {
+                c.TextOptions.shuffle = v !== "list";
+                c.TextOptions.weighted = v === "weighted";
+            });
+        });
+        $("textGroup").addEventListener("change", (ev) => {
+            const v = ev.target.value;
+            if (pushConfigNow((c) => { c.TextOptions.group = v; })) toast(v ? "Cycling through " + v : "Cycling through all hearted messages");
+        });
+        $("textIcons").addEventListener("input", (ev) => {
+            const icons = ev.target.value.split(/\s+/).filter(Boolean).slice(0, 40);
+            pushConfig((c) => { c.TextOptions.icons = icons; });
+        });
+
+        function addGroup() {
+            const input = $("textGroupName");
+            const name = Array.from(input.value.trim()).slice(0, 24).join("");
+            if (!name) { input.focus(); return; }
+            const c = config();
+            const groups = (c && c.TextOptions.groups) || [];
+            if (groups.some((g) => g.toLowerCase() === name.toLowerCase())) {
+                toast(name + " is already a group", true);
+                return;
+            }
+            if (pushConfigNow((cfg) => { cfg.TextOptions.groups = (cfg.TextOptions.groups || []).concat([name]); })) {
+                input.value = "";
+                toast("Added group " + name);
+            }
+        }
+        $("textGroupAdd").addEventListener("click", addGroup);
+        $("textGroupName").addEventListener("keydown", (ev) => { if (ev.key === "Enter") addGroup(); });
+
+        $("textGroups").addEventListener("click", (ev) => {
+            const pick = ev.target.closest("[data-group-pick]");
+            if (pick) {
+                const c = config();
+                const g = pick.dataset.groupPick;
+                const next = c && c.TextOptions.group === g ? "" : g;
+                if (pushConfigNow((cfg) => { cfg.TextOptions.group = next; })) toast(next ? "Cycling through " + next : "Cycling through all hearted messages");
+                return;
+            }
+            const del = ev.target.closest("[data-group-del]");
+            if (!del) return;
+            const g = del.dataset.groupDel;
+            const lower = g.toLowerCase();
+            const members = [];
+            (S.msgs || []).forEach((m, i) => { if (m.group.toLowerCase() === lower) { members.push(i); m.group = ""; } });
+            const messages = (S.msgs || []).map((m) => Object.assign({}, m));
+            const removeGroup = (cfg) => {
+                cfg.TextMessages = messages;
+                cfg.TextOptions.groups = (cfg.TextOptions.groups || []).filter((x) => x.toLowerCase() !== lower);
+                if ((cfg.TextOptions.group || "").toLowerCase() === lower) cfg.TextOptions.group = "";
+            };
+            markMsgsDirty();
+            if (!pushConfigNow(removeGroup)) return;
+            S.msgGroups = (S.msgGroups || []).filter((x) => x.toLowerCase() !== lower);
+            paintMessages();
+            toast("Removed group " + g + (members.length ? "; its messages stay, with no group" : ""), false, {
+                label: "Undo",
+                run: () => {
+                    members.forEach((i) => { if (S.msgs[i]) S.msgs[i].group = g; });
+                    S.msgGroups = (S.msgGroups || []).concat([g]);
+                    paintMessages();
+                    pushConfigNow((cfg) => { cfg.TextOptions.groups = (cfg.TextOptions.groups || []).concat([g]); });
+                    pushMessages(true);
+                }
+            });
+        });
 
         $("msgList").addEventListener("input", (ev) => {
             const input = ev.target.closest(".msg-input");
             if (!input) return;
             const index = num(input.dataset.msg, -1);
             if (index < 0 || !S.msgs) return;
-            S.msgs[index] = input.value;
+            S.msgs[index].text = input.value;
             pushMessages(false);
         });
 
         $("msgList").addEventListener("click", (ev) => {
+            const heart = ev.target.closest("[data-heart]");
+            if (heart && S.msgs) {
+                const message = S.msgs[num(heart.dataset.heart, -1)];
+                if (!message) return;
+                message.on = !message.on;
+                heart.textContent = message.on ? "♥" : "♡";
+                heart.title = message.on ? "In the rotation" : "Left out of the rotation";
+                heart.setAttribute("aria-pressed", message.on ? "true" : "false");
+                heart.closest(".row").classList.toggle("off", !message.on);
+                pushMessages(true);
+                if (S.state) renderTextOptions(S.state);
+                return;
+            }
             const del = ev.target.closest("[data-del]");
             if (!del) return;
             const index = num(del.dataset.del, -1);
@@ -2539,14 +2775,14 @@
                 paintMessages();
                 return;
             }
-            $("msgCount").textContent = S.msgs.length;
+            if (S.state) renderTextOptions(S.state);
             toast("Message removed", false, {
                 label: "Undo",
                 run: () => {
                     S.msgs.splice(Math.min(index, S.msgs.length), 0, removed);
                     paintMessages();
                     pushMessages(true);
-                    $("msgCount").textContent = S.msgs.length;
+                    if (S.state) renderTextOptions(S.state);
                 }
             });
         });

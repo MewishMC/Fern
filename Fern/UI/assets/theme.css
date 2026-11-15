@@ -1204,6 +1204,91 @@ select option {
     border-color: var(--accent-border);
 }
 
+/* ---------------- text page ---------------- */
+
+.heart {
+    border: 0;
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 15px;
+    line-height: 1;
+    padding: 3px 5px;
+    border-radius: 6px;
+}
+
+.heart:hover {
+    background: var(--bg-hover-2);
+}
+
+.msg-row.off .heart {
+    color: var(--text-faint);
+}
+
+.msg-row.off .msg-input {
+    color: var(--text-dim);
+}
+
+.row.current {
+    border-color: var(--accent-border2);
+    box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.msg-group {
+    width: 120px;
+    flex: 0 0 auto;
+    padding: 3px 6px;
+    font-size: .74rem;
+}
+
+.text-groups {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.text-group {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--bg-input);
+}
+
+.text-group.on {
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
+}
+
+.text-group > button:first-child {
+    font: inherit;
+    font-size: .78rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 5px 4px 5px 10px;
+}
+
+.text-group b {
+    font-size: .66rem;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.hint.warn {
+    color: var(--accent-light);
+}
+
+@media (max-width: 700px) {
+    .msg-group {
+        width: 92px;
+    }
+}
+
 /* ---------------- afk page ---------------- */
 
 .afk-styles {

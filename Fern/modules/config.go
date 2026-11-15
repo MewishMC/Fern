@@ -92,6 +92,16 @@ type TextOptions struct {
 	Speed   int    `json:"speed"`
 	Shuffle bool   `json:"shuffle"`
 	Label   string `json:"label"` // optional prefix before the message
+	// Weighted makes the shuffle favour messages that have gone unseen the
+	// longest. It only applies while Shuffle is on.
+	Weighted bool `json:"weighted"`
+	// Group limits the rotation to the messages in one group; empty means
+	// every hearted message. Groups lists the groups, empty ones included.
+	Group  string   `json:"group"`
+	Groups []string `json:"groups"`
+	// Icons go in front of the messages, one per message change.
+	Icons       []string `json:"icons"`
+	IconsRandom bool     `json:"icons_random"`
 }
 
 // LoadingOptions controls the loading module.
@@ -199,7 +209,7 @@ type OSCOptions struct {
 // Config is the persisted application configuration.
 type Config struct {
 	DisplayOptions DisplayOptions `json:"display_options"`
-	TextMessages   []string       `json:"TextMessages"`
+	TextMessages   []TextMessage  `json:"TextMessages"`
 	WindowOptions  WindowOptions  `json:"WindowOptions"`
 	TextOptions    TextOptions    `json:"TextOptions"`
 	LoadingOptions LoadingOptions `json:"LoadingOptions"`
@@ -241,7 +251,7 @@ func DefaultConfig() Config {
 			MaxChars:     144,
 			MaxLines:     9,
 		},
-		TextMessages: []string{"♡ hi there", "♡ have a good day", "♡ be kind"},
+		TextMessages: Messages("♡ hi there", "♡ have a good day", "♡ be kind"),
 		WindowOptions: WindowOptions{
 			Simplified: true,
 			Label:      "",
@@ -327,7 +337,9 @@ func DefaultConfig() Config {
 func (c Config) clone() Config {
 	out := c
 	out.DisplayOptions.Order = append([]string{}, c.DisplayOptions.Order...)
-	out.TextMessages = append([]string{}, c.TextMessages...)
+	out.TextMessages = append([]TextMessage{}, c.TextMessages...)
+	out.TextOptions.Groups = append([]string{}, c.TextOptions.Groups...)
+	out.TextOptions.Icons = append([]string{}, c.TextOptions.Icons...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	return out
@@ -667,19 +679,7 @@ func (c *Config) sanitize() {
 		c.OSCOptions.Port = 9000
 	}
 
-	// Keep messages exactly as typed, blanks included. Editing a message briefly
-	// empties it, and dropping blank entries here made rows vanish mid-edit and
-	// shifted every index after them. Blank entries are skipped when rendering.
-	if c.TextMessages != nil {
-		if len(c.TextMessages) > 200 {
-			c.TextMessages = c.TextMessages[:200]
-		}
-		limited := make([]string, 0, len(c.TextMessages))
-		for _, m := range c.TextMessages {
-			limited = append(limited, RuneLimit(m, 144))
-		}
-		c.TextMessages = limited
-	}
+	sanitizeTexts(c)
 }
 
 func scheduleSave() {
