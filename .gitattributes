@@ -8,3 +8,6 @@ go.sum text eol=lf
 
 # Shell scripts run under bash on the Windows release runner, which chokes on CRLF.
 *.sh text eol=lf
+
+# Valve's openvr_api.dll is embedded as-is; never touch its bytes.
+*.dll binary

@@ -1076,6 +1076,355 @@
                     </div>
                 </div>
             </section>
+            <!-- ================= BATTERY ================= -->
+            <section class="page" id="page-battery">
+                <div class="page-head">
+                    <div>
+                        <h2>Tracker battery</h2>
+                        <p>Charge of your headset, controllers and trackers, read from SteamVR</p>
+                    </div>
+                    <span class="badge" id="batteryBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the battery line</b>
+                            <span>Adds it to the chatbox in the order set on Lines. Fern only connects to SteamVR while this or VR performance is on.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="battery"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>SteamVR</b>
+                            <span id="batteryStatus">SteamVR not running</span>
+                        </div>
+                        <div class="field-control"><code class="window-now" id="batteryNow">—</code></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Each device</b>
+                            <span><code>{icon}</code> <code>{name}</code> <code>{batt}</code> <code>{charging}</code> <code>{low}</code> <code>{kind}</code> <code>{model}</code> <code>{serial}</code></span>
+                        </div>
+                        <div class="field-control"><input type="text" id="batteryTemplate" maxlength="80" autocomplete="off" spellcheck="false" placeholder="{icon} {name} {batt}%"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix before the devices</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="batteryLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between devices</b>
+                            <span>Spaces count, e.g. “ | ”</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="batterySeparator" placeholder=" | " maxlength="8" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Icons</b>
+                            <span>What <code>{icon}</code> becomes. Leave one empty for none.</span>
+                        </div>
+                        <div class="field-control bar-chars">
+                            <label>Headset<input type="text" id="batteryHeadsetIcon" maxlength="8" autocomplete="off"></label>
+                            <label>Controller<input type="text" id="batteryControllerIcon" maxlength="8" autocomplete="off"></label>
+                            <label>Tracker<input type="text" id="batteryTrackerIcon" maxlength="8" autocomplete="off"></label>
+                            <label>Charging<input type="text" id="batteryChargingMark" maxlength="8" autocomplete="off"></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the headset</b>
+                            <span>Only headsets that report a battery to SteamVR</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="batteryHeadset"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show controllers</b>
+                            <span>Named Left and Right by the hand SteamVR gives them</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="batteryControllers"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show trackers</b>
+                            <span>Full-body trackers, numbered in the order SteamVR found them</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="batteryTrackers"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Order</b>
+                            <span>Low to high puts whatever is about to die first</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="batterySort" style="width:170px" aria-label="Order">
+                                <option value="detected">As detected</option>
+                                <option value="name">Name (A–Z)</option>
+                                <option value="low">Battery low to high</option>
+                                <option value="high">Battery high to low</option>
+                                <option value="type">Type, then name</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Most devices</b>
+                            <span>Cut the list after this many. 0 shows them all.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="batteryMax" min="0" max="16" step="1">
+                            <span class="val" id="batteryMaxVal">all</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Low battery</div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Low at or below</b>
+                            <span>Devices at this charge or less get the <code>{low}</code> tag</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="batteryLow" min="5" max="100" step="5">
+                            <span class="val" id="batteryLowVal">20%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Low tag</b>
+                            <span>What <code>{low}</code> becomes on a low device</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="batteryLowTag" placeholder="LOW" maxlength="12" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Only show low devices</b>
+                            <span>The line stays empty until something needs charging</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="batteryOnlyLow"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Only show the lowest</b>
+                            <span>Just the one device with the least charge</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="batteryOnlyLowest"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Devices <span class="badge" id="batteryDeviceCount">0</span></div>
+                <div class="list" id="batteryDevices"></div>
+                <div class="hint">Devices are remembered by serial number, so a name or a hidden device sticks between sessions. Base stations are left out.</div>
+            </section>
+
+            <!-- ================= VR PERFORMANCE ================= -->
+            <section class="page" id="page-vrperf">
+                <div class="page-head">
+                    <div>
+                        <h2>VR performance</h2>
+                        <p>Frame rate, reprojection and GPU time from the SteamVR compositor</p>
+                    </div>
+                    <span class="badge" id="vrperfBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the performance line</b>
+                            <span>Adds it to the chatbox in the order set on Lines. Only SteamVR is read, not Oculus or other OpenXR runtimes.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="vrperf"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>SteamVR</b>
+                            <span id="vrperfStatus">SteamVR not running</span>
+                        </div>
+                        <div class="field-control"><code class="window-now" id="vrperfNow">—</code></div>
+                    </div>
+                    <div class="stat-grid vr-stats">
+                        <div class="stat"><b id="vrStatFps">—</b><span>Frame rate</span></div>
+                        <div class="stat"><b id="vrStatHz">—</b><span>Headset refresh</span></div>
+                        <div class="stat"><b id="vrStatReproj">—</b><span>Reprojected</span></div>
+                        <div class="stat"><b id="vrStatDropped">—</b><span>Dropped, last minute</span></div>
+                        <div class="stat"><b id="vrStatGpu">—</b><span>Game GPU per frame</span></div>
+                        <div class="stat"><b id="vrStatBudget">—</b><span>Frame budget used</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Frame rate</b>
+                            <span>Frames the game makes each second</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfFps"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Headset refresh rate</b>
+                            <span>What the headset is running at, e.g. 90 Hz</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfHz"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Reprojection</b>
+                            <span>Share of frames SteamVR had to fake to keep up</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfReproj"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Dropped frames</b>
+                            <span>Frames missed entirely in the last minute</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfDropped"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>GPU time</b>
+                            <span>Milliseconds the game's frame takes on the graphics card</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfGpu"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>CPU time</b>
+                            <span>Milliseconds the game's frame takes on the processor</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfCpu"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Frame budget</b>
+                            <span>GPU time as a share of the time one refresh allows. Near 100% is on the edge.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfBudget"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Motion smoothing</b>
+                            <span>Says so while SteamVR's motion smoothing is filling in frames</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfSmoothing"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Small raised units</b>
+                            <span>“90ᶠᵖˢ” instead of “90 fps”</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfSmall"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix before the numbers</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="vrperfLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between values</b>
+                            <span>Spaces count, e.g. “ ¦ ”</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="vrperfSeparator" placeholder=" ¦ " maxlength="8" autocomplete="off"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Only when it struggles</div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Only show when performance is bad</b>
+                            <span>Keeps the line out of the chatbox while everything runs smoothly</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrperfOnlyBad"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Reprojection at or above</b>
+                            <span>Share of faked frames that counts as struggling</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrperfBadReproj" min="0" max="50" step="1">
+                            <span class="val" id="vrperfBadReprojVal">10%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Dropped frames per minute</b>
+                            <span>This many or more counts as struggling</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrperfBadDropped" min="0" max="60" step="1">
+                            <span class="val" id="vrperfBadDroppedVal">5</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Frame rate below</b>
+                            <span>Share of the headset's refresh rate</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrperfBadFps" min="0" max="100" step="5">
+                            <span class="val" id="vrperfBadFpsVal">90%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Smooth for this long to clear</b>
+                            <span>Stops the line flickering every time a world loads something</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrperfClear" min="0" max="60" step="1">
+                            <span class="val" id="vrperfClearVal">5s</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
             <!-- ================= OUTPUT ================= -->
             <section class="page" id="page-output">
                 <div class="page-head">
@@ -1287,6 +1636,7 @@
             ["vrchat", "VRChat"],
             ["media", "Music & text"],
             ["system", "System"],
+            ["steamvr", "SteamVR"],
         ];
         const MODULES = [
             { id: "afk", name: "AFK", icon: "fa-moon", category: "vrchat", desc: "AFK timer since last activity", keywords: "idle away" },
@@ -1298,6 +1648,8 @@
             { id: "memory", name: "Memory", icon: "fa-memory", category: "system", desc: "RAM usage", keywords: "ram" },
             { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
             { id: "window", name: "Active window", icon: "fa-window-maximize", category: "system", desc: "Active window title", keywords: "focus app program" },
+            { id: "battery", name: "Tracker battery", icon: "fa-battery-three-quarters", category: "steamvr", desc: "Headset, controller and tracker charge", keywords: "steamvr vr battery tracker controller headset fbt charge" },
+            { id: "vrperf", name: "VR performance", icon: "fa-gauge-high", category: "steamvr", desc: "Frame rate, reprojection and GPU time", keywords: "steamvr vr fps frames reprojection gpu performance" },
         ];
         const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
         const MODULE_NAME = Object.fromEntries(MODULES.map((m) => [m.id, m.name]));
@@ -1439,6 +1791,7 @@
             renderMedia(st);
             renderMediaSources(st);
             renderWindowRules(st);
+            renderSteamVR(st);
             renderStats(st);
             renderFooter(st);
             syncControls(st);
@@ -1714,6 +2067,163 @@
             }
         });
 
+        /* SteamVR battery and performance pages. Fern reads SteamVR in the
+           background; these only paint what the last state push carried. */
+        const KIND_LABEL = { headset: "Headset", left: "Left controller", right: "Right controller", controller: "Controller", tracker: "Tracker" };
+        function steamVRStatusText(v, on) {
+            if (!v.running) return "SteamVR not running";
+            if (v.connected) return "Connected" + (v.interfaces ? " (" + v.interfaces + ")" : "");
+            if (!on) return "SteamVR is running. Turn the line on and Fern will read it.";
+            return v.error ? "Can't read SteamVR yet: " + v.error : "Connecting to SteamVR…";
+        }
+
+        function renderSteamVR(st) {
+            const v = st.steamvr || {};
+            const mods = st.modules || {};
+            const anyOn = !!(mods.battery || mods.vrperf);
+            const badge = (el, text, on) => { el.textContent = text; el.classList.toggle("on", !!on); };
+
+            $("batteryStatus").textContent = steamVRStatusText(v, anyOn);
+            $("batteryNow").textContent = (st.samples && st.samples.battery) || (v.connected ? "(nothing to show)" : "—");
+            badge($("batteryBadge"), v.connected ? "connected" : (v.running ? "SteamVR on" : "SteamVR off"), v.connected);
+            renderBatteryDevices(st);
+
+            $("vrperfStatus").textContent = steamVRStatusText(v, anyOn);
+            const sample = st.samples && st.samples.vrperf;
+            const p = v.perf || {};
+            $("vrperfNow").textContent = sample || (v.connected && p.valid ? "(hidden while it runs well)" : "—");
+            if (!v.connected) badge($("vrperfBadge"), v.running ? "SteamVR on" : "SteamVR off", false);
+            else if (!p.valid) badge($("vrperfBadge"), "no game frames", false);
+            else badge($("vrperfBadge"), v.perfBad ? "struggling" : "running well", !v.perfBad);
+            const show = (id, ok, text) => { $(id).textContent = ok ? text : "—"; };
+            const live = v.connected && p.valid;
+            show("vrStatFps", live, Math.round(p.fps) + " fps");
+            show("vrStatHz", v.connected && p.hz > 0, Math.round(p.hz) + " Hz");
+            show("vrStatReproj", live, Math.round(p.reprojectionPct) + "%");
+            show("vrStatDropped", live, String(Math.round(p.droppedPerMin)));
+            show("vrStatGpu", live && p.gpuMs > 0, (p.gpuMs || 0).toFixed(1) + " ms");
+            show("vrStatBudget", live && p.budgetPct > 0, Math.round(p.budgetPct) + "%");
+        }
+
+        // Remembered devices first, then any connected one Fern has not saved
+        // yet. Rows are rebuilt only when that list changes and nobody is
+        // typing in it; the live battery figures are updated in place.
+        function batteryRows(st) {
+            const saved = (lockForms() && S.batteryDevices) || st.config.BatteryOptions.devices || [];
+            const live = ((st.steamvr && st.steamvr.devices) || []).filter((d) => d.serial && d.hasBattery);
+            const rows = saved.map((d) => Object.assign({}, d));
+            live.forEach((d) => {
+                if (!rows.some((r) => r.serial === d.serial)) rows.push({ serial: d.serial, name: "", kind: d.kind, model: d.model, hidden: false, unsaved: true });
+            });
+            return rows;
+        }
+
+        function batteryLiveText(d) {
+            if (!d) return "offline";
+            if (!d.hasBattery) return "no battery";
+            return d.battery + "%" + (d.charging ? " ⚡" : "");
+        }
+
+        function renderBatteryDevices(st, force) {
+            const rows = batteryRows(st);
+            const live = {};
+            ((st.steamvr && st.steamvr.devices) || []).forEach((d) => { live[d.serial] = d; });
+            $("batteryDeviceCount").textContent = rows.length;
+            const list = $("batteryDevices");
+            const sig = JSON.stringify(rows) + JSON.stringify(Object.keys(live).sort().map((k) => [k, live[k].defaultName]));
+            if (force || (sig !== S.batterySig && !list.contains(document.activeElement))) {
+                S.batterySig = sig;
+                list.replaceChildren();
+                if (!rows.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "log-empty";
+                    empty.textContent = "No devices yet. They show up here once SteamVR reports them.";
+                    list.appendChild(empty);
+                }
+                rows.forEach((d, index) => {
+                    const detected = (live[d.serial] && live[d.serial].defaultName) || KIND_LABEL[d.kind] || "Device";
+                    const row = document.createElement("div");
+                    row.className = "row vr-device";
+                    row.dataset.index = String(index);
+                    row.dataset.serial = d.serial;
+                    row.innerHTML =
+                        '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                        '<span class="vr-batt"></span>' +
+                        '<input class="msg-input vr-name" type="text" maxlength="32" autocomplete="off" aria-label="Custom name">' +
+                        '<label class="switch" title="Show on the battery line"><input type="checkbox" class="vr-show" aria-label="Show on the battery line"><span></span></label>' +
+                        '<button class="mini-x" title="Forget this device" aria-label="Forget this device">✕</button>';
+                    row.querySelector(".row-name").textContent = d.name || detected;
+                    row.querySelector(".row-desc").textContent = [KIND_LABEL[d.kind], d.model, d.serial].filter(Boolean).join(" · ");
+                    const name = row.querySelector(".vr-name");
+                    name.value = d.name || "";
+                    name.placeholder = "Show as " + detected;
+                    row.querySelector(".vr-show").checked = !d.hidden;
+                    row.querySelector(".mini-x").hidden = !!d.unsaved;
+                    list.appendChild(row);
+                });
+            }
+            list.querySelectorAll(".vr-device").forEach((row) => {
+                const d = live[row.dataset.serial];
+                const el = row.querySelector(".vr-batt");
+                const text = batteryLiveText(d);
+                if (el.textContent !== text) el.textContent = text;
+                el.classList.toggle("low", !!(d && d.hasBattery && d.battery <= st.config.BatteryOptions.low_threshold));
+                el.classList.toggle("off", !d);
+            });
+        }
+
+        // Applies an edit to the remembered devices; unsaved live devices
+        // become saved ones the moment they are edited.
+        function editBatteryDevices(index, mutate, now) {
+            if (!S.state) return false;
+            const rows = batteryRows(S.state);
+            if (!rows[index]) return false;
+            mutate(rows, index);
+            const next = rows.filter((d) => !d.unsaved).map((d) => ({ serial: d.serial, name: d.name || "", kind: d.kind, model: d.model || "", hidden: !!d.hidden }));
+            const ok = (now ? pushConfigNow : pushConfig)((c) => { c.BatteryOptions.devices = next.map((d) => Object.assign({}, d)); });
+            if (!ok) return false;
+            S.batteryDevices = next;
+            if (now) renderBatteryDevices(S.state, true);
+            return true;
+        }
+        const keepDevice = (d) => { delete d.unsaved; };
+
+        $("batteryDevices").addEventListener("input", (ev) => {
+            if (!ev.target.classList.contains("vr-name")) return;
+            const index = +ev.target.closest(".vr-device").dataset.index;
+            const value = Array.from(ev.target.value).slice(0, 32).join("");
+            editBatteryDevices(index, (rows, i) => { keepDevice(rows[i]); rows[i].name = value; });
+        });
+        $("batteryDevices").addEventListener("change", (ev) => {
+            if (!ev.target.classList.contains("vr-show")) return;
+            const index = +ev.target.closest(".vr-device").dataset.index;
+            const shown = ev.target.checked;
+            editBatteryDevices(index, (rows, i) => { keepDevice(rows[i]); rows[i].hidden = !shown; }, true);
+        });
+        $("batteryDevices").addEventListener("focusout", () => {
+            setTimeout(() => { if (S.state) renderBatteryDevices(S.state); }, 0);
+        });
+        $("batteryDevices").addEventListener("click", (ev) => {
+            const button = ev.target.closest(".mini-x");
+            if (!button) return;
+            const index = +button.closest(".vr-device").dataset.index;
+            const removed = batteryRows(S.state)[index];
+            if (!removed || removed.unsaved) return;
+            if (editBatteryDevices(index, (rows, i) => { rows.splice(i, 1); }, true)) {
+                toast("Forgot " + (removed.name || removed.model || removed.serial), false, {
+                    label: "Undo",
+                    run: () => {
+                        const saved = (S.state.config.BatteryOptions.devices || []).slice();
+                        saved.splice(Math.min(index, saved.length), 0, removed);
+                        if (pushConfigNow((c) => { c.BatteryOptions.devices = saved; })) S.batteryDevices = saved;
+                    },
+                });
+            }
+        });
+        $("batterySort").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.BatteryOptions.sort = ev.target.value; });
+        });
+
         function mediaSourceLabel(src) {
             const name = src.app || src.appId || "Media";
             const title = src.title ? " — " + src.title : "";
@@ -1798,6 +2308,7 @@
                 if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
+                if (typing !== $("batterySort")) $("batterySort").value = c.BatteryOptions.sort || "detected";
                 document.querySelectorAll("[data-module-toggle]").forEach((el) => {
                     el.checked = !!(st.modules && st.modules[el.dataset.moduleToggle]);
                 });
@@ -1993,11 +2504,30 @@
             ["cpuName", ["CPUOptions", "show_name"]],
             ["cpuCores", ["CPUOptions", "show_cores"]],
             ["cpuUsage", ["CPUOptions", "show_usage"]],
+            ["batteryHeadset", ["BatteryOptions", "show_headset"]],
+            ["batteryControllers", ["BatteryOptions", "show_controllers"]],
+            ["batteryTrackers", ["BatteryOptions", "show_trackers"]],
+            ["batteryOnlyLow", ["BatteryOptions", "only_low"]],
+            ["batteryOnlyLowest", ["BatteryOptions", "only_lowest"]],
+            ["vrperfFps", ["VRPerfOptions", "show_fps"]],
+            ["vrperfHz", ["VRPerfOptions", "show_hz"]],
+            ["vrperfReproj", ["VRPerfOptions", "show_reprojection"]],
+            ["vrperfDropped", ["VRPerfOptions", "show_dropped"]],
+            ["vrperfGpu", ["VRPerfOptions", "show_gpu"]],
+            ["vrperfCpu", ["VRPerfOptions", "show_cpu"]],
+            ["vrperfBudget", ["VRPerfOptions", "show_budget"]],
+            ["vrperfSmoothing", ["VRPerfOptions", "show_smoothing"]],
+            ["vrperfSmall", ["VRPerfOptions", "small_units"]],
+            ["vrperfOnlyBad", ["VRPerfOptions", "only_when_bad"]],
         ];
 
         const asIs = (v) => String(v);
         const asMs = (v) => v + "ms";
         const asSeconds = (digits) => (v) => (v / 1000).toFixed(digits) + "s";
+        const asPercent = (v) => v + "%";
+        const asPercentOrOff = (v) => (v ? v + "%" : "off");
+        const asCountOrOff = (v) => (v ? String(v) : "off");
+        const asCountOrAll = (v) => (v ? String(v) : "all");
 
         // [range id, config path, value label id, label format] — debounced.
         const RANGES = [
@@ -2011,6 +2541,12 @@
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
             ["cpuDecimals", ["CPUOptions", "decimals"], "cpuDecimalsVal", asIs],
+            ["batteryMax", ["BatteryOptions", "max_devices"], "batteryMaxVal", asCountOrAll],
+            ["batteryLow", ["BatteryOptions", "low_threshold"], "batteryLowVal", asPercent],
+            ["vrperfBadReproj", ["VRPerfOptions", "bad_reprojection"], "vrperfBadReprojVal", asPercentOrOff],
+            ["vrperfBadDropped", ["VRPerfOptions", "bad_dropped_per_min"], "vrperfBadDroppedVal", asCountOrOff],
+            ["vrperfBadFps", ["VRPerfOptions", "bad_fps_percent"], "vrperfBadFpsVal", asPercentOrOff],
+            ["vrperfClear", ["VRPerfOptions", "clear_seconds"], "vrperfClearVal", (v) => v + "s"],
         ];
 
         // [text input id, config path, max length] — debounced.
@@ -2034,6 +2570,16 @@
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
+            ["batteryTemplate", ["BatteryOptions", "template"], 80],
+            ["batteryLabel", ["BatteryOptions", "label"], 16],
+            ["batterySeparator", ["BatteryOptions", "separator"], 8],
+            ["batteryHeadsetIcon", ["BatteryOptions", "headset_icon"], 4],
+            ["batteryControllerIcon", ["BatteryOptions", "controller_icon"], 4],
+            ["batteryTrackerIcon", ["BatteryOptions", "tracker_icon"], 4],
+            ["batteryChargingMark", ["BatteryOptions", "charging_mark"], 4],
+            ["batteryLowTag", ["BatteryOptions", "low_tag"], 12],
+            ["vrperfLabel", ["VRPerfOptions", "label"], 16],
+            ["vrperfSeparator", ["VRPerfOptions", "separator"], 8],
         ];
 
         // Settings that do nothing given another setting are dimmed and locked:
@@ -2060,6 +2606,11 @@
             ["afkTimerStyle", (c) => c.AfkOptions.auto_detect && c.AfkOptions.show_timer],
             ["memDecimals", (c) => c.MemoryOptions.show_used || c.MemoryOptions.show_total],
             ["cpuDecimals", (c) => c.CPUOptions.show_usage],
+            ["batteryLowTag", (c) => c.BatteryOptions.template.includes("{low}")],
+            ["vrperfBadReproj", (c) => c.VRPerfOptions.only_when_bad],
+            ["vrperfBadDropped", (c) => c.VRPerfOptions.only_when_bad],
+            ["vrperfBadFps", (c) => c.VRPerfOptions.only_when_bad],
+            ["vrperfClear", (c) => c.VRPerfOptions.only_when_bad],
         ];
         function applyDepends(c) {
             if (!c) return;

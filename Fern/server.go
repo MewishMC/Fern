@@ -68,6 +68,7 @@ type uiState struct {
 	OSC       string                `json:"osc"`
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
+	SteamVR   modules.SteamVRStatus `json:"steamvr"`
 }
 
 type afkState struct {
@@ -369,6 +370,8 @@ func buildState() uiState {
 			modules.ModuleMedia:   d.Media,
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
+			modules.ModuleBattery: d.Battery,
+			modules.ModuleVRPerf:  d.VRPerf,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -402,6 +405,7 @@ func buildState() uiState {
 		OSC:       oscTarget(),
 		Version:   appVersion,
 		Update:    currentUpdate(),
+		SteamVR:   modules.SteamVRState(),
 	}
 }
 
