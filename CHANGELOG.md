@@ -20,6 +20,17 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
   optionally Oculus), with your own wording.
 - Apps without a custom name show their real product name (from the executable) instead of
   the window title.
+- Tracker battery line: the charge of your headset (when it reports one), controllers and
+  trackers from SteamVR, with your own per-device template, icons, a charging mark, a
+  low-battery tag and threshold, "only low" and "only the lowest" modes, sorting, and custom
+  names or hiding per device, remembered by serial number.
+- VR performance line: frame rate, headset refresh rate, reprojection, dropped frames, GPU
+  and CPU frame time, frame budget and motion smoothing from the SteamVR compositor. It can
+  stay hidden until performance drops below your thresholds, and only clears after running
+  smoothly for a set time so it does not flicker.
+- Fern stays a single exe: Valve's OpenVR library is built in and only unpacked to
+  %LOCALAPPDATA%\Fern\openvr when SteamVR is running and one of these lines is on. Fern
+  connects as a background app, so it never starts SteamVR and lets go when SteamVR quits.
 
 ## v2.2 - Custom bars
 
