@@ -1200,16 +1200,29 @@
             return true;
         }
 
-        function toast(text, bad) {
+        // An optional action ({ label, run }) adds a button and keeps the toast
+        // up longer so there is time to use it.
+        function toast(text, bad, action) {
             const el = document.createElement("div");
             el.className = "toast" + (bad ? " bad" : "");
             el.textContent = text;
+            if (action) {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "toast-action";
+                button.textContent = action.label;
+                button.addEventListener("click", () => {
+                    action.run();
+                    el.remove();
+                });
+                el.appendChild(button);
+            }
             $("toasts").appendChild(el);
             setTimeout(() => {
                 el.style.opacity = "0";
                 el.style.transition = "opacity .25s";
                 setTimeout(() => el.remove(), 260);
-            }, 2200);
+            }, action ? 6000 : 2200);
         }
 
         /* ---------------- helpers ---------------- */
@@ -1912,7 +1925,7 @@
             const messages = (S.msgs || []).slice();
             S.msgSig = messages.join("\u0001");
             markMsgsDirty();
-            pushConfig(function (c) { c.TextMessages = messages; }, now);
+            return pushConfig(function (c) { c.TextMessages = messages; }, now);
         }
 
         $("msgList").addEventListener("input", (ev) => {
@@ -1929,12 +1942,24 @@
             if (!del) return;
             const index = num(del.dataset.del, -1);
             if (index < 0 || !S.msgs) return;
-            S.msgs.splice(index, 1);
+            const removed = S.msgs.splice(index, 1)[0];
             markMsgsDirty();
             paintMessages();
-            pushMessages(true);
+            if (!pushMessages(true)) {
+                S.msgs.splice(index, 0, removed);
+                paintMessages();
+                return;
+            }
             $("msgCount").textContent = S.msgs.length;
-            toast("Message removed");
+            toast("Message removed", false, {
+                label: "Undo",
+                run: () => {
+                    S.msgs.splice(Math.min(index, S.msgs.length), 0, removed);
+                    paintMessages();
+                    pushMessages(true);
+                    $("msgCount").textContent = S.msgs.length;
+                }
+            });
         });
 
         /* ---------------- media page ---------------- */

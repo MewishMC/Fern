@@ -1407,6 +1407,19 @@ input[type="range"]::-webkit-slider-thumb {
     color: #f0a3ad;
 }
 
+.toast-action {
+    margin-left: 12px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--accent);
+    font: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+    pointer-events: auto;
+}
+
 .badge {
     font-size: .62rem;
     letter-spacing: .6px;
