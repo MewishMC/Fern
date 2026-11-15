@@ -1349,6 +1349,24 @@ select option {
     overflow-wrap: anywhere;
 }
 
+.counter-row input[type="date"],
+.counter-row input[type="time"] {
+    font: inherit;
+    font-size: .78rem;
+    background: var(--bg-body);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 3px 6px;
+    color-scheme: dark;
+}
+
+.counter-row input[type="date"]:focus,
+.counter-row input[type="time"]:focus {
+    outline: none;
+    border-color: var(--accent-border);
+}
+
 textarea.bar-json {
     display: block;
     margin: 4px 0 8px;

@@ -1010,7 +1010,63 @@
                         </div>
                         <div class="field-control"><input type="text" id="clockLabel" placeholder="none" autocomplete="off"></div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Time zone</b>
+                            <span>Any IANA zone, like Europe/Berlin. Empty uses your PC's zone. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="clockZone" list="clockZoneList" placeholder="Your PC's zone" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the zone</b>
+                            <span>Adds its abbreviation, like 3:04 PM CET</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="clockShowZone"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Second clock</b>
+                            <span>Another zone after the first, like a friend's time. Empty for none.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="clockZone2" list="clockZoneList" placeholder="none" autocomplete="off" spellcheck="false" aria-label="Second clock zone">
+                            <input type="text" id="clockLabel2" maxlength="16" placeholder="Label" autocomplete="off" style="width:96px" aria-label="Second clock label">
+                        </div>
+                    </div>
+                    <datalist id="clockZoneList"></datalist>
                 </div>
+
+                <div class="section-title">Counters <span class="badge" id="counterCount">0</span></div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Units shown</b>
+                            <span>How precise each counter is: 2 gives “1y 2m”, 3 gives “1y 2m 6d”</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="counterUnits" min="1" max="4" step="1">
+                            <span class="val" id="counterUnitsVal">2</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Own line</b>
+                            <span>Puts counters on a line below the clock instead of after it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="counterLine"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="window-add">
+                    <button class="btn" type="button" id="counterAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add counter</button>
+                </div>
+                <div class="list" id="counterList"></div>
+                <div class="hint">Time line now: <code class="bar-preview" id="timeNow"></code></div>
+                <div class="hint">Time since a past date, or until a future one, after its label: “together 1y 2m”, “trip in 4d 17h”. The time is optional.</div>
             </section>
 
             <!-- ================= LOADING ================= -->
@@ -1634,6 +1690,7 @@
             syncMessages(st);
             renderLogs(st);
             renderLyrics(st);
+            renderCounters(st);
         }
 
         function renderPreview(st) {
@@ -1985,6 +2042,8 @@
                 if (typing !== $("oscPort")) $("oscPort").value = c.OSC.port;
                 if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
                 if (typing !== $("lyricsFolder")) $("lyricsFolder").value = c.LyricsOptions.folder || "";
+                if (typing !== $("clockZone")) $("clockZone").value = c.TimeOptions.zone || "";
+                if (typing !== $("clockZone2")) $("clockZone2").value = c.TimeOptions.zone2 || "";
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
                 document.querySelectorAll("[data-module-toggle]").forEach((el) => {
@@ -2175,6 +2234,8 @@
             ["clock24", ["TimeOptions", "use_24h"]],
             ["clockSeconds", ["TimeOptions", "seconds"]],
             ["clockNoAmPm", ["TimeOptions", "no_am_pm"]],
+            ["clockShowZone", ["TimeOptions", "show_zone"]],
+            ["counterLine", ["TimeOptions", "counter_line"]],
             ["afkMovementOnly", ["AfkOptions", "poopyafk"]],
             ["afkShowTimer", ["AfkOptions", "show_timer"]],
             ["windowSimplified", ["WindowOptions", "simplified"]],
@@ -2208,6 +2269,7 @@
             ["lyricsHold", ["LyricsOptions", "hold_seconds"], "lyricsHoldVal", (v) => v + "s"],
             ["lyricsGap", ["LyricsOptions", "gap_seconds"], "lyricsGapVal", (v) => v ? v + "s" : "never"],
             ["lyricsMaxChars", ["LyricsOptions", "max_chars"], "lyricsMaxCharsVal", asIs],
+            ["counterUnits", ["TimeOptions", "counter_units"], "counterUnitsVal", asIs],
             ["windowMaxChars", ["WindowOptions", "max_chars"], "windowMaxCharsVal", asIs],
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
@@ -2229,6 +2291,7 @@
             ["mediaSeparator", ["MediaOptions", "separator"], 8],
             ["lyricsGapMarker", ["LyricsOptions", "gap_marker"], 16],
             ["lyricsLabel", ["LyricsOptions", "label"], 16],
+            ["clockLabel2", ["TimeOptions", "label2"], 16],
             ["mediaBarFilled", ["MediaOptions", "bar_filled"], 2],
             ["mediaBarEmpty", ["MediaOptions", "bar_empty"], 2],
             ["mediaBarHead", ["MediaOptions", "bar_head"], 2],
@@ -2904,6 +2967,106 @@
         }
         commitField($("lyricsFolder"), (v) => v.trim().replace(/^"|"$/g, ""),
             (c, v) => { c.LyricsOptions.folder = v; }, "");
+
+        /* ---------------- time page ---------------- */
+        // Chromium knows the IANA zone list, so the picker needs no table of
+        // its own. Typed names are matched to it so the case is right for Go.
+        const ZONES = (() => { try { return Intl.supportedValuesOf("timeZone"); } catch (e) { return []; } })();
+        $("clockZoneList").replaceChildren(...["UTC"].concat(ZONES).map((z) => new Option("", z)));
+        function checkZone(v) {
+            v = v.trim();
+            if (!v) return "";
+            const hit = ZONES.find((z) => z.toLowerCase() === v.toLowerCase());
+            if (hit) return hit;
+            try { new Intl.DateTimeFormat("en-US", { timeZone: v }); return v; } catch (e) { return null; }
+        }
+        commitField($("clockZone"), checkZone, (c, v) => { c.TimeOptions.zone = v; }, "Not a time zone. Pick one from the list, like Europe/Berlin.");
+        commitField($("clockZone2"), checkZone, (c, v) => { c.TimeOptions.zone2 = v; }, "Not a time zone. Pick one from the list, like America/New_York.");
+
+        function renderCounters(st, force) {
+            const list = (lockForms() && S.counters) || st.config.TimeOptions.counters || [];
+            $("counterCount").textContent = list.length;
+            $("timeNow").textContent = (st.samples && st.samples.time) || "";
+            $("counterAdd").disabled = list.length >= 10;
+            const box = $("counterList");
+            const sig = JSON.stringify(list);
+            if (!force && (sig === S.counterSig || box.contains(document.activeElement))) return;
+            S.counterSig = sig;
+            box.replaceChildren();
+            if (!list.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No counters yet.";
+                box.appendChild(empty);
+                return;
+            }
+            list.forEach((c, index) => {
+                const row = document.createElement("div");
+                row.className = "row counter-row";
+                row.dataset.index = String(index);
+                row.innerHTML =
+                    '<input class="msg-input counter-label" type="text" maxlength="24" autocomplete="off" placeholder="together" aria-label="Label">' +
+                    '<input class="compact counter-date" type="date" aria-label="Date">' +
+                    '<input class="compact counter-time" type="time" aria-label="Time (optional)">' +
+                    '<button class="mini-x" title="Remove" aria-label="Remove">✕</button>';
+                const parts = (c.date || "").split("T");
+                row.querySelector(".counter-label").value = c.label || "";
+                row.querySelector(".counter-date").value = parts[0] || "";
+                row.querySelector(".counter-time").value = parts[1] || "";
+                box.appendChild(row);
+            });
+        }
+        function editCounters(mutate, now) {
+            if (!S.state) return false;
+            const current = (lockForms() && S.counters) || S.state.config.TimeOptions.counters || [];
+            const next = current.map((c) => Object.assign({}, c));
+            mutate(next);
+            const ok = (now ? pushConfigNow : pushConfig)((c) => { c.TimeOptions.counters = next.map((x) => Object.assign({}, x)); });
+            if (!ok) return false;
+            S.counters = next;
+            if (now) renderCounters(S.state, true);
+            return true;
+        }
+        function counterFromRow(row) {
+            const day = row.querySelector(".counter-date").value;
+            const time = row.querySelector(".counter-time").value;
+            return {
+                label: Array.from(row.querySelector(".counter-label").value).slice(0, 24).join(""),
+                date: day && time ? day + "T" + time : day,
+            };
+        }
+        $("counterAdd").addEventListener("click", () => {
+            const today = new Date();
+            const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+            if (editCounters((list) => { if (list.length < 10) list.push({ label: "", date: day }); }, true)) {
+                const rows = $("counterList").querySelectorAll(".counter-label");
+                if (rows.length) rows[rows.length - 1].focus();
+            }
+        });
+        $("counterList").addEventListener("input", (ev) => {
+            const row = ev.target.closest(".counter-row");
+            if (!row) return;
+            const index = +row.dataset.index;
+            const value = counterFromRow(row);
+            editCounters((list) => { if (list[index]) list[index] = value; });
+        });
+        $("counterList").addEventListener("focusout", () => {
+            setTimeout(() => { if (S.state) renderCounters(S.state); }, 0);
+        });
+        $("counterList").addEventListener("click", (ev) => {
+            const button = ev.target.closest(".mini-x");
+            if (!button) return;
+            const index = +button.closest(".counter-row").dataset.index;
+            const list = (lockForms() && S.counters) || S.state.config.TimeOptions.counters || [];
+            const removed = list[index];
+            if (!removed) return;
+            if (editCounters((l) => { l.splice(index, 1); }, true)) {
+                toast("Removed " + (removed.label || "counter"), false, {
+                    label: "Undo",
+                    run: () => editCounters((l) => { l.splice(Math.min(index, l.length), 0, removed); }, true),
+                });
+            }
+        });
 
         /* ---------------- per module options ---------------- */
         $("afkTimerStyle").addEventListener("change", (ev) => {

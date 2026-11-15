@@ -116,28 +116,6 @@ func textLine(cfg Config) string {
 	return withLabel(cfg.TextOptions.Label, CurrentMessage())
 }
 
-func clockText(cfg Config) string {
-	now := time.Now()
-	layout := "3:04 PM"
-	switch {
-	case cfg.TimeOptions.Use24h:
-		layout = "15:04"
-	case cfg.TimeOptions.NoAmPm:
-		layout = "3:04"
-	}
-	if cfg.TimeOptions.Seconds {
-		switch {
-		case cfg.TimeOptions.Use24h:
-			layout = "15:04:05"
-		case cfg.TimeOptions.NoAmPm:
-			layout = "3:04:05"
-		default:
-			layout = "3:04:05 PM"
-		}
-	}
-	return withLabel(cfg.TimeOptions.Label, now.Format(layout))
-}
-
 // ModuleSamples renders every module's line whether it is enabled or not, so
 // the panel can show what each one would add to the chatbox.
 func ModuleSamples(cfg Config) map[string]string {

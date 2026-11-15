@@ -171,6 +171,14 @@ type TimeOptions struct {
 	Seconds bool   `json:"seconds"`
 	NoAmPm  bool   `json:"no_am_pm"` // 3:04 instead of 3:04 PM
 	Label   string `json:"label"`
+	// Zone is an IANA time zone like Europe/Berlin; empty uses the PC's.
+	Zone         string        `json:"zone"`
+	ShowZone     bool          `json:"show_zone"` // add the abbreviation, like CET
+	Zone2        string        `json:"zone2"`     // optional second clock
+	Label2       string        `json:"label2"`
+	Counters     []TimeCounter `json:"counters"`
+	CounterUnits int           `json:"counter_units"` // units per counter, 1-4
+	CounterLine  bool          `json:"counter_line"`  // counters on a line of their own
 }
 
 // MemoryOptions controls the memory line.
@@ -313,8 +321,9 @@ func DefaultConfig() Config {
 			TidyTitles:     true,
 		},
 		TimeOptions: TimeOptions{
-			Use24h: false,
-			Label:  "",
+			Use24h:       false,
+			Label:        "",
+			CounterUnits: 2,
 		},
 		MemoryOptions: MemoryOptions{
 			Label:       "ᵐᵉᵐ",
@@ -358,6 +367,7 @@ func (c Config) clone() Config {
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	out.MediaOptions.BarPresets = append([]BarPreset{}, c.MediaOptions.BarPresets...)
+	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	return out
 }
 
@@ -690,6 +700,7 @@ func (c *Config) sanitize() {
 	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
 	sanitizeLyrics(&c.LyricsOptions)
+	sanitizeTime(&c.TimeOptions)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
 	if c.LoadingOptions.Dots == 0 {
 		c.LoadingOptions.Dots = 6
