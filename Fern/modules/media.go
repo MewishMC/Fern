@@ -50,10 +50,47 @@ var (
 	mediaLastPos time.Duration
 )
 
+var (
+	// mediaChangeKey is the track and whether it plays; mediaChangedAt is when
+	// it last changed. They drive "only show on change".
+	mediaChangeKey string
+	mediaChangedAt time.Time
+)
+
 func setMedia(raw rawMedia) {
+	key := ""
+	if raw.Available {
+		key = trackKey(raw) + "\x00" + fmt.Sprint(raw.Status == "playing")
+	}
 	mediaMu.Lock()
 	mediaCurrent = raw
+	changed := key != mediaChangeKey
+	if changed {
+		mediaChangeKey = key
+		mediaChangedAt = time.Now()
+	}
 	mediaMu.Unlock()
+	if changed {
+		// Show the change in the chatbox now rather than at the next tick.
+		NotifyChange()
+	}
+}
+
+// mediaChangedSince reports how long ago the track changed or playback was
+// paused or resumed.
+func mediaChangedSince() time.Duration {
+	mediaMu.RLock()
+	defer mediaMu.RUnlock()
+	if mediaChangedAt.IsZero() {
+		return time.Duration(1<<63 - 1)
+	}
+	return time.Since(mediaChangedAt)
+}
+
+// mediaHiddenByChange reports whether "only show on change" hides the line,
+// given how long ago the last change was.
+func mediaHiddenByChange(o MediaOptions, since time.Duration) bool {
+	return o.OnlyOnChange && since >= time.Duration(o.ChangeSeconds)*time.Second
 }
 
 // CurrentMedia returns the media state with the playback position advanced to
@@ -316,6 +353,9 @@ func isSpotifyBranding(title string) bool {
 
 // mediaLine renders the now playing module for the chatbox.
 func mediaLine(cfg Config) string {
+	if mediaHiddenByChange(cfg.MediaOptions, mediaChangedSince()) {
+		return ""
+	}
 	return formatMediaLine(cfg.MediaOptions, CurrentMedia())
 }
 

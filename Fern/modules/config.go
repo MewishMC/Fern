@@ -143,6 +143,10 @@ type MediaOptions struct {
 	Separator       string `json:"separator"` // between the title and the artist
 	Uppercase       bool   `json:"uppercase"`
 	SuperscriptTime bool   `json:"superscript_time"` // ¹˸²⁴ᐟ³˸¹⁸ instead of 1:24/3:18
+	// OnlyOnChange shows the line for ChangeSeconds after the track changes or
+	// playback is paused or resumed, then hides it until the next change.
+	OnlyOnChange  bool `json:"only_on_change"`
+	ChangeSeconds int  `json:"change_seconds"`
 }
 
 // TimeOptions controls the clock line.
@@ -275,6 +279,7 @@ func DefaultConfig() Config {
 			PreferredApp:   "",
 			StoppedIcon:    "⏹",
 			Separator:      " — ",
+			ChangeSeconds:  25,
 		},
 		TimeOptions: TimeOptions{
 			Use24h: false,
@@ -598,6 +603,7 @@ func (c *Config) sanitize() {
 	if strings.TrimSpace(c.MediaOptions.Separator) == "" {
 		c.MediaOptions.Separator = " — "
 	}
+	c.MediaOptions.ChangeSeconds = clampInt(c.MediaOptions.ChangeSeconds, 3, 600)
 
 	c.MemoryOptions.Label = RuneLimit(strings.TrimSpace(c.MemoryOptions.Label), 16)
 	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)

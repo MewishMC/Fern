@@ -1,6 +1,37 @@
 package modules
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
+
+func TestOnlyShowOnChange(t *testing.T) {
+	o := DefaultConfig().MediaOptions
+	if mediaHiddenByChange(o, time.Hour) {
+		t.Error("hidden while the option is off")
+	}
+	o.OnlyOnChange = true
+	if mediaHiddenByChange(o, 10*time.Second) {
+		t.Error("hidden 10s after a change with a 25s window")
+	}
+	if !mediaHiddenByChange(o, 25*time.Second) {
+		t.Error("still shown 25s after a change")
+	}
+
+	defer setMedia(rawMedia{})
+	setMedia(rawMedia{Available: true, AppID: "a", Title: "One", Status: "playing"})
+	mediaMu.Lock()
+	mediaChangedAt = time.Now().Add(-time.Minute)
+	mediaMu.Unlock()
+	setMedia(rawMedia{Available: true, AppID: "a", Title: "One", Status: "playing", Position: time.Second})
+	if mediaChangedSince() < 50*time.Second {
+		t.Error("a new position alone counted as a change")
+	}
+	setMedia(rawMedia{Available: true, AppID: "a", Title: "One", Status: "paused"})
+	if mediaChangedSince() > time.Second {
+		t.Error("pausing did not count as a change")
+	}
+}
 
 func TestFormatMediaLine(t *testing.T) {
 	base := DefaultConfig().MediaOptions

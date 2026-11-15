@@ -537,6 +537,25 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Only show on change</b>
+                            <span>Shows the line when the track changes or you pause or resume, then hides it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaOnChange"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show for</b>
+                            <span>How long the line stays after a change</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="mediaChangeSecs" min="5" max="120" step="5">
+                            <span class="val" id="mediaChangeSecsVal">25s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Keyword filter</b>
                             <span>Matches the app, title or artist, e.g. Spotify. Empty means any app.</span>
                         </div>
@@ -2002,6 +2021,7 @@
             ["mediaArtist", ["MediaOptions", "show_artist"]],
             ["mediaAlbum", ["MediaOptions", "show_album"]],
             ["mediaStopped", ["MediaOptions", "show_when_stopped"]],
+            ["mediaOnChange", ["MediaOptions", "only_on_change"]],
             ["mediaUpper", ["MediaOptions", "uppercase"]],
             ["mediaSuperTime", ["MediaOptions", "superscript_time"]],
             ["clock24", ["TimeOptions", "use_24h"]],
@@ -2035,6 +2055,7 @@
             ["speedRange", ["TextOptions", "speed"], "speedVal", asSeconds(1)],
             ["mediaBarWidth", ["MediaOptions", "bar_width"], "mediaBarWidthVal", asIs],
             ["mediaMaxChars", ["MediaOptions", "max_chars"], "mediaMaxCharsVal", asIs],
+            ["mediaChangeSecs", ["MediaOptions", "change_seconds"], "mediaChangeSecsVal", (v) => v + "s"],
             ["windowMaxChars", ["WindowOptions", "max_chars"], "windowMaxCharsVal", asIs],
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
@@ -2083,6 +2104,7 @@
             ["mediaBarLeft", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarRight", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaPausedText", (c) => c.MediaOptions.show_when_paused],
+            ["mediaChangeSecs", (c) => c.MediaOptions.only_on_change],
             ["mediaStoppedIcon", (c) => c.MediaOptions.show_when_stopped],
             ["mediaSuperTime", (c) => c.MediaOptions.show_progress && ["time", "both"].includes(c.MediaOptions.progress_style)],
             ["windowVrText", (c) => c.WindowOptions.show_mode],
