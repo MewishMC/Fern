@@ -26,8 +26,9 @@ the whole interface is served by the same executable with its fonts and icons em
   window changes, with a configurable threshold, label and timer format.
 - **VRChat logs** — joins, leaves, an activity feed and a history of everything Fern sent,
   tailed incrementally instead of re-read every tick.
-- **Settings that stick** — everything is written to `config.json` next to the executable,
-  and old config files pick up new options with sensible defaults.
+- **Settings that stick** — everything is written to `%LOCALAPPDATA%\Fern\config.json`,
+  so it survives updates and moving the executable, and old config files pick up new
+  options with sensible defaults.
 - **Self-contained UI** — no CDN, no web fonts, no framework; the stylesheet and fonts are
   embedded in the binary.
 
@@ -95,8 +96,10 @@ Start Fern with `--debug` to open the WebView with developer tools enabled.
 
 ## Configuration
 
-`config.json` is created next to the executable on first launch and rewritten whenever you
-change a setting. Delete it to reset everything to defaults; unknown or missing fields in an
+Settings live in `%LOCALAPPDATA%\Fern\config.json`, created on first launch and rewritten
+whenever you change a setting. If an older `config.json` sits next to the executable, Fern
+moves it there on first launch and keeps the original as `config.json.old`. Delete the file
+in `%LOCALAPPDATA%\Fern` to reset everything to defaults; unknown or missing fields in an
 older file fall back to the defaults rather than failing to load.
 
 ## Project layout

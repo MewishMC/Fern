@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -166,7 +167,7 @@ type Config struct {
 var (
 	cfgMu    sync.RWMutex
 	cfg      Config
-	cfgPath  = "./config.json"
+	cfgPath  string // set by Load; see configPath
 	saveMu   sync.Mutex
 	saveAt   *time.Timer
 	changeCh = make(chan struct{}, 1)
@@ -287,8 +288,70 @@ func NotifyChange() {
 	}
 }
 
+// configPath returns where Fern keeps its settings: %LOCALAPPDATA%\Fern\config.json,
+// so they survive replacing or moving the executable. It falls back to the
+// folder Fern runs from if no per-user folder can be created.
+func configPath() string {
+	base := os.Getenv("LOCALAPPDATA")
+	if base == "" {
+		base, _ = os.UserConfigDir()
+	}
+	if base != "" {
+		dir := filepath.Join(base, "Fern")
+		if err := os.MkdirAll(dir, 0o755); err == nil {
+			return filepath.Join(dir, "config.json")
+		}
+	}
+	return "config.json"
+}
+
+// legacyConfigPaths are where versions up to 2.1 kept config.json: next to the
+// executable, or the folder Fern was started from.
+func legacyConfigPaths() []string {
+	var paths []string
+	if exe, err := os.Executable(); err == nil {
+		paths = append(paths, filepath.Join(filepath.Dir(exe), "config.json"))
+	}
+	if wd, err := os.Getwd(); err == nil {
+		paths = append(paths, filepath.Join(wd, "config.json"))
+	}
+	return paths
+}
+
+// migrateConfig copies the first existing legacy config to path when path does
+// not exist yet, then renames the old file to config.json.old so deleting the
+// new one later resets the settings instead of importing the old ones again.
+func migrateConfig(path string, legacy []string) {
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		return
+	}
+	for _, old := range legacy {
+		if same, _ := filepath.Abs(old); same == path {
+			continue
+		}
+		data, err := os.ReadFile(old)
+		if err != nil {
+			continue
+		}
+		if err := os.WriteFile(path, data, 0o644); err != nil {
+			fmt.Println("config: could not copy", old, "to", path+":", err)
+			return
+		}
+		if err := os.Rename(old, old+".old"); err != nil {
+			fmt.Println("config: could not rename", old+":", err)
+		}
+		fmt.Println("config: moved settings from", old, "to", path)
+		return
+	}
+}
+
 // Load reads the config file, filling anything missing with defaults.
 func Load() {
+	if cfgPath == "" {
+		cfgPath = configPath()
+		migrateConfig(cfgPath, legacyConfigPaths())
+	}
+	fmt.Println("config:", cfgPath)
 	loaded := DefaultConfig()
 
 	data, err := os.ReadFile(cfgPath)
