@@ -216,7 +216,6 @@
                     <div class="head-actions">
                         <button class="btn ghost" id="btnAllOff">All off</button>
                         <button class="btn ghost" id="btnAllOn">All on</button>
-                        <button class="btn ghost" id="btnSave">Save now</button>
                         <button class="btn danger" id="btnReset">Reset all</button>
                     </div>
                 </div>
@@ -2209,9 +2208,6 @@
             pushConfig((c) => { c.AfkOptions.afk_message = value; });
         });
 
-        $("btnSave").addEventListener("click", () => {
-            if (send({ type: "save" })) toast("Saved");
-        });
         $("btnReset").addEventListener("click", () => {
             if (!confirm("Reset every setting back to the defaults?")) return;
             if (!send({ type: "reset" })) return;
