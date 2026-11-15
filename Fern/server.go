@@ -69,6 +69,7 @@ type uiState struct {
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
 	Network   networkState          `json:"network"`
+	GPUs      []modules.GPUInfo     `json:"gpus"`
 }
 
 type networkState struct {
@@ -374,6 +375,7 @@ func buildState() uiState {
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
 			modules.ModuleNetwork: d.Network,
+			modules.ModuleGPU:     d.GPU,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -408,6 +410,7 @@ func buildState() uiState {
 		Version:   appVersion,
 		Update:    currentUpdate(),
 		Network:   currentNetwork(),
+		GPUs:      orEmpty(modules.GPUs()),
 	}
 }
 

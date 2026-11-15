@@ -9,5 +9,6 @@ func StartWorkers() {
 	startLogWorker()
 	startSpecsWorker()
 	startNetworkWorker()
+	startGPUWorker()
 	go watchVRChatProcess()
 }

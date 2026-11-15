@@ -89,6 +89,9 @@ func cpuLine(cfg Config) string {
 	label := strings.TrimSpace(o.Label)
 	var parts []string
 	if o.ShowName {
+		if custom := strings.TrimSpace(o.CustomName); custom != "" {
+			model = custom
+		}
 		if model == "" {
 			model = "CPU"
 		}

@@ -99,6 +99,8 @@ func moduleText(id string, cfg Config) string {
 		return logsLine(cfg)
 	case ModuleNetwork:
 		return networkLine(cfg)
+	case ModuleGPU:
+		return gpuLine(cfg)
 	}
 	return ""
 }

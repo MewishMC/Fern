@@ -22,13 +22,14 @@ const (
 	ModuleWindow  = "window"
 	ModuleLogs    = "logs"
 	ModuleNetwork = "network"
+	ModuleGPU     = "gpu"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
 	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
-	ModuleNetwork,
+	ModuleNetwork, ModuleGPU,
 }
 
 var knownModules = func() map[string]bool {
@@ -52,6 +53,7 @@ type DisplayOptions struct {
 	CPU          bool     `json:"cpu"`
 	VRChatLogs   bool     `json:"vr_chat_logs"`
 	Network      bool     `json:"network"`
+	GPU          bool     `json:"gpu"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -158,11 +160,25 @@ type MemoryOptions struct {
 
 // CPUOptions controls the CPU line.
 type CPUOptions struct {
-	Label     string `json:"label"`
-	ShowName  bool   `json:"show_name"`
-	ShowCores bool   `json:"show_cores"`
-	ShowUsage bool   `json:"show_usage"`
-	Decimals  int    `json:"decimals"`
+	Label      string `json:"label"`
+	ShowName   bool   `json:"show_name"`
+	CustomName string `json:"custom_name"` // replaces the detected model when set
+	ShowCores  bool   `json:"show_cores"`
+	ShowUsage  bool   `json:"show_usage"`
+	Decimals   int    `json:"decimals"`
+}
+
+// GPUOptions controls the graphics card line.
+type GPUOptions struct {
+	Label         string `json:"label"`
+	Adapter       string `json:"adapter"` // adapter name; empty picks the one with the most VRAM
+	ShowName      bool   `json:"show_name"`
+	CustomName    string `json:"custom_name"` // replaces the detected name when set
+	ShowUsage     bool   `json:"show_usage"`
+	ShowVRAM      bool   `json:"show_vram"`
+	ShowVRAMTotal bool   `json:"show_vram_total"`
+	ShowTemp      bool   `json:"show_temp"` // NVIDIA only, through the driver's nvml.dll
+	Fahrenheit    bool   `json:"fahrenheit"`
 }
 
 // NetworkOptions controls the network traffic line.
@@ -209,6 +225,7 @@ type Config struct {
 	CPUOptions     CPUOptions     `json:"CPUOptions"`
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	NetworkOptions NetworkOptions `json:"NetworkOptions"`
+	GPUOptions     GPUOptions     `json:"GPUOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -308,6 +325,13 @@ func DefaultConfig() Config {
 			ShowJoin:  true,
 			ShowLeave: true,
 			MaxChars:  80,
+		},
+		GPUOptions: GPUOptions{
+			Label:         "ᵍᵖᵘ",
+			ShowName:      true,
+			ShowUsage:     true,
+			ShowVRAM:      true,
+			ShowVRAMTotal: true,
 		},
 		NetworkOptions: NetworkOptions{
 			ShowDown:    true,
@@ -492,6 +516,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.VRChatLogs
 	case ModuleNetwork:
 		return &d.Network
+	case ModuleGPU:
+		return &d.GPU
 	}
 	return nil
 }
@@ -611,6 +637,10 @@ func (c *Config) sanitize() {
 	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)
 	c.CPUOptions.Label = RuneLimit(strings.TrimSpace(c.CPUOptions.Label), 16)
 	c.CPUOptions.Decimals = clampInt(c.CPUOptions.Decimals, 0, 2)
+	c.CPUOptions.CustomName = RuneLimit(strings.TrimSpace(c.CPUOptions.CustomName), 40)
+	c.GPUOptions.Label = RuneLimit(strings.TrimSpace(c.GPUOptions.Label), 16)
+	c.GPUOptions.CustomName = RuneLimit(strings.TrimSpace(c.GPUOptions.CustomName), 40)
+	c.GPUOptions.Adapter = RuneLimit(strings.TrimSpace(c.GPUOptions.Adapter), 128)
 	c.WindowOptions.Label = RuneLimit(strings.TrimSpace(c.WindowOptions.Label), 16)
 	c.WindowOptions.MaxChars = clampInt(c.WindowOptions.MaxChars, 0, 144)
 	c.WindowOptions.HiddenText = RuneLimit(strings.TrimSpace(c.WindowOptions.HiddenText), 40)

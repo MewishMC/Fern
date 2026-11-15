@@ -433,6 +433,13 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Custom name</b>
+                            <span>Shown instead of the detected model. Leave empty to use it.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="cpuCustomName" placeholder="detected model" maxlength="40" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Show cores</b>
                             <span>How many logical cores the CPU has</span>
                         </div>
@@ -600,6 +607,119 @@
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="netSmall"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= GPU ================= -->
+            <section class="page" id="page-gpu">
+                <div class="page-head">
+                    <div>
+                        <h2>GPU</h2>
+                        <p>Graphics card load and video memory, from the counters Task Manager uses</p>
+                    </div>
+                    <span class="badge" id="gpuBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the GPU line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="gpu"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Graphics card</h3>
+                        <span class="count" id="gpuInfo"></span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Measure</b>
+                            <span>Automatic picks the card with the most video memory</span>
+                        </div>
+                        <div class="field-control"><select id="gpuAdapter" style="width:240px" aria-label="Graphics card"></select></div>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="gpuNowUsage">—</b><span>Load</span><div class="bar"><i id="gpuUsageBar"></i></div></div>
+                        <div class="stat"><b id="gpuNowVram">—</b><span>Video memory</span><div class="bar"><i id="gpuVramBar"></i></div></div>
+                        <div class="stat"><b id="gpuNowTemp">—</b><span>Temperature</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the card name. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="gpuLabel" placeholder="gpu" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the name</b>
+                            <span>The card model without the vendor, like RTX 4070</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="gpuName"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Custom name</b>
+                            <span>Shown instead of the detected name. Leave empty to use it.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="gpuCustomName" placeholder="detected name" maxlength="40" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show load</b>
+                            <span>Busiest GPU engine in percent, as in Task Manager</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="gpuUsage"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show video memory</b>
+                            <span>Dedicated VRAM in use</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="gpuVram"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show total video memory</b>
+                            <span>Adds the card's total after the used amount</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="gpuVramTotal"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show temperature</b>
+                            <span id="gpuTempDesc">NVIDIA cards, read through the driver</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="gpuTemp"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Fahrenheit</b>
+                            <span>°F instead of °C</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="gpuFahrenheit"><span></span></label>
                         </div>
                     </div>
                 </div>
@@ -1397,6 +1517,7 @@
             { id: "time", name: "Time", icon: "fa-clock", category: "system", desc: "Current clock", keywords: "clock hour" },
             { id: "memory", name: "Memory", icon: "fa-memory", category: "system", desc: "RAM usage", keywords: "ram" },
             { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
+            { id: "gpu", name: "GPU", icon: "fa-display", category: "system", desc: "Graphics card load and VRAM", keywords: "graphics video card vram nvidia amd temperature" },
             { id: "network", name: "Network", icon: "fa-wifi", category: "system", desc: "Download and upload speed", keywords: "internet bandwidth ethernet wifi traffic" },
             { id: "window", name: "Active window", icon: "fa-window-maximize", category: "system", desc: "Active window title", keywords: "focus app program" },
         ];
@@ -1548,7 +1669,57 @@
             syncMessages(st);
             renderLogs(st);
             renderNetwork(st);
+            renderGPU(st);
         }
+
+        /* ---------------- gpu ---------------- */
+        function renderGPU(st) {
+            const gpus = st.gpus || [];
+            const o = st.config.GPUOptions;
+            const select = $("gpuAdapter");
+            const names = gpus.map((g) => g.name);
+            if (o.adapter && !names.includes(o.adapter)) names.push(o.adapter);
+            const auto = gpus.reduce((best, g) => (!best || g.vramTotal > best.vramTotal ? g : best), null);
+            const sig = names.join("\u0001") + "|" + (auto ? auto.name : "");
+            if (select.dataset.sig !== sig && document.activeElement !== select) {
+                select.dataset.sig = sig;
+                select.innerHTML = "";
+                const first = document.createElement("option");
+                first.value = "";
+                first.textContent = "Automatic" + (auto ? " (" + auto.name + ")" : "");
+                select.appendChild(first);
+                names.forEach((name) => {
+                    const opt = document.createElement("option");
+                    opt.value = name;
+                    opt.textContent = gpus.some((g) => g.name === name) ? name : name + " (not found)";
+                    select.appendChild(opt);
+                });
+            }
+            if (document.activeElement !== select && !lockForms()) select.value = o.adapter || "";
+            const g = gpus.find((x) => x.name === o.adapter) || auto;
+            if (!g) {
+                ["gpuNowUsage", "gpuNowVram", "gpuNowTemp"].forEach((id) => { $(id).textContent = "—"; });
+                $("gpuBadge").textContent = "no GPU found";
+                $("gpuInfo").textContent = "";
+                return;
+            }
+            const gb = 1024 * 1024 * 1024;
+            $("gpuNowUsage").textContent = g.usage.toFixed(0) + "%";
+            $("gpuUsageBar").style.width = Math.min(100, g.usage) + "%";
+            $("gpuNowVram").textContent = (g.vramUsed / gb).toFixed(1) + " / " + (g.vramTotal / gb).toFixed(1) + " GB";
+            $("gpuVramBar").style.width = (g.vramTotal ? Math.min(100, (g.vramUsed / g.vramTotal) * 100) : 0) + "%";
+            const temp = o.fahrenheit ? Math.round(g.tempC * 9 / 5 + 32) + "°F" : Math.round(g.tempC) + "°C";
+            $("gpuNowTemp").textContent = g.hasTemp ? temp : "n/a";
+            $("gpuTempDesc").textContent = g.hasTemp
+                ? "Read through the NVIDIA driver"
+                : "Not available for this card: only NVIDIA drivers expose it without extra software";
+            $("gpuBadge").textContent = g.usage.toFixed(0) + "%";
+            $("gpuInfo").textContent = g.name;
+        }
+        $("gpuAdapter").addEventListener("change", (ev) => {
+            const v = ev.target.value;
+            pushConfigNow((c) => { c.GPUOptions.adapter = v; });
+        });
 
         /* ---------------- network ---------------- */
         function fmtRate(bytesPerSec, bytes) {
@@ -2165,6 +2336,12 @@
             ["netUtilPeak", ["NetworkOptions", "util_vs_peak"]],
             ["netBytes", ["NetworkOptions", "bytes"]],
             ["netSmall", ["NetworkOptions", "small_labels"]],
+            ["gpuName", ["GPUOptions", "show_name"]],
+            ["gpuUsage", ["GPUOptions", "show_usage"]],
+            ["gpuVram", ["GPUOptions", "show_vram"]],
+            ["gpuVramTotal", ["GPUOptions", "show_vram_total"]],
+            ["gpuTemp", ["GPUOptions", "show_temp"]],
+            ["gpuFahrenheit", ["GPUOptions", "fahrenheit"]],
         ];
 
         const asIs = (v) => String(v);
@@ -2207,6 +2384,9 @@
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
             ["netLabel", ["NetworkOptions", "label"], 16],
+            ["gpuLabel", ["GPUOptions", "label"], 16],
+            ["gpuCustomName", ["GPUOptions", "custom_name"], 40],
+            ["cpuCustomName", ["CPUOptions", "custom_name"], 40],
         ];
 
         // Settings that do nothing given another setting are dimmed and locked:
@@ -2234,6 +2414,10 @@
             ["memDecimals", (c) => c.MemoryOptions.show_used || c.MemoryOptions.show_total],
             ["cpuDecimals", (c) => c.CPUOptions.show_usage],
             ["netUtilPeak", (c) => c.NetworkOptions.show_util],
+            ["gpuCustomName", (c) => c.GPUOptions.show_name],
+            ["cpuCustomName", (c) => c.CPUOptions.show_name],
+            ["gpuVramTotal", (c) => c.GPUOptions.show_vram],
+            ["gpuFahrenheit", (c) => c.GPUOptions.show_temp],
         ];
         function applyDepends(c) {
             if (!c) return;
