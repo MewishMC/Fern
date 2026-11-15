@@ -230,6 +230,45 @@ func TestLookupLyricsOffline(t *testing.T) {
 	}
 }
 
+func TestLyricsLines(t *testing.T) {
+	defer setMedia(rawMedia{})
+	setMedia(rawMedia{Available: true, AppID: "a", Title: "Song", Artist: "Band", Status: "playing",
+		Position: 5 * time.Second, Duration: time.Minute, Sampled: time.Now(), Updated: time.Now()})
+	q, _ := lyricsQueryFor(CurrentMedia())
+	lyricsMu.Lock()
+	lyricsKey = q.key
+	lyricsCur = lyricsResult{state: lyricsFound, lines: []LyricLine{{4 * time.Second, "hello there"}, {30 * time.Second, "later"}}}
+	lyricsMu.Unlock()
+	defer func() {
+		lyricsMu.Lock()
+		lyricsKey, lyricsCur = "", lyricsResult{}
+		lyricsMu.Unlock()
+	}()
+
+	c := DefaultConfig()
+	c.DisplayOptions.Lyrics = true
+	c.MediaOptions.ShowProgress = false
+	c.LyricsOptions.Label = "🎤"
+	if got := lyricsLine(c); got != "🎤 hello there" {
+		t.Errorf("own line: got %q", got)
+	}
+	if got := mediaLine(c); got != "♪ Song — Band" {
+		t.Errorf("media line without replace: got %q", got)
+	}
+	c.LyricsOptions.ReplaceTrack = true
+	if got, line := mediaLine(c), lyricsLine(c); got != "♪ hello there" || line != "" {
+		t.Errorf("replace: media %q, lyrics %q", got, line)
+	}
+	c.DisplayOptions.Media = false
+	if got := lyricsLine(c); got != "🎤 hello there" {
+		t.Errorf("replace with the media line off: got %q", got)
+	}
+	c.DisplayOptions.Lyrics = false
+	if got := lyricsLine(c); got != "" {
+		t.Errorf("module off: got %q", got)
+	}
+}
+
 func TestSanitizeLyrics(t *testing.T) {
 	c := DefaultConfig()
 	c.LyricsOptions.OffsetMS = 99999
