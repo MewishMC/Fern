@@ -128,3 +128,4 @@ Bundled third-party assets keep their own licences:
 - Font Awesome Free icons — [LICENSE](Fern/UI/assets/fa/LICENSE.txt)
 - Noto Emoji font — [OFL 1.1](Fern/UI/assets/fonts/LICENSE.txt)
 - CodeMirror 5 (custom CSS editor) — [MIT](Fern/UI/assets/codemirror/LICENSE.txt)
+- OpenVR SDK v2.15.6 `openvr_api.dll` (SteamVR battery and performance lines), embedded in Fern.exe — Copyright (c) 2015, Valve Corporation, [BSD 3-Clause](Fern/modules/openvr/LICENSE-openvr)
