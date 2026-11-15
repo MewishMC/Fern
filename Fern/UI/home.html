@@ -1788,6 +1788,7 @@
             });
             document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === "page-" + page));
             $("main").scrollTop = 0;
+            try { localStorage.setItem("fern_page", page); } catch (e) { }
         }
 
         $("nav").addEventListener("click", (ev) => {
@@ -1818,6 +1819,9 @@
             back.innerHTML = '<i class="fa fa-chevron-left" aria-hidden="true"></i> Modules';
             head.prepend(back);
         });
+
+        // Come back to the page that was open last time.
+        try { showPage(localStorage.getItem("fern_page") || "live"); } catch (e) { }
 
         /* ---------------- modules page ---------------- */
         const modView = { search: "", filter: "all" };
