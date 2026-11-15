@@ -20,6 +20,20 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
   optionally Oculus), with your own wording.
 - Apps without a custom name show their real product name (from the executable) instead of
   the window title.
+- Discord: Rich Presence shows your VRChat world, instance type, player count and time in
+  the world on your profile, with an optional Join button for public instances and a button
+  of your own. Uses your own Discord application ID, set up from the new Discord page.
+- Discord voice line: your voice channel, how many are in it, who is talking and your mute
+  or deafen state, with layout presets, a limit on listed names and an option to leave
+  yourself out. Needs your application's client secret and a one-time approval in Discord.
+- Twitch line: live or offline, viewers, game, title and followers with short counts
+  (1.2k), or your own layout. Sign in with Twitch from the panel using your app's client ID.
+- Soundpad line: the sound you just played in Soundpad, shown for as long as you choose.
+- Voicemod: switch voices and play sounds from the panel, and show the sound and the
+  active voice in the chatbox. Needs a Voicemod Control API client key.
+- Tokens, client secrets and keys for these are stored encrypted for your Windows account
+  in `secrets.dat`, never shown again in the panel and never written to `config.json`.
+  Each integration has a status badge and stays quiet when its app is not running.
 
 ## v2.2 - Custom bars
 
