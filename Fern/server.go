@@ -68,6 +68,12 @@ type uiState struct {
 	OSC       string                `json:"osc"`
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
+	Network   networkState          `json:"network"`
+}
+
+type networkState struct {
+	Adapters []modules.NetAdapter `json:"adapters"`
+	Busiest  string               `json:"busiest"`
 }
 
 type afkState struct {
@@ -367,6 +373,7 @@ func buildState() uiState {
 			modules.ModuleMedia:   d.Media,
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
+			modules.ModuleNetwork: d.Network,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -400,7 +407,13 @@ func buildState() uiState {
 		OSC:       oscTarget(),
 		Version:   appVersion,
 		Update:    currentUpdate(),
+		Network:   currentNetwork(),
 	}
+}
+
+func currentNetwork() networkState {
+	list, busiest := modules.NetAdapters()
+	return networkState{Adapters: orEmpty(list), Busiest: busiest}
 }
 
 // orEmpty keeps nil slices from reaching the page as JSON null.

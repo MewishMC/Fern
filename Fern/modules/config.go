@@ -21,12 +21,14 @@ const (
 	ModuleMedia   = "media"
 	ModuleWindow  = "window"
 	ModuleLogs    = "logs"
+	ModuleNetwork = "network"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
 	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
+	ModuleNetwork,
 }
 
 var knownModules = func() map[string]bool {
@@ -49,6 +51,7 @@ type DisplayOptions struct {
 	ActiveWindow bool     `json:"active_window"`
 	CPU          bool     `json:"cpu"`
 	VRChatLogs   bool     `json:"vr_chat_logs"`
+	Network      bool     `json:"network"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -162,6 +165,22 @@ type CPUOptions struct {
 	Decimals  int    `json:"decimals"`
 }
 
+// NetworkOptions controls the network traffic line.
+type NetworkOptions struct {
+	Label         string `json:"label"`
+	Adapter       string `json:"adapter"` // adapter alias; empty follows the busiest one
+	ShowDown      bool   `json:"show_down"`
+	ShowUp        bool   `json:"show_up"`
+	ShowPeakDown  bool   `json:"show_peak_down"`
+	ShowPeakUp    bool   `json:"show_peak_up"`
+	ShowTotalDown bool   `json:"show_total_down"`
+	ShowTotalUp   bool   `json:"show_total_up"`
+	ShowUtil      bool   `json:"show_util"`
+	UtilVsPeak    bool   `json:"util_vs_peak"` // against the fastest rate seen, not the link speed
+	Bytes         bool   `json:"bytes"`        // MB/s instead of Mbps
+	SmallLabels   bool   `json:"small_labels"` // raised units and labels, fewer characters
+}
+
 // LogsOptions controls the VRChat log line.
 type LogsOptions struct {
 	Label     string `json:"label"`
@@ -189,6 +208,7 @@ type Config struct {
 	MemoryOptions  MemoryOptions  `json:"MemoryOptions"`
 	CPUOptions     CPUOptions     `json:"CPUOptions"`
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
+	NetworkOptions NetworkOptions `json:"NetworkOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -288,6 +308,12 @@ func DefaultConfig() Config {
 			ShowJoin:  true,
 			ShowLeave: true,
 			MaxChars:  80,
+		},
+		NetworkOptions: NetworkOptions{
+			ShowDown:    true,
+			ShowUp:      true,
+			ShowUtil:    true,
+			SmallLabels: true,
 		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
@@ -464,6 +490,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.ActiveWindow
 	case ModuleLogs:
 		return &d.VRChatLogs
+	case ModuleNetwork:
+		return &d.Network
 	}
 	return nil
 }
@@ -622,6 +650,8 @@ func (c *Config) sanitize() {
 	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
+	c.NetworkOptions.Label = RuneLimit(strings.TrimSpace(c.NetworkOptions.Label), 16)
+	c.NetworkOptions.Adapter = RuneLimit(strings.TrimSpace(c.NetworkOptions.Adapter), 256)
 	if c.LoadingOptions.Dots == 0 {
 		c.LoadingOptions.Dots = 6
 	}

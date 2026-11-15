@@ -462,6 +462,149 @@
                 </div>
             </section>
 
+            <!-- ================= NETWORK ================= -->
+            <section class="page" id="page-network">
+                <div class="page-head">
+                    <div>
+                        <h2>Network</h2>
+                        <p>Download and upload speed, peaks and totals since Fern started</p>
+                    </div>
+                    <span class="badge" id="netBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the network line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="network"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Adapter</h3>
+                        <span class="count" id="netAdapterInfo"></span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Measure</b>
+                            <span>Automatic follows the busiest physical adapter</span>
+                        </div>
+                        <div class="field-control"><select id="netAdapter" style="width:240px" aria-label="Network adapter"></select></div>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="netNowDown">—</b><span>Download now</span></div>
+                        <div class="stat"><b id="netNowUp">—</b><span>Upload now</span></div>
+                        <div class="stat"><b id="netPeak">—</b><span>Peak down / up</span></div>
+                        <div class="stat"><b id="netTotal">—</b><span>Total down / up</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the numbers. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="netLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Download speed</b>
+                            <span>Current rate, ↓</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netDown"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Upload speed</b>
+                            <span>Current rate, ↑</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netUp"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Peak download</b>
+                            <span>Fastest download since Fern started</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netPeakDown"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Peak upload</b>
+                            <span>Fastest upload since Fern started</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netPeakUp"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Total downloaded</b>
+                            <span>Data received since Fern started</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netTotalDown"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Total uploaded</b>
+                            <span>Data sent since Fern started</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netTotalUp"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Utilisation</b>
+                            <span>How busy the connection is, in percent</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netUtil"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Against the fastest seen</b>
+                            <span>A gigabit port reports 1000 Mbps whatever your line can do, so compare with the best rate reached instead</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netUtilPeak"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Bytes instead of bits</b>
+                            <span>MB/s instead of Mbps</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netBytes"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Small labels</b>
+                            <span>Raised units like ᴹᵇᵖˢ, which saves characters</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="netSmall"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- ================= MEDIA ================= -->
             <section class="page" id="page-media">
                 <div class="page-head">
@@ -1254,6 +1397,7 @@
             { id: "time", name: "Time", icon: "fa-clock", category: "system", desc: "Current clock", keywords: "clock hour" },
             { id: "memory", name: "Memory", icon: "fa-memory", category: "system", desc: "RAM usage", keywords: "ram" },
             { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
+            { id: "network", name: "Network", icon: "fa-wifi", category: "system", desc: "Download and upload speed", keywords: "internet bandwidth ethernet wifi traffic" },
             { id: "window", name: "Active window", icon: "fa-window-maximize", category: "system", desc: "Active window title", keywords: "focus app program" },
         ];
         const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
@@ -1403,7 +1547,68 @@
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
+            renderNetwork(st);
         }
+
+        /* ---------------- network ---------------- */
+        function fmtRate(bytesPerSec, bytes) {
+            let v = bytes ? bytesPerSec : bytesPerSec * 8;
+            const units = bytes ? ["B/s", "KB/s", "MB/s", "GB/s"] : ["bps", "kbps", "Mbps", "Gbps"];
+            let i = 0;
+            while (v >= 1000 && i < units.length - 1) { v /= 1000; i++; }
+            return (i === 0 || v >= 10 ? v.toFixed(0) : v.toFixed(1)) + " " + units[i];
+        }
+        function fmtBytes(n) {
+            let v = n || 0;
+            const units = ["B", "KB", "MB", "GB", "TB"];
+            let i = 0;
+            while (v >= 1000 && i < units.length - 1) { v /= 1000; i++; }
+            return (i === 0 || v >= 10 ? v.toFixed(0) : v.toFixed(1)) + " " + units[i];
+        }
+        function renderNetwork(st) {
+            const net = st.network || { adapters: [] };
+            const o = st.config.NetworkOptions;
+            const select = $("netAdapter");
+            const names = net.adapters.map((a) => a.name);
+            if (o.adapter && !names.includes(o.adapter)) names.push(o.adapter);
+            const sig = names.join("\u0001") + "|" + net.busiest;
+            if (select.dataset.sig !== sig && document.activeElement !== select) {
+                select.dataset.sig = sig;
+                select.innerHTML = "";
+                const auto = document.createElement("option");
+                auto.value = "";
+                auto.textContent = "Automatic" + (net.busiest ? " (" + net.busiest + ")" : "");
+                select.appendChild(auto);
+                names.forEach((name) => {
+                    const a = net.adapters.find((x) => x.name === name);
+                    const opt = document.createElement("option");
+                    opt.value = name;
+                    opt.textContent = a ? name : name + " (not connected)";
+                    if (a && a.desc) opt.title = a.desc;
+                    select.appendChild(opt);
+                });
+            }
+            if (document.activeElement !== select && !lockForms()) select.value = o.adapter || "";
+            const cur = net.adapters.find((a) => a.name === (o.adapter || net.busiest)) || net.adapters.find((a) => a.name === net.busiest);
+            const bytes = !!o.bytes;
+            if (!cur) {
+                ["netNowDown", "netNowUp", "netPeak", "netTotal"].forEach((id) => { $(id).textContent = "—"; });
+                $("netBadge").textContent = "no adapter";
+                $("netAdapterInfo").textContent = "";
+                return;
+            }
+            $("netNowDown").textContent = fmtRate(cur.down, bytes);
+            $("netNowUp").textContent = fmtRate(cur.up, bytes);
+            $("netPeak").textContent = fmtRate(cur.peakDown, bytes) + " / " + fmtRate(cur.peakUp, bytes);
+            $("netTotal").textContent = fmtBytes(cur.totalDown) + " / " + fmtBytes(cur.totalUp);
+            $("netBadge").textContent = "↓ " + fmtRate(cur.down, bytes);
+            const link = Math.max(cur.rxLink || 0, cur.txLink || 0);
+            $("netAdapterInfo").textContent = cur.desc + (link ? " · link " + fmtRate(link / 8, false) : "");
+        }
+        $("netAdapter").addEventListener("change", (ev) => {
+            const v = ev.target.value;
+            pushConfigNow((c) => { c.NetworkOptions.adapter = v; });
+        });
 
         function renderPreview(st) {
             const preview = st.preview || "";
@@ -1950,6 +2155,16 @@
             ["cpuName", ["CPUOptions", "show_name"]],
             ["cpuCores", ["CPUOptions", "show_cores"]],
             ["cpuUsage", ["CPUOptions", "show_usage"]],
+            ["netDown", ["NetworkOptions", "show_down"]],
+            ["netUp", ["NetworkOptions", "show_up"]],
+            ["netPeakDown", ["NetworkOptions", "show_peak_down"]],
+            ["netPeakUp", ["NetworkOptions", "show_peak_up"]],
+            ["netTotalDown", ["NetworkOptions", "show_total_down"]],
+            ["netTotalUp", ["NetworkOptions", "show_total_up"]],
+            ["netUtil", ["NetworkOptions", "show_util"]],
+            ["netUtilPeak", ["NetworkOptions", "util_vs_peak"]],
+            ["netBytes", ["NetworkOptions", "bytes"]],
+            ["netSmall", ["NetworkOptions", "small_labels"]],
         ];
 
         const asIs = (v) => String(v);
@@ -1991,6 +2206,7 @@
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
+            ["netLabel", ["NetworkOptions", "label"], 16],
         ];
 
         // Settings that do nothing given another setting are dimmed and locked:
@@ -2017,6 +2233,7 @@
             ["afkTimerStyle", (c) => c.AfkOptions.auto_detect && c.AfkOptions.show_timer],
             ["memDecimals", (c) => c.MemoryOptions.show_used || c.MemoryOptions.show_total],
             ["cpuDecimals", (c) => c.CPUOptions.show_usage],
+            ["netUtilPeak", (c) => c.NetworkOptions.show_util],
         ];
         function applyDepends(c) {
             if (!c) return;
