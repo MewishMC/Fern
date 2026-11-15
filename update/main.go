@@ -48,7 +48,12 @@ func showError(title, message string) {
 func main() {
 	exe := targetPath(os.Args)
 
-	if updated, err := update(LatestReleaseAPI, exe); err != nil {
+	// FERN_RELEASE_API points at a local fake to try updates without publishing.
+	api := LatestReleaseAPI
+	if v := os.Getenv("FERN_RELEASE_API"); v != "" {
+		api = v
+	}
+	if updated, err := update(api, exe); err != nil {
 		fmt.Println("Update skipped:", err)
 	} else if updated {
 		fmt.Println("Installed the latest Fern.")
