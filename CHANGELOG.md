@@ -10,6 +10,13 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+### Added
+- The window line can rename apps, show an app's window title or both, or hide it, per app.
+  Recently focused apps can be picked from a list, "Only show listed apps" hides everything
+  else, and hidden apps can send a replacement text such as "busy".
+- Apps without a custom name show their real product name (from the executable) instead of
+  the window title.
+
 ## v2.2 - Custom bars
 
 ### Added
