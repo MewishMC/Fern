@@ -65,6 +65,7 @@ type uiState struct {
 	TextIndex int                   `json:"textIndex"`
 	OSC       string                `json:"osc"`
 	Version   string                `json:"version"`
+	Update    updateState           `json:"update"`
 }
 
 type afkState struct {
@@ -276,6 +277,8 @@ func handleCommand(cmd command) {
 		modules.ResetConfig()
 	case "save":
 		_ = modules.SaveNow()
+	case "update":
+		go startUpdate()
 	}
 }
 
@@ -392,6 +395,7 @@ func buildState() uiState {
 		TextIndex: modules.MessageIndex(),
 		OSC:       oscTarget(),
 		Version:   appVersion,
+		Update:    currentUpdate(),
 	}
 }
 

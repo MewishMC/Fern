@@ -64,6 +64,7 @@
                 <div id="oscLabel" class="foot-line">127.0.0.1:9000</div>
                 <div id="vrLabel" class="foot-line">VRChat: unknown</div>
                 <span class="version" id="verLabel">v&mdash;</span>
+                <button class="btn update-btn" type="button" id="btnUpdate" hidden><i class="fa fa-download" aria-hidden="true"></i> <span id="updateLabel">Update</span></button>
             </div>
         </aside>
 
@@ -1450,11 +1451,22 @@
             $("vrLabel").textContent = "VRChat: " + vr.text;
             $("vrLabel").title = vr.detail;
             $("verLabel").textContent = "v" + st.version;
+            renderUpdate(st.update || {});
             $("logBadge").textContent = st.vrchat.running ? "live" : "waiting";
             $("logBadge").classList.toggle("on", !!st.vrchat.running);
             $("heroOsc").textContent = st.osc;
             $("heroVr").textContent = vr.text;
             $("heroVr").title = vr.detail;
+        }
+
+        function renderUpdate(u) {
+            const button = $("btnUpdate");
+            button.hidden = !u.available;
+            button.disabled = !!u.busy;
+            $("updateLabel").textContent = u.busy ? "Updating\u2026" : "Update to v" + u.latest;
+            button.title = u.busy ? "Fern will restart on the new version" : "Download v" + u.latest + " and restart Fern";
+            if (u.error && u.error !== S.updateError) toast("Update failed: " + u.error, true);
+            S.updateError = u.error || "";
         }
 
         const lockForms = () => Date.now() < S.dirtyUntil;
@@ -2188,6 +2200,13 @@
         $("afkMessage").addEventListener("input", (ev) => {
             const value = ev.target.value || "AFK";
             pushConfig((c) => { c.AfkOptions.afk_message = value; });
+        });
+
+        $("btnUpdate").addEventListener("click", () => {
+            const u = (S.state && S.state.update) || {};
+            if (!u.available) return;
+            if (!confirm("Update Fern to v" + u.latest + "? Fern will close and reopen on the new version.")) return;
+            if (send({ type: "update" })) toast("Downloading v" + u.latest + "\u2026");
         });
 
         $("btnReset").addEventListener("click", () => {

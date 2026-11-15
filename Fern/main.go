@@ -12,7 +12,10 @@ import (
 	"Fern/modules"
 )
 
-const appVersion = "2.0"
+// appVersion is overridden by release builds with
+// -ldflags "-X main.appVersion=<tag without v>", which is what the update
+// check compares against the latest GitHub release.
+var appVersion = "2.0"
 
 var (
 	client    *osc.Client  // owned by sendLoop
@@ -34,6 +37,7 @@ func main() {
 	}
 	go StartServer(listener)
 	go sendLoop()
+	go watchUpdates()
 
 	fmt.Printf("Fern %s listening on http://127.0.0.1:%d/\n", appVersion, port)
 

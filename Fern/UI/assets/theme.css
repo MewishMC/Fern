@@ -1580,6 +1580,12 @@ input[type="range"]::-webkit-slider-thumb {
     color: #fff;
 }
 
+.update-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+}
+
 /* ---------------- toasts & misc ---------------- */
 
 #toasts {
