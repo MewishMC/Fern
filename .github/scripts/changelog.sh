@@ -11,6 +11,7 @@ version=${2:?usage: changelog.sh name|notes VERSION}
 file=${CHANGELOG:-CHANGELOG.md}
 
 awk -v ver="${version#v}" -v mode="$mode" '
+{ sub(/\r$/, "") }  # CRLF checkouts
 /^## / {
     if (found) { done = 1; exit }
     line = $0

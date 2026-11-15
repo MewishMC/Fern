@@ -5,3 +5,6 @@
 *.go text eol=lf
 go.mod text eol=lf
 go.sum text eol=lf
+
+# Shell scripts run under bash on the Windows release runner, which chokes on CRLF.
+*.sh text eol=lf

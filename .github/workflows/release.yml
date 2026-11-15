@@ -41,11 +41,11 @@ jobs:
 
       - name: Read the changelog entry
         run: |
-          if ! name=$(.github/scripts/changelog.sh name "$GITHUB_REF_NAME"); then
+          if ! name=$(bash .github/scripts/changelog.sh name "$GITHUB_REF_NAME"); then
             echo "::error file=CHANGELOG.md::No '## $GITHUB_REF_NAME' section. Add one (or rename Unreleased) before tagging."
             exit 1
           fi
-          .github/scripts/changelog.sh notes "$GITHUB_REF_NAME" > release-notes.md
+          bash .github/scripts/changelog.sh notes "$GITHUB_REF_NAME" > release-notes.md
           if [ ! -s release-notes.md ]; then
             echo "::error file=CHANGELOG.md::The $GITHUB_REF_NAME section is empty."
             exit 1
