@@ -59,13 +59,32 @@ you touched.
 
 ## Releases
 
-Push a version tag and the Release workflow (`.github/workflows/release.yml`) builds
-`Fern.exe` and `update.exe` and publishes them as a GitHub release:
+Note user-facing changes under **Unreleased** in `CHANGELOG.md` as you go. To release:
 
-```bat
-git tag v2.1
-git push origin v2.1
-```
+1. Rename `## Unreleased` to the version, optionally with a name, and start a fresh
+   Unreleased section above it:
+
+   ```markdown
+   ## Unreleased
+
+   ## v2.1 - Spring cleaning
+   ### Added
+   - ...
+   ```
+
+2. Commit that, then tag the commit and push the tag:
+
+   ```bat
+   git tag v2.1
+   git push origin v2.1
+   ```
+
+The Release workflow (`.github/workflows/release.yml`) then builds `Fern.exe` and `update.exe`
+and publishes them as a GitHub release titled "Fern 2.1 - Spring cleaning", with that
+changelog section as its notes. Fern shows the same title and notes in its update dialog. A
+tag with no matching `## v2.1` section (the version must match exactly, so `v2.1.0` needs
+`## v2.1.0`) fails before anything is built; delete the tag, fix the changelog, and tag again.
+To preview an entry, run `bash .github/scripts/changelog.sh notes v2.1`.
 
 The tag without its `v` becomes Fern's version (`-X main.appVersion=2.1`). Running copies of
 Fern compare their version against the latest release and offer the update in the panel;
