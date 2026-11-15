@@ -15,6 +15,7 @@ var (
 	holdUntil time.Time
 	holdPin   bool
 	holdSeq   uint64 // bumped for every new message
+	holdLive  bool   // the message is still being typed
 )
 
 // RuneLimit shortens s to at most n runes without splitting a character.
@@ -32,9 +33,18 @@ func RuneLimit(s string, n int) string {
 // SetHold shows a custom message for a while. A duration of zero pins it until
 // it is cleared.
 func SetHold(text string, d time.Duration) {
+	setHold(text, d, false)
+}
+
+// setHold shows text. A live message is one being typed: each change
+// replaces the last one without counting as a new message.
+func setHold(text string, d time.Duration, live bool) {
 	text = strings.TrimSpace(strings.ReplaceAll(text, "\n", " "))
 	holdMu.Lock()
-	holdSeq++
+	if !live || !holdLive || holdText == "" {
+		holdSeq++
+	}
+	holdLive = live
 	holdText = RuneLimit(text, 143)
 	if d <= 0 {
 		holdPin = true
@@ -51,6 +61,7 @@ func SetHold(text string, d time.Duration) {
 func ClearHold() {
 	holdMu.Lock()
 	holdText = ""
+	holdLive = false
 	holdPin = false
 	holdUntil = time.Time{}
 	holdMu.Unlock()
@@ -74,13 +85,13 @@ func HoldState() (text string, until int64, pinned bool) {
 }
 
 // holdOverlay returns the held message, pinned or timed, while one is active,
-// and its sequence number.
-func holdOverlay() (string, uint64, bool) {
+// its sequence number and whether it is still being typed.
+func holdOverlay() (string, uint64, bool, bool) {
 	text, _, _ := HoldState()
 	holdMu.RLock()
-	seq := holdSeq
+	seq, live := holdSeq, holdLive
 	holdMu.RUnlock()
-	return text, seq, text != ""
+	return text, seq, live, text != ""
 }
 
 func moduleText(id string, cfg Config) string {
@@ -200,6 +211,7 @@ type Chatbox struct {
 	Hold   bool     `json:"hold"`   // a sent message is showing instead of the lines
 	Hidden []string `json:"hidden"` // enabled lines hidden by their VR / desktop setting
 	Seq    uint64   `json:"-"`      // changes with every new held message
+	Live   bool     `json:"live"`   // the held message is still being typed
 }
 
 // sendLimit is the longest text Fern sends. VRChat takes 144 characters and
@@ -215,8 +227,8 @@ func sendLimit(d DisplayOptions) int {
 // ComposeChatbox renders the chatbox: a held message if one is active,
 // otherwise every line fitted into VRChat's limits.
 func ComposeChatbox() Chatbox {
-	if text, seq, ok := holdOverlay(); ok {
-		return Chatbox{Fit: Fit{Text: text}, Hold: true, Seq: seq}
+	if text, seq, live, ok := holdOverlay(); ok {
+		return Chatbox{Fit: Fit{Text: text}, Hold: true, Seq: seq, Live: live}
 	}
 	cfg := GetConfig()
 	d := cfg.DisplayOptions

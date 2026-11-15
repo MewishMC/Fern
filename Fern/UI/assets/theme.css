@@ -1104,6 +1104,21 @@ select option {
     text-overflow: ellipsis;
 }
 
+/* Live page composer: live typing switch, suggestion and recent messages. */
+.send-opts {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.send-opts b {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
 /* Extra OSC outputs: host, port and a switch on one row. */
 .out-control {
     display: flex;

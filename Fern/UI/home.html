@@ -146,6 +146,10 @@
                             <button class="btn ghost" id="btnClearHold">Clear pin</button>
                             <button class="btn" id="btnSend">Send</button>
                         </div>
+                        <div class="send-opts">
+                            <label class="switch" title="Send as you type"><input type="checkbox" id="liveTyping" aria-label="Live typing"><span></span></label>
+                            <span><b>Live typing</b> &middot; <span id="liveHint">the chatbox follows as you type</span></span>
+                        </div>
                         <div class="hint">Overrides the rotation for a while, then Fern goes back to normal. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> also sends.</div>
                     </div>
 
@@ -1139,8 +1143,25 @@
                     </div>
                 </div>
 
-                <div class="section-title">Sound</div>
+                <div class="section-title">Chat</div>
                 <div class="card" id="chatCard">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Live typing rate</b>
+                            <span>With live typing on, how often the message is sent while you type. VRChat drops messages that come faster than about one a second.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="liveRate" min="1000" max="3000" step="100">
+                            <span class="val" id="liveRateVal">1.5s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Typing indicator</b>
+                            <span>Show VRChat's typing bubble while you write a message on the Live page</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="typingIndicator"><span></span></label></div>
+                    </div>
                     <div class="field">
                         <div class="field-label">
                             <b>Sound for sent messages</b>
@@ -1861,6 +1882,10 @@
 
             RANGES.forEach(([, path, labelId, format]) => { $(labelId).textContent = format(field(c, path)); });
             $("windowBadge").textContent = d.active_window ? "on" : "off";
+            const liveHint = c.ChatOptions.live_typing
+                ? "sends as you type, every " + (c.ChatOptions.live_rate_ms / 1000).toFixed(1) + "s"
+                : "off, messages go out when you press Send";
+            if ($("liveHint").textContent !== liveHint) $("liveHint").textContent = liveHint;
 
             const style = c.MediaOptions.show_progress ? (c.MediaOptions.progress_style || "both") : "none";
             renderBarPreview();
@@ -2092,6 +2117,8 @@
             ["out1On", ["OSC", "extra", 1, "enabled"]],
             ["notifySend", ["ChatOptions", "notify_send"]],
             ["notifyAuto", ["ChatOptions", "notify_auto"]],
+            ["liveTyping", ["ChatOptions", "live_typing"]],
+            ["typingIndicator", ["ChatOptions", "typing_indicator"]],
             ["spinFast", ["LoadingOptions", "fast"]],
             ["loadDots", ["LoadingOptions", "show_dots"]],
             ["cycleSwitch", ["TextOptions", "cycle"]],
@@ -2125,6 +2152,7 @@
         // [range id, config path, value label id, label format] — debounced.
         const RANGES = [
             ["rateRange", ["timeout_ms"], "rateVal", asSeconds(2)],
+            ["liveRate", ["ChatOptions", "live_rate_ms"], "liveRateVal", asSeconds(1)],
             ["spinRate", ["LoadingOptions", "rate_ms"], "spinRateVal", asMs],
             ["loadDotsRange", ["LoadingOptions", "dots"], "loadDotsVal", asIs],
             ["speedRange", ["TextOptions", "speed"], "speedVal", asSeconds(1)],
@@ -2164,6 +2192,7 @@
         // Settings that do nothing given another setting are dimmed and locked:
         // [control id, is it in effect for this config].
         const DEPENDS = [
+            ["liveRate", (c) => c.ChatOptions.live_typing],
             ["clockNoAmPm", (c) => !c.TimeOptions.use_24h],
             ["loadDotsRange", (c) => c.LoadingOptions.show_dots],
             ["spinRate", (c) => c.LoadingOptions.fast],
@@ -2403,11 +2432,73 @@
             if (send({ type: "send", text: text, hold: hold })) {
                 toast(hold === 0 ? "Pinned" : "Sent · holding " + hold + "s");
                 $("sendText").value = "";
+                composeDone();
             }
         }
 
+        /* ---------------- composing ----------------
+           Live typing sends the box as it changes, at most once per live rate
+           (Fern holds back anything faster too). The typing bubble is re-sent
+           every few seconds while keys are pressed and taken down after a
+           pause, on send, or when the box is left. */
+        const compose = { liveTimer: null, liveAt: 0, liveSent: "", typingOn: false, typingAt: 0, typingIdle: null };
+
+        function chatOptions() {
+            const c = config();
+            return (c && c.ChatOptions) || {};
+        }
+
+        function scheduleLive() {
+            clearTimeout(compose.liveTimer);
+            const rate = Math.max(1000, num(chatOptions().live_rate_ms, 1500));
+            const wait = Math.max(0, compose.liveAt + rate - Date.now());
+            compose.liveTimer = setTimeout(() => {
+                if (!chatOptions().live_typing) return;
+                const text = $("sendText").value.trim();
+                if (text === compose.liveSent) return;
+                if (!send({ type: "live", text: text, hold: num($("sendHold").value, 10) })) return;
+                compose.liveAt = Date.now();
+                compose.liveSent = text;
+            }, wait);
+        }
+
+        function setTyping(active) {
+            clearTimeout(compose.typingIdle);
+            if (active && chatOptions().typing_indicator) {
+                if (!compose.typingOn || Date.now() - compose.typingAt > 4000) {
+                    if (send({ type: "typing", enabled: true })) {
+                        compose.typingOn = true;
+                        compose.typingAt = Date.now();
+                    }
+                }
+                compose.typingIdle = setTimeout(() => setTyping(false), 5000);
+            } else if (compose.typingOn) {
+                compose.typingOn = false;
+                send({ type: "typing", enabled: false });
+            }
+        }
+
+        function composeChanged() {
+            const text = $("sendText").value;
+            if (chatOptions().live_typing) scheduleLive();
+            setTyping(text.trim() !== "");
+        }
+
+        // After a send: the next keystroke starts a new message.
+        function composeDone() {
+            clearTimeout(compose.liveTimer);
+            compose.liveSent = "";
+            setTyping(false);
+        }
+
+        $("sendText").addEventListener("input", composeChanged);
+        $("sendText").addEventListener("blur", () => setTyping(false));
+
         $("btnClearHold").addEventListener("click", () => {
-            if (send({ type: "clearHold" })) toast("Back to rotation");
+            if (send({ type: "clearHold" })) {
+                compose.liveSent = "";
+                toast("Back to rotation");
+            }
         });
 
         document.addEventListener("click", (ev) => {

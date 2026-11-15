@@ -45,6 +45,7 @@ func main() {
 func sendLoop() {
 	var lastBody string
 	var lastSeq uint64
+	var lastSend time.Time
 	for {
 		cfg := modules.GetConfig()
 		oscClients(cfg.OSCOptions)
@@ -55,17 +56,26 @@ func sendLoop() {
 			}
 			box := modules.ComposeChatbox()
 			body, payload := modules.PayloadFor(box)
+			// Typed messages come in bursts. Keep them to VRChat's pace so none
+			// is dropped, folding the keystrokes in between into one send.
+			if wait := sendGap(cfg.ChatOptions, box, body, lastBody, lastSend); wait > 0 {
+				time.Sleep(wait)
+				continue
+			}
 			if body != "" {
 				notify := shouldNotify(cfg.ChatOptions, box, body, lastBody, lastSeq)
 				msg := osc.NewMessage("/chatbox/input", payload, true, notify)
 				if sendOSC(cfg.OSCOptions, msg) > 0 {
 					lastBody = body
+					lastSend = time.Now()
 					if box.Hold {
 						lastSeq = box.Seq
 					}
 					atomic.AddInt64(&sentCount, 1)
 					atomic.StoreInt64(&lastSentAt, time.Now().UnixMilli())
-					modules.AddHistory(body)
+					if !box.Live {
+						modules.AddHistory(body)
+					}
 				}
 			}
 		}
@@ -86,8 +96,35 @@ func sendLoop() {
 // chatbox dings only when its text changed, and only if asked: with the
 // loading dots on that is about once a second.
 func shouldNotify(opts modules.ChatOptions, box modules.Chatbox, body, lastBody string, lastSeq uint64) bool {
+	if box.Live {
+		return false
+	}
 	if box.Hold {
 		return opts.NotifySend && box.Seq != lastSeq
 	}
 	return opts.NotifyAuto && body != lastBody
+}
+
+// sendGap is how long to wait before sending a typed message, so messages
+// go out no faster than the live typing rate. Everything else, and a
+// message that is already showing, goes at once.
+func sendGap(opts modules.ChatOptions, box modules.Chatbox, body, lastBody string, lastSend time.Time) time.Duration {
+	if !box.Hold || body == "" || body == lastBody || lastSend.IsZero() {
+		return 0
+	}
+	gap := time.Duration(opts.LiveRateMS)*time.Millisecond - time.Since(lastSend)
+	if gap < 0 {
+		return 0
+	}
+	return gap
+}
+
+// sendTyping turns VRChat's typing bubble on or off at every output. Like
+// the chatbox it is only sent while the display is on.
+func sendTyping(on bool) {
+	cfg := modules.GetConfig()
+	if !cfg.DisplayOptions.Show || (on && !cfg.ChatOptions.TypingIndicator) {
+		return
+	}
+	sendOSC(cfg.OSCOptions, osc.NewMessage("/chatbox/typing", on))
 }

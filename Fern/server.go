@@ -270,6 +270,10 @@ func handleCommand(cmd command) {
 	case "send":
 		hold := time.Duration(cmd.Hold) * time.Second
 		modules.SetHold(cmd.Text, hold)
+	case "live":
+		modules.SetLive(cmd.Text, time.Duration(cmd.Hold)*time.Second)
+	case "typing":
+		go sendTyping(cmd.Enabled)
 	case "clearHold":
 		modules.ClearHold()
 	case "media":

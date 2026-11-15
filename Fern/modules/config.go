@@ -211,6 +211,11 @@ func defaultExtraOutput(i int) OSCTarget {
 type ChatOptions struct {
 	NotifySend bool `json:"notify_send"` // play VRChat's sound for "Send now" messages
 	NotifyAuto bool `json:"notify_auto"` // play it when the automatic chatbox changes
+	// LiveTyping sends the message box as you type, at most every LiveRateMS.
+	LiveTyping bool `json:"live_typing"`
+	LiveRateMS int  `json:"live_rate_ms"`
+	// TypingIndicator shows VRChat's typing bubble while composing.
+	TypingIndicator bool `json:"typing_indicator"`
 }
 
 // Config is the persisted application configuration.
@@ -335,7 +340,9 @@ func DefaultConfig() Config {
 			Extra: []OSCTarget{defaultExtraOutput(0), defaultExtraOutput(1)},
 		},
 		ChatOptions: ChatOptions{
-			NotifySend: true,
+			NotifySend:      true,
+			LiveRateMS:      1500,
+			TypingIndicator: true,
 		},
 		TimeoutMS: 2500,
 	}
@@ -718,6 +725,9 @@ func (c *Config) sanitize() {
 	default:
 		c.AfkOptions.TimerStyle = "full"
 	}
+
+	// VRChat drops chatbox messages sent faster than about one a second.
+	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)
 
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"
