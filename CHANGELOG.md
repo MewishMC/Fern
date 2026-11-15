@@ -10,6 +10,12 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+### Changed
+- Neutral colours are on by default.
+- Settings are saved in `%LOCALAPPDATA%\Fern\config.json` instead of next to Fern.exe. An
+  existing `config.json` next to Fern is moved there on first launch and the original kept
+  as `config.json.old`.
+
 ## v2.1 - Modules and updates
 
 ### Added
