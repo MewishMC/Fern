@@ -54,6 +54,7 @@
                 </div>
                 <div class="nav-group">
                     <span class="nav-title">Settings</span>
+                    <button class="nav-item" data-page="output" data-label="Output"><i class="fa fa-tower-broadcast" aria-hidden="true"></i><span class="nav-label">Output</span></button>
                     <button class="nav-item" data-page="appearance" data-label="Appearance"><i class="fa fa-palette" aria-hidden="true"></i><span class="nav-label">Appearance</span></button>
                 </div>
             </nav>
@@ -220,6 +221,10 @@
                     </div>
                 </div>
 
+                <div class="section-title" style="margin-top:0">Order &amp; visibility</div>
+                <div class="list" id="orderList" style="margin-top:0"></div>
+
+                <div class="section-title">Chatbox</div>
                 <div class="card">
                     <div class="field">
                         <div class="field-label">
@@ -236,7 +241,7 @@
                             <span>How lines are joined together</span>
                         </div>
                         <div class="field-control">
-                            <select id="sepSelect" style="width:150px">
+                            <select id="sepSelect" style="width:200px">
                                 <option value="&#10;">New line (recommended)</option>
                                 <option value=" | ">Pipe bar</option>
                                 <option value=" · ">Middle dot</option>
@@ -267,39 +272,6 @@
                     </div>
                 </div>
 
-                <div class="card" style="margin-top:12px">
-                    <div class="card-head">
-                        <h3>Output</h3>
-                        <span class="badge" id="oscBadge">127.0.0.1:9000</span>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>OSC host</b>
-                            <span>Where VRChat listens</span>
-                        </div>
-                        <div class="field-control"><input type="text" id="oscHost" autocomplete="off"></div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>OSC port</b>
-                            <span>Default is 9000</span>
-                        </div>
-                        <div class="field-control"><input type="number" id="oscPort" min="1" max="65535"></div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>Update rate</b>
-                            <span>How often the chatbox is sent. Smooth loading animation can send faster.</span>
-                        </div>
-                        <div class="field-control">
-                            <input type="range" id="rateRange" min="250" max="10000" step="250">
-                            <span class="val" id="rateVal">2.5s</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="section-title">Order &amp; visibility</div>
-                <div class="list" id="orderList"></div>
             </section>
 
             <!-- ================= TEXT ================= -->
@@ -1006,12 +978,51 @@
                             <span class="val" id="windowMaxCharsVal">60</span>
                         </div>
                     </div>
-                    <div class="meta-row" style="margin-top:8px">
-                        <span id="configPath">config.json</span>
-                        <span id="versionFoot">—</span>
-                    </div>
                 </div>
             </section>
+            <!-- ================= OUTPUT ================= -->
+            <section class="page" id="page-output">
+                <div class="page-head">
+                    <div>
+                        <h2>Output</h2>
+                        <p>Where the chatbox is sent and how often</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Output</h3>
+                        <span class="badge" id="oscBadge">127.0.0.1:9000</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>OSC host</b>
+                            <span>Where VRChat listens</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="oscHost" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>OSC port</b>
+                            <span>Default is 9000</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="oscPort" min="1" max="65535"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Update rate</b>
+                            <span>How often the chatbox is sent. Smooth loading animation can send faster.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="rateRange" min="250" max="10000" step="250">
+                            <span class="val" id="rateVal">2.5s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hint">Every change is saved to <code>config.json</code> next to Fern as you make it.</div>
+            </section>
+
             <!-- ================= APPEARANCE ================= -->
             <section class="page" id="page-appearance">
                 <div class="page-head">
@@ -1460,7 +1471,6 @@
             $("vrLabel").textContent = "VRChat: " + vr.text;
             $("vrLabel").title = vr.detail;
             $("verLabel").textContent = "v" + st.version;
-            $("versionFoot").textContent = "Fern v" + st.version;
             $("logBadge").textContent = st.vrchat.running ? "live" : "waiting";
             $("logBadge").classList.toggle("on", !!st.vrchat.running);
             $("heroOsc").textContent = st.osc;
@@ -1501,7 +1511,6 @@
             });
             const sample = c.TimeOptions.use_24h ? "15:04" : "3:04 PM";
             $("clockBadge").textContent = (c.TimeOptions.label ? c.TimeOptions.label + " " : "") + sample;
-            $("configPath").textContent = "saved to config.json";
             if (!locked) {
                 $("afkAuto").checked = !!c.AfkOptions.auto_detect && !c.AfkOptions.bypass;
                 applyDepends(c);
