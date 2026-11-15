@@ -5,7 +5,9 @@
 #   git push origin v2.1
 #
 # The tag (without the "v") is baked into Fern as its version, which is what
-# the in-app update check compares against the latest release.
+# the in-app update check compares against the latest release. The tag's
+# section in CHANGELOG.md ("## v2.1 - Name") becomes the release notes and
+# title; a tag without one fails before anything is built.
 name: Release
 
 on:
@@ -37,6 +39,21 @@ jobs:
           fi
           echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
 
+      - name: Read the changelog entry
+        run: |
+          if ! name=$(.github/scripts/changelog.sh name "$GITHUB_REF_NAME"); then
+            echo "::error file=CHANGELOG.md::No '## $GITHUB_REF_NAME' section. Add one (or rename Unreleased) before tagging."
+            exit 1
+          fi
+          .github/scripts/changelog.sh notes "$GITHUB_REF_NAME" > release-notes.md
+          if [ ! -s release-notes.md ]; then
+            echo "::error file=CHANGELOG.md::The $GITHUB_REF_NAME section is empty."
+            exit 1
+          fi
+          title="Fern $VERSION"
+          if [ -n "$name" ]; then title="$title - $name"; fi
+          echo "TITLE=$title" >> "$GITHUB_ENV"
+
       # The WebView package needs cgo. Use the runner's MinGW if it has one.
       - name: Make sure gcc is available
         shell: pwsh
@@ -66,5 +83,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "$GITHUB_REF_NAME" Fern.exe update.exe \
-            --title "Fern $VERSION" \
-            --generate-notes
+            --title "$TITLE" \
+            --notes-file release-notes.md
