@@ -1186,8 +1186,16 @@
             $("heroDot").classList.toggle("on", on);
         }
 
+        // Returns false and warns when the panel has lost the connection, so
+        // callers only confirm actions that actually reached Fern.
         function send(obj) {
-            if (!S.ws || S.ws.readyState !== WebSocket.OPEN) return false;
+            if (!S.ws || S.ws.readyState !== WebSocket.OPEN) {
+                if (Date.now() - (S.offlineToastAt || 0) > 2500) {
+                    S.offlineToastAt = Date.now();
+                    toast("Not connected to Fern — change not sent", true);
+                }
+                return false;
+            }
             S.ws.send(JSON.stringify(obj));
             return true;
         }
@@ -1597,13 +1605,11 @@
             S.edits.forEach((edit) => edit(next));
             S.dirtyUntil = Date.now() + 1400;
             clearTimeout(S.timer);
-            if (immediate) {
-                send({ type: "config", config: next });
-                return;
-            }
+            if (immediate) return send({ type: "config", config: next });
             S.timer = setTimeout(() => {
                 send({ type: "config", config: next });
             }, 180);
+            return true;
         }
 
         const pushConfigNow = (mutate) => pushConfig(mutate, true);
@@ -1709,9 +1715,9 @@
         /* ---------------- live actions ---------------- */
         $("btnMaster").addEventListener("click", () => {
             const on = !!config().display_options.show;
+            if (!send({ type: "master", enabled: !on })) return;
             S.dirtyUntil = Date.now() + 1400;
             $("masterSwitch").checked = !on;
-            send({ type: "master", enabled: !on });
             toast(on ? "Display off" : "Display on");
         });
 
@@ -1739,14 +1745,11 @@
             if (send({ type: "send", text: text, hold: hold })) {
                 toast(hold === 0 ? "Pinned" : "Sent · holding " + hold + "s");
                 $("sendText").value = "";
-            } else {
-                toast("Not connected", true);
             }
         }
 
         $("btnClearHold").addEventListener("click", () => {
-            send({ type: "clearHold" });
-            toast("Back to rotation");
+            if (send({ type: "clearHold" })) toast("Back to rotation");
         });
 
         document.addEventListener("click", (ev) => {
@@ -1768,9 +1771,9 @@
                 const to = ev.target.dataset.move === "up" ? from - 1 : from + 1;
                 if (from < 0 || to < 0 || to >= order.length) return;
                 order.splice(to, 0, order.splice(from, 1)[0]);
+                if (!send({ type: "order", order })) return;
                 S.state.order = order;
                 S.orderSig = "";
-                send({ type: "order", order });
                 // Drop focus first, otherwise the redraw guard skips the refresh
                 // and the arrows look like they did nothing.
                 if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
@@ -1788,9 +1791,15 @@
         // Flip a module locally right away, then tell the server.
         function toggleModule(id, on) {
             if (!S.state) return;
+            if (!send({ type: "toggle", module: id })) {
+                // Put the switch back so it keeps showing what Fern really has.
+                S.orderSig = "";
+                renderOrder(S.state);
+                document.querySelectorAll('[data-module-toggle="' + id + '"]').forEach((el) => { el.checked = !!S.state.modules[id]; });
+                return;
+            }
             S.state.modules[id] = on;
             S.orderSig = "";
-            send({ type: "toggle", module: id });
             renderOrder(S.state);
             renderPreview(S.state);
         }
@@ -1801,15 +1810,13 @@
             el.addEventListener("change", () => toggleModule(el.dataset.moduleToggle, el.checked));
         });
         $("sepSelect").addEventListener("change", (ev) => {
-            pushConfigNow((c) => { c.display_options.separator = ev.target.value; });
-            toast("Separator updated");
+            if (pushConfigNow((c) => { c.display_options.separator = ev.target.value; })) toast("Separator updated");
         });
 
         function setAllModules(on) {
-            Object.keys(MODULE_NAME).forEach((id) => {
-                if (S.state && !!S.state.modules[id] !== on) send({ type: "toggle", module: id });
-            });
-            toast(on ? "All modules on" : "All modules off");
+            if (!S.state) return;
+            const ids = Object.keys(MODULE_NAME).filter((id) => !!S.state.modules[id] !== on);
+            if (ids.every((id) => send({ type: "toggle", module: id }))) toast(on ? "All modules on" : "All modules off");
         }
         $("btnAllOn").addEventListener("click", () => setAllModules(true));
         $("btnAllOff").addEventListener("click", () => setAllModules(false));
@@ -1881,8 +1888,7 @@
 
         /* ---------------- text page ---------------- */
         $("btnRestartText").addEventListener("click", () => {
-            send({ type: "skipText" });
-            toast("Rotation restarted");
+            if (send({ type: "skipText" })) toast("Rotation restarted");
         });
         $("btnAddMsg").addEventListener("click", () => {
             if (!S.msgs) S.msgs = [];
@@ -1934,13 +1940,12 @@
             if (!ev.target.classList.contains("media-pick")) return;
             const value = ev.target.value;
             S.mediaSourcesSig = "";
-            pushConfigNow((c) => { c.MediaOptions.preferred_app = value; });
-            toast(value ? "Detecting " + value.replace(/\.exe$/i, "") : "Following the current media session");
+            if (pushConfigNow((c) => { c.MediaOptions.preferred_app = value; })) toast(value ? "Detecting " + value.replace(/\.exe$/i, "") : "Following the current media session");
         });
         $("styleSeg").addEventListener("click", (ev) => {
             const button = ev.target.closest("button[data-style]");
             if (!button) return;
-            pushConfigNow((c) => { c.MediaOptions.progress_style = button.dataset.style; });
+            if (!pushConfigNow((c) => { c.MediaOptions.progress_style = button.dataset.style; })) return;
             S.dirtyUntil = 0;
             toast("Progress style: " + button.dataset.style);
         });
@@ -1969,12 +1974,11 @@
         });
 
         $("btnSave").addEventListener("click", () => {
-            send({ type: "save" });
-            toast("Saved");
+            if (send({ type: "save" })) toast("Saved");
         });
         $("btnReset").addEventListener("click", () => {
             if (!confirm("Reset every setting back to the defaults?")) return;
-            send({ type: "reset" });
+            if (!send({ type: "reset" })) return;
             S.edits = [];
             S.orderSig = "";
             S.msgSig = "";
