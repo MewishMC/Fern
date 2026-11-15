@@ -59,9 +59,21 @@ you touched.
 
 ## Releases
 
-The bundled updater reads `https://github.com/MewishMC/Fern/releases/latest` and expects an
-asset named `Fern.exe` on that release. To publish a version, run `build.bat` and attach the
-resulting `Fern.exe` to a new release.
+Push a version tag and the Release workflow (`.github/workflows/release.yml`) builds
+`Fern.exe` and `update.exe` and publishes them as a GitHub release:
+
+```bat
+git tag v2.1
+git push origin v2.1
+```
+
+The tag without its `v` becomes Fern's version (`-X main.appVersion=2.1`). Running copies of
+Fern compare their version against the latest release and offer the update in the panel;
+`update.exe` swaps in the release's `Fern.exe` (checked against its published SHA-256) and
+starts it. Both need those two assets on the release, so keep their names.
+
+To try the whole flow without publishing, point Fern and the updater at a local server that
+answers like GitHub's latest-release API by setting `FERN_RELEASE_API` to its URL.
 
 ## License
 

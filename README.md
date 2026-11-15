@@ -51,6 +51,11 @@ Grab `Fern.exe` from [Releases](https://github.com/MewishMC/Fern/releases) and r
 Fern needs Windows 10 or 11 (x64) and the WebView2 runtime, which ships with Windows 11 and
 current Windows 10 installs.
 
+Fern checks for new releases while it runs. When one is out, an **Update** button appears at
+the bottom of the sidebar; it downloads the new version and restarts Fern on it. You can also
+keep `update.exe` next to `Fern.exe` and start that instead, which updates Fern before
+launching it.
+
 ## Build from source
 
 Requirements:
