@@ -1125,6 +1125,12 @@ select option {
     color: var(--text-secondary);
 }
 
+.chev:disabled {
+    opacity: .3;
+    cursor: default;
+    background: transparent;
+}
+
 /* ---------------- toggle ---------------- */
 
 .switch {

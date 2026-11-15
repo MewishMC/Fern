@@ -1538,8 +1538,8 @@
                     '</div><span class="row-desc">' + (MODULE_DESC[id] || "") + "</span></div>" +
                     '<div class="row-actions">' +
                     '<button class="chev" data-open="' + id + '" title="Settings" aria-label="' + (MODULE_NAME[id] || id) + ' settings"><i class="fa fa-gear" aria-hidden="true"></i></button>' +
-                    '<button class="chev" data-move="up" title="Move up">▲</button>' +
-                    '<button class="chev" data-move="down" title="Move down">▼</button>' +
+                    '<button class="chev" data-move="up" title="Move up" aria-label="Move ' + (MODULE_NAME[id] || id) + ' up"' + (index === 0 ? " disabled" : "") + '>▲</button>' +
+                    '<button class="chev" data-move="down" title="Move down" aria-label="Move ' + (MODULE_NAME[id] || id) + ' down"' + (index === order.length - 1 ? " disabled" : "") + '>▼</button>' +
                     '<label class="switch"><input type="checkbox" data-mod="' + id + '"' +
                     (st.modules[id] ? " checked" : "") + '><span></span></label>' +
                     "</div>";
