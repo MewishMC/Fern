@@ -10,6 +10,10 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+### Added
+- The music progress bar can be restyled: pick a preset (blocks, line, shade, squares, dots,
+  classic) or set your own played and unplayed characters, a position marker and end caps.
+
 ### Changed
 - Neutral colours are on by default.
 - Settings are saved in `%LOCALAPPDATA%\Fern\config.json` instead of next to Fern.exe. An
