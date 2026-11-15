@@ -170,6 +170,7 @@ func StartServer(listener net.Listener) {
 		w.Header().Set("Cache-Control", "no-store")
 		_, _ = w.Write(cover.Data)
 	})
+	mux.HandleFunc("/textstyle.js", serveTextStyleJS)
 	mux.HandleFunc("/ws", handleSocket)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
