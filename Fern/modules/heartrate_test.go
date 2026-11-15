@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -203,6 +204,11 @@ func TestCleanHeartErrorHidesSecrets(t *testing.T) {
 			t.Errorf("message leaks the secret: %q", msg)
 		}
 	}
+	if _, err := net.Dial("tcp", "127.0.0.1:1"); err != nil {
+		if got := cleanHeartError(err, nil); got != "could not reach 127.0.0.1:1" {
+			t.Errorf("refused dial = %q", got)
+		}
+	}
 	if got := cleanHeartError(heartError{msg: "Pulsoid refused the credentials (HTTP 401)"}, nil); !strings.Contains(got, "401") {
 		t.Errorf("friendly message lost: %q", got)
 	}
@@ -398,6 +404,14 @@ func TestHypeRatePhoenixEndToEnd(t *testing.T) {
 	o.HypeRateKey = "key-1"
 	o.HypeRateID = "ABCD"
 	waitSample(t, o, 69)
+}
+
+func TestHeartOptionsJSONKey(t *testing.T) {
+	// The panel reads and writes config.HeartRateOptions.
+	data, err := json.Marshal(DefaultConfig())
+	if err != nil || !strings.Contains(string(data), `"HeartRateOptions":{"source":"pulsoid"`) {
+		t.Errorf("config JSON lacks HeartRateOptions: %v", err)
+	}
 }
 
 func TestSendParamUsesAvatarAddress(t *testing.T) {

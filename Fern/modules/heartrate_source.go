@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -467,6 +468,8 @@ func cleanHeartError(err error, secrets []string) string {
 		err = ue.Err
 	}
 	var he heartError
+	var dnsErr *net.DNSError
+	var opErr *net.OpError
 	msg := err.Error()
 	switch {
 	case errors.As(err, &he):
@@ -475,6 +478,10 @@ func cleanHeartError(err error, secrets []string) string {
 		msg = "timed out"
 	case errors.Is(err, websocket.ErrBadHandshake):
 		msg = "the server did not accept a websocket"
+	case errors.As(err, &dnsErr):
+		msg = "could not find " + dnsErr.Name
+	case errors.As(err, &opErr) && opErr.Op == "dial" && opErr.Addr != nil:
+		msg = "could not reach " + opErr.Addr.String()
 	}
 	for _, s := range secrets {
 		if len(s) >= 4 {

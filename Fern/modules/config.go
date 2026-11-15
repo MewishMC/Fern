@@ -247,7 +247,7 @@ type Config struct {
 	MemoryOptions  MemoryOptions  `json:"MemoryOptions"`
 	CPUOptions     CPUOptions     `json:"CPUOptions"`
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
-	HeartRate      HeartOptions   `json:"HeartOptions"`
+	HeartRate      HeartOptions   `json:"HeartRateOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
