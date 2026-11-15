@@ -540,3 +540,27 @@ func progressBar(pos, dur time.Duration, o MediaOptions) string {
 	}
 	return o.BarLeft + bar + o.BarRight
 }
+
+// maxBarPresets is how many saved bar styles are kept.
+const maxBarPresets = 30
+
+// sanitizeBarPresets drops unnamed and repeated presets (names compare without
+// case; the first one wins) and keeps the characters as short as the bar
+// fields themselves.
+func sanitizeBarPresets(in []BarPreset) []BarPreset {
+	out := make([]BarPreset, 0, len(in))
+	seen := map[string]bool{}
+	for _, p := range in {
+		p.Name = RuneLimit(strings.Join(strings.Fields(p.Name), " "), 24)
+		key := strings.ToLower(p.Name)
+		if p.Name == "" || seen[key] || len(out) >= maxBarPresets {
+			continue
+		}
+		seen[key] = true
+		for _, s := range []*string{&p.Filled, &p.Empty, &p.Head, &p.Left, &p.Right} {
+			*s = RuneLimit(strings.ReplaceAll(*s, "\n", ""), 2)
+		}
+		out = append(out, p)
+	}
+	return out
+}

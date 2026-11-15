@@ -695,10 +695,33 @@
                                 <option value="squares">■■■□□ Squares</option>
                                 <option value="dots">●●●○○ Dots</option>
                                 <option value="classic">[==>-] Classic</option>
+                                <optgroup label="Saved" id="mediaBarSaved"></optgroup>
                                 <option value="custom">Custom</option>
                             </select>
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Save this style</b>
+                            <span>Keeps the characters below under a name in the style list</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="mediaBarPresetName" maxlength="24" autocomplete="off" placeholder="Preset name" aria-label="Preset name">
+                            <button class="btn" type="button" id="mediaBarSave">Save</button>
+                            <button class="btn" type="button" id="mediaBarDelete" title="Delete the selected saved style">Delete</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Share saved styles</b>
+                            <span>Export puts your saved styles here as text and copies it. Paste someone's text and press Import to add theirs.</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn" type="button" id="mediaBarExport">Export</button>
+                            <button class="btn" type="button" id="mediaBarImport">Import</button>
+                        </div>
+                    </div>
+                    <textarea id="mediaBarJson" class="bar-json" rows="3" spellcheck="false" aria-label="Saved styles as JSON" placeholder='[{"name":"Hearts","bar_filled":"♥","bar_empty":"♡"}]'></textarea>
                     <div class="field">
                         <div class="field-label">
                             <b>Bar characters</b>
@@ -2600,17 +2623,136 @@
                 for (const k in BAR_FIELDS) o[k] = Array.from($(BAR_FIELDS[k]).value).slice(0, 2).join("");
             }
             $("mediaBarPreview").textContent = drawBar(o, 0.4) || "(no bar)";
-            const match = Object.keys(BAR_PRESETS).find((name) => Object.keys(BAR_FIELDS).every((k) => (o[k] || "") === BAR_PRESETS[name][k]));
-            if (document.activeElement !== $("mediaBarPreset")) $("mediaBarPreset").value = match || "custom";
+            renderSavedBars();
+            const same = (p) => Object.keys(BAR_FIELDS).every((k) => (o[k] || "") === (p[k] || ""));
+            const builtIn = Object.keys(BAR_PRESETS).find((name) => same(BAR_PRESETS[name]));
+            const saved = savedBars().find(same);
+            if (document.activeElement !== $("mediaBarPreset")) $("mediaBarPreset").value = builtIn || (saved ? "saved:" + saved.name : "custom");
+        }
+
+        // Saved bar styles live in MediaOptions.bar_presets with the same keys
+        // as the bar fields, so applying one is a plain copy.
+        function savedBars() {
+            const c = config();
+            return (c && c.MediaOptions.bar_presets) || [];
+        }
+        function renderSavedBars() {
+            const list = savedBars();
+            const sig = JSON.stringify(list);
+            if (sig === S.savedBarSig || document.activeElement === $("mediaBarPreset")) return;
+            S.savedBarSig = sig;
+            $("mediaBarSaved").replaceChildren(...list.map((p) => {
+                const sample = drawBar(Object.assign({ bar_width: 5 }, p), 0.4);
+                return new Option(sample + " " + p.name, "saved:" + p.name);
+            }));
+            $("mediaBarSaved").hidden = !list.length;
+        }
+        function barFieldsNow() {
+            const o = {};
+            for (const k in BAR_FIELDS) o[k] = Array.from($(BAR_FIELDS[k]).value).slice(0, 2).join("");
+            return o;
+        }
+        // Accepts what Export writes, a single preset, or {presets: [...]}, and
+        // the short keys filled/empty/head/left/right.
+        function parseBarPresets(text) {
+            let data = JSON.parse(text);
+            if (data && !Array.isArray(data) && Array.isArray(data.presets)) data = data.presets;
+            if (!Array.isArray(data)) data = [data];
+            const out = [];
+            data.forEach((p) => {
+                if (!p || typeof p !== "object") return;
+                const name = String(p.name || "").trim().slice(0, 24);
+                if (!name) return;
+                const preset = { name: name };
+                for (const k in BAR_FIELDS) {
+                    const v = p[k] !== undefined ? p[k] : p[k.replace("bar_", "")];
+                    preset[k] = Array.from(String(v === undefined || v === null ? "" : v)).slice(0, 2).join("");
+                }
+                out.push(preset);
+            });
+            return out;
+        }
+        function mergeBarPresets(list, added) {
+            const next = list.map((p) => Object.assign({}, p));
+            added.forEach((p) => {
+                const at = next.findIndex((q) => q.name.toLowerCase() === p.name.toLowerCase());
+                if (at >= 0) next[at] = p; else next.push(p);
+            });
+            return next.slice(0, 30);
         }
         $("mediaBarPreset").addEventListener("change", (ev) => {
-            const preset = BAR_PRESETS[ev.target.value];
+            const value = ev.target.value;
+            let preset = BAR_PRESETS[value];
+            if (!preset && value.startsWith("saved:")) {
+                const found = savedBars().find((p) => "saved:" + p.name === value);
+                if (found) {
+                    preset = {};
+                    for (const k in BAR_FIELDS) preset[k] = found[k] || "";
+                    $("mediaBarPresetName").value = found.name;
+                }
+            }
             if (!preset) return;
             for (const k in preset) $(BAR_FIELDS[k]).value = preset[k];
             renderBarPreview();
             if (pushConfigNow((c) => { Object.assign(c.MediaOptions, preset); })) toast("Bar style: " + ev.target.selectedOptions[0].textContent.replace(/^\S+\s/, ""));
         });
         $("mediaBarWidth").addEventListener("input", () => renderBarPreview());
+        $("mediaBarSave").addEventListener("click", () => {
+            const name = Array.from($("mediaBarPresetName").value.trim()).slice(0, 24).join("");
+            if (!name) { toast("Give the style a name first", true); $("mediaBarPresetName").focus(); return; }
+            const list = savedBars();
+            const exists = list.some((p) => p.name.toLowerCase() === name.toLowerCase());
+            if (!exists && list.length >= 30) { toast("30 saved styles is the limit; delete one first", true); return; }
+            const preset = Object.assign({ name: name }, barFieldsNow());
+            const next = mergeBarPresets(list, [preset]);
+            if (pushConfigNow((c) => { c.MediaOptions.bar_presets = next; })) {
+                S.savedBarSig = "";
+                toast((exists ? "Updated " : "Saved ") + name);
+            }
+        });
+        $("mediaBarDelete").addEventListener("click", () => {
+            const value = $("mediaBarPreset").value;
+            const typed = $("mediaBarPresetName").value.trim().toLowerCase();
+            const list = savedBars();
+            const at = list.findIndex((p) => "saved:" + p.name === value || (typed && p.name.toLowerCase() === typed));
+            if (at < 0) { toast("Pick a saved style, or type its name, to delete it", true); return; }
+            const removed = list[at];
+            const next = list.filter((_, i) => i !== at);
+            if (pushConfigNow((c) => { c.MediaOptions.bar_presets = next; })) {
+                S.savedBarSig = "";
+                toast("Deleted " + removed.name, false, {
+                    label: "Undo",
+                    run: () => pushConfigNow((c) => { c.MediaOptions.bar_presets = mergeBarPresets(c.MediaOptions.bar_presets || [], [removed]); }),
+                });
+            }
+        });
+        $("mediaBarExport").addEventListener("click", () => {
+            const list = savedBars();
+            if (!list.length) { toast("No saved styles yet. Save one first.", true); return; }
+            const text = JSON.stringify(list.map((p) => Object.assign({ name: p.name }, p)));
+            const box = $("mediaBarJson");
+            box.value = text;
+            box.select();
+            const done = () => toast("Copied " + list.length + " style" + (list.length === 1 ? "" : "s"));
+            const fallback = () => {
+                try { if (document.execCommand("copy")) { done(); return; } } catch (e) { }
+                toast("Exported below. Copy it with Ctrl+C.");
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+            else fallback();
+        });
+        $("mediaBarImport").addEventListener("click", () => {
+            const text = $("mediaBarJson").value.trim();
+            if (!text) { toast("Paste exported styles into the box first", true); $("mediaBarJson").focus(); return; }
+            let added;
+            try { added = parseBarPresets(text); } catch (e) { toast("That isn't valid style text", true); return; }
+            if (!added.length) { toast("No named styles found in that text", true); return; }
+            const next = mergeBarPresets(savedBars(), added);
+            if (pushConfigNow((c) => { c.MediaOptions.bar_presets = next; })) {
+                S.savedBarSig = "";
+                toast("Imported " + added.length + " style" + (added.length === 1 ? "" : "s"));
+            }
+        });
 
         /* ---------------- per module options ---------------- */
         $("afkTimerStyle").addEventListener("change", (ev) => {

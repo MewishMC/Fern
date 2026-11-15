@@ -148,6 +148,19 @@ type MediaOptions struct {
 	OnlyOnChange  bool `json:"only_on_change"`
 	ChangeSeconds int  `json:"change_seconds"`
 	TidyTitles    bool `json:"tidy_titles"` // drop "(Official Video)", "[HD]" and the like
+	// BarPresets are the user's saved progress bar styles.
+	BarPresets []BarPreset `json:"bar_presets"`
+}
+
+// BarPreset is a named set of progress bar characters. The keys match the
+// MediaOptions fields so the panel can copy one over the other.
+type BarPreset struct {
+	Name   string `json:"name"`
+	Filled string `json:"bar_filled"`
+	Empty  string `json:"bar_empty"`
+	Head   string `json:"bar_head"`
+	Left   string `json:"bar_left"`
+	Right  string `json:"bar_right"`
 }
 
 // TimeOptions controls the clock line.
@@ -321,6 +334,7 @@ func (c Config) clone() Config {
 	out.TextMessages = append([]string{}, c.TextMessages...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
+	out.MediaOptions.BarPresets = append([]BarPreset{}, c.MediaOptions.BarPresets...)
 	return out
 }
 
@@ -606,6 +620,7 @@ func (c *Config) sanitize() {
 		c.MediaOptions.Separator = " — "
 	}
 	c.MediaOptions.ChangeSeconds = clampInt(c.MediaOptions.ChangeSeconds, 3, 600)
+	c.MediaOptions.BarPresets = sanitizeBarPresets(c.MediaOptions.BarPresets)
 
 	c.MemoryOptions.Label = RuneLimit(strings.TrimSpace(c.MemoryOptions.Label), 16)
 	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)
