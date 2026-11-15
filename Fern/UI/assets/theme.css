@@ -1586,6 +1586,101 @@ input[type="range"]::-webkit-slider-thumb {
     margin-top: 4px;
 }
 
+.update-dialog {
+    margin: auto;
+    width: min(520px, calc(100vw - 32px));
+    max-height: min(640px, calc(100vh - 48px));
+    padding: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    background: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+.update-dialog::backdrop {
+    background: rgb(0 0 0 / .55);
+}
+
+.update-dialog form {
+    display: flex;
+    flex-direction: column;
+    max-height: inherit;
+    padding: 20px 22px 18px;
+}
+
+.update-eyebrow {
+    font-size: .65rem;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.update-dialog h3 {
+    margin: 6px 0 12px;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+}
+
+.update-notes {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding-right: 4px;
+    font-size: .8rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+.update-notes h4 {
+    margin: 12px 0 4px;
+    font-size: .68rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.update-notes h4:first-child {
+    margin-top: 0;
+}
+
+.update-notes ul {
+    padding-left: 18px;
+}
+
+.update-notes li + li {
+    margin-top: 3px;
+}
+
+.update-notes p + p {
+    margin-top: 6px;
+}
+
+.update-notes code {
+    font-family: "Cascadia Mono", Consolas, monospace;
+    font-size: .74rem;
+    padding: 1px 4px;
+    border-radius: 4px;
+    background: var(--bg-input);
+}
+
+.update-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.update-link {
+    margin-right: auto;
+    font-size: .74rem;
+    color: var(--text-dim);
+}
+
+.update-link:hover {
+    color: var(--accent-light);
+}
+
 /* ---------------- toasts & misc ---------------- */
 
 #toasts {

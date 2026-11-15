@@ -31,6 +31,8 @@ var updateClient = &http.Client{Timeout: 30 * time.Second}
 
 type ghRelease struct {
 	TagName string    `json:"tag_name"`
+	Name    string    `json:"name"` // release title, e.g. "Fern 2.1 - Spring cleaning"
+	Body    string    `json:"body"` // the release notes, from CHANGELOG.md
 	HTMLURL string    `json:"html_url"`
 	Assets  []ghAsset `json:"assets"`
 }
@@ -54,6 +56,9 @@ func (r *ghRelease) asset(name string) *ghAsset {
 type updateState struct {
 	Available bool   `json:"available"`
 	Latest    string `json:"latest"`
+	Name      string `json:"name"`
+	Notes     string `json:"notes"`
+	URL       string `json:"url"`
 	Error     string `json:"error"`
 	Busy      bool   `json:"busy"`
 }
@@ -72,6 +77,9 @@ func currentUpdate() updateState {
 	if latest != nil && newerVersion(latest.TagName, appVersion) {
 		st.Available = true
 		st.Latest = strings.TrimPrefix(latest.TagName, "v")
+		st.Name = latest.Name
+		st.Notes = latest.Body
+		st.URL = latest.HTMLURL
 	}
 	return st
 }

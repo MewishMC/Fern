@@ -4,8 +4,10 @@ import (
 	"embed"
 	"io/fs"
 	"os"
+	"os/exec"
 	"runtime"
 	"slices"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -44,6 +46,9 @@ func StartWebview(url string) {
 	// The page calls this to open the CSS editor as a native window. A popup
 	// from window.open would get WebView2's own frame with the URL showing.
 	_ = w.Bind("fernOpenCssEditor", func() { openEditorWindow(url + "css-editor") })
+	// Links out (like a release page) go to the default browser rather than a
+	// WebView2 popup. Only Fern's own GitHub pages are allowed.
+	_ = w.Bind("fernOpenURL", openExternal)
 
 	w.Dispatch(func() {
 		w.Navigate(url)
@@ -55,6 +60,15 @@ func StartWebview(url string) {
 	mainView = w
 	hookClose(uintptr(w.Window()), closeMain)
 	w.Run()
+}
+
+const repoPages = "https://github.com/MewishMC/Fern/"
+
+func openExternal(link string) {
+	if !strings.HasPrefix(link, repoPages) {
+		return
+	}
+	_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", link).Start()
 }
 
 var (

@@ -59,6 +59,19 @@ func TestFetchLatestRelease(t *testing.T) {
 	}
 }
 
+func TestCurrentUpdateCarriesReleaseNotes(t *testing.T) {
+	updateMu.Lock()
+	saved := latest
+	latest = &ghRelease{TagName: "v99.0", Name: "Fern 99.0 - Moonlight", Body: "- Added a thing", HTMLURL: "https://example.invalid/r"}
+	updateMu.Unlock()
+	t.Cleanup(func() { updateMu.Lock(); latest = saved; updateMu.Unlock() })
+
+	st := currentUpdate()
+	if !st.Available || st.Latest != "99.0" || st.Name != "Fern 99.0 - Moonlight" || st.Notes != "- Added a thing" || st.URL == "" {
+		t.Errorf("got %+v", st)
+	}
+}
+
 func TestEnsureUpdaterDownloadsWhenMissing(t *testing.T) {
 	payload := []byte("updater build")
 	sum := sha256.Sum256(payload)

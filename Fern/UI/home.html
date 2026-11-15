@@ -1105,6 +1105,19 @@
 
     <div id="toasts"></div>
 
+    <dialog id="updateDialog" class="update-dialog" aria-labelledby="updateTitle">
+        <form method="dialog">
+            <span class="update-eyebrow"><i class="fa fa-gift" aria-hidden="true"></i> What's new</span>
+            <h3 id="updateTitle">Update</h3>
+            <div class="update-notes" id="updateNotes"></div>
+            <div class="update-actions">
+                <a class="update-link" id="updateLink" target="_blank" rel="noopener">View on GitHub</a>
+                <button class="btn ghost" value="later">Later</button>
+                <button class="btn" value="update" id="updateConfirm"><i class="fa fa-download" aria-hidden="true"></i> Update &amp; restart</button>
+            </div>
+        </form>
+    </dialog>
+
 
     <script>
         "use strict";
@@ -2202,11 +2215,60 @@
             pushConfig((c) => { c.AfkOptions.afk_message = value; });
         });
 
+        // Release notes are Markdown from CHANGELOG.md. Render the handful of
+        // things a changelog uses (headings, bullets, bold, code) and escape
+        // everything else.
+        function renderNotes(markdown) {
+            const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            const inline = (t) => esc(t)
+                .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+                .replace(/`([^`]+)`/g, "<code>$1</code>");
+            const out = [];
+            let item = null;
+            const flush = () => { if (item !== null) { out.push("<li>" + inline(item) + "</li>"); item = null; } };
+            let inList = false;
+            const closeList = () => { flush(); if (inList) { out.push("</ul>"); inList = false; } };
+            (markdown || "").replace(/\r/g, "").split("\n").forEach((line) => {
+                const heading = line.match(/^#{1,6}\s+(.*)$/);
+                const bullet = line.match(/^\s*[-*]\s+(.*)$/);
+                if (heading) {
+                    closeList();
+                    out.push("<h4>" + inline(heading[1]) + "</h4>");
+                } else if (bullet) {
+                    flush();
+                    if (!inList) { out.push("<ul>"); inList = true; }
+                    item = bullet[1];
+                } else if (/^\s+\S/.test(line) && item !== null) {
+                    item += " " + line.trim();
+                } else if (line.trim()) {
+                    closeList();
+                    out.push("<p>" + inline(line.trim()) + "</p>");
+                } else {
+                    flush();
+                }
+            });
+            closeList();
+            return out.join("") || "<p>No notes for this release.</p>";
+        }
+
         $("btnUpdate").addEventListener("click", () => {
             const u = (S.state && S.state.update) || {};
             if (!u.available) return;
-            if (!confirm("Update Fern to v" + u.latest + "? Fern will close and reopen on the new version.")) return;
-            if (send({ type: "update" })) toast("Downloading v" + u.latest + "\u2026");
+            $("updateTitle").textContent = u.name || "Fern " + u.latest;
+            $("updateNotes").innerHTML = renderNotes(u.notes);
+            $("updateLink").hidden = !u.url;
+            if (u.url) $("updateLink").href = u.url;
+            $("updateDialog").showModal();
+        });
+        $("updateLink").addEventListener("click", (ev) => {
+            if (typeof window.fernOpenURL !== "function") return; // plain browser: let the link open
+            ev.preventDefault();
+            window.fernOpenURL($("updateLink").href);
+        });
+        $("updateDialog").addEventListener("close", () => {
+            if ($("updateDialog").returnValue !== "update") return;
+            const u = (S.state && S.state.update) || {};
+            if (send({ type: "update" })) toast("Downloading v" + u.latest + "\u2026 Fern will restart.");
         });
 
         $("btnReset").addEventListener("click", () => {
