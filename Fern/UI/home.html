@@ -1454,9 +1454,11 @@
                 RANGES.forEach(([id, path]) => { $(id).value = field(c, path); });
                 TEXTS.forEach(([id, path]) => { $(id).value = field(c, path) || ""; });
                 $("sepSelect").value = d.separator;
-                $("oscHost").value = c.OSC.host;
-                $("oscPort").value = c.OSC.port;
-                $("afkTime").value = c.AfkOptions.afk_time;
+                // These apply on change, so leave them alone while being typed in.
+                const typing = document.activeElement;
+                if (typing !== $("oscHost")) $("oscHost").value = c.OSC.host;
+                if (typing !== $("oscPort")) $("oscPort").value = c.OSC.port;
+                if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
                 document.querySelectorAll("[data-module-toggle]").forEach((el) => {
@@ -1956,18 +1958,33 @@
         });
 
         /* ---------------- settings page ---------------- */
-        $("oscHost").addEventListener("input", (ev) => {
-            const value = ev.target.value.trim() || "127.0.0.1";
-            pushConfig((c) => { c.OSC.host = value; });
-        });
-        $("oscPort").addEventListener("input", (ev) => {
-            const value = num(ev.target.value, 9000);
-            pushConfig((c) => { c.OSC.port = value; });
-        });
-        $("afkTime").addEventListener("input", (ev) => {
-            const value = Math.max(0, num(ev.target.value, 10));
-            pushConfig((c) => { c.AfkOptions.afk_time = value; });
-        });
+        // Host, port and AFK delay apply once the field is left (or Enter is
+        // pressed). Applying per keystroke pointed Fern at port 9, then 90, then
+        // 900 while typing 9000.
+        function commitField(el, read, apply, invalid) {
+            el.addEventListener("keydown", (ev) => { if (ev.key === "Enter") el.blur(); });
+            el.addEventListener("change", () => {
+                const value = read(el.value);
+                if (value === null) {
+                    toast(invalid, true);
+                    S.dirtyUntil = 0;
+                    if (S.state) syncControls(S.state);
+                    return;
+                }
+                el.value = value;
+                pushConfigNow((c) => apply(c, value));
+            });
+        }
+        commitField($("oscHost"), (v) => v.trim() || null,
+            (c, v) => { c.OSC.host = v; }, "OSC host can't be empty");
+        commitField($("oscPort"), (v) => {
+            const n = Number(v);
+            return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : null;
+        }, (c, v) => { c.OSC.port = v; }, "OSC port must be a whole number from 1 to 65535");
+        commitField($("afkTime"), (v) => {
+            const n = Number(v);
+            return v.trim() !== "" && Number.isFinite(n) && n >= 0 && n <= 3600 ? Math.round(n) : null;
+        }, (c, v) => { c.AfkOptions.afk_time = v; }, "AFK delay must be between 0 and 3600 seconds");
         $("afkMessage").addEventListener("input", (ev) => {
             const value = ev.target.value || "AFK";
             pushConfig((c) => { c.AfkOptions.afk_message = value; });
