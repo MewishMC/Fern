@@ -92,6 +92,7 @@
                         <p>Exactly what the chatbox shows right now</p>
                     </div>
                     <div class="head-actions">
+                        <button class="btn ghost" id="btnAfk" title="Show the AFK line until you turn it off" aria-pressed="false"><i class="fa fa-moon" aria-hidden="true"></i><span>I'm AFK</span></button>
                         <button class="btn ghost" id="btnSkip">Next text</button>
                         <button class="btn" id="btnMaster">Display on</button>
                     </div>
@@ -861,7 +862,7 @@
                 <div class="page-head">
                     <div>
                         <h2>AFK</h2>
-                        <p>Idle timer based on OSC movement and window changes</p>
+                        <p>Idle timer from VRChat's OSC, window changes and your keyboard and mouse</p>
                     </div>
                     <span class="badge" id="afkBadge">idle</span>
                 </div>
@@ -876,25 +877,26 @@
                             <label class="switch"><input type="checkbox" data-module-toggle="afk"><span></span></label>
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>I'm AFK</b>
+                            <span id="afkManualInfo">Stays on until you turn it off, whatever detection says</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="afkManual"><span></span></label>
+                        </div>
+                    </div>
                 </div>
 
+                <div class="section-title">Detection</div>
                 <div class="card">
                     <div class="field">
                         <div class="field-label">
                             <b>Detect AFK</b>
-                            <span>Counts idle time from VRChat's OSC (movement, voice, input) and window changes</span>
+                            <span>Counts idle time from the activity picked below</span>
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="afkAuto"><span></span></label>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>Only OSC movement</b>
-                            <span>Ignores voice, input and window switching</span>
-                        </div>
-                        <div class="field-control">
-                            <label class="switch"><input type="checkbox" id="afkMovementOnly"><span></span></label>
                         </div>
                     </div>
                     <div class="field">
@@ -909,15 +911,100 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
-                            <b>AFK text</b>
-                            <span>Shown before the timer</span>
+                            <b>Only OSC movement</b>
+                            <span>Ignores everything below except moving in VRChat</span>
                         </div>
-                        <div class="field-control"><input type="text" id="afkMessage" autocomplete="off"></div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="afkMovementOnly"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Moving in VRChat</b>
+                            <span>OSC velocity and turning · <em class="afk-seen" data-seen="movement">–</em></span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="afkUseMovement"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Talking</b>
+                            <span>OSC voice · <em class="afk-seen" data-seen="voice">–</em></span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="afkUseVoice"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Other VRChat OSC</b>
+                            <span>Looking up and down, OSC input · <em class="afk-seen" data-seen="osc">–</em></span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="afkUseOsc"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Switching windows</b>
+                            <span>A new window in front · <em class="afk-seen" data-seen="window">–</em></span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="afkUseWindow"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Keyboard and mouse</b>
+                            <span>Typing or using the mouse in any app · <em class="afk-seen" data-seen="input">–</em></span>
+                        </div>
+                        <div class="field-control">
+                            <select id="afkInputMode" style="width:170px">
+                                <option value="always">Always counts</option>
+                                <option value="desktop">Only on desktop</option>
+                                <option value="off">Ignored</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="hint">Any picked activity keeps you active, so typing in another window while your avatar stands still is not AFK, and neither is moving in VR with the keyboard untouched. "Only on desktop" ignores the keyboard while a VR runtime is running.</div>
+
+                <div class="section-title">Look</div>
+                <div class="afk-styles" id="afkStyles"></div>
+                <div class="card" style="margin-top:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Preview</b>
+                            <span>Five minutes away, with the settings below</span>
+                        </div>
+                        <div class="field-control"><code class="bar-preview" id="afkPreview"></code></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Icon</b>
+                            <span>Optional, in front of the text</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="afkIcon" maxlength="16" autocomplete="off" placeholder="none" style="width:80px;text-align:center"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Text with the timer</b>
+                            <span><code>{time}</code> places the timer and <code>{since}</code> the time you left; without them the timer goes at the end</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="afkMessage" autocomplete="off" maxlength="160" placeholder="AFK"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Text without the timer</b>
+                            <span>Used when the timer is off</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="afkPlain" autocomplete="off" maxlength="160" placeholder="same text, no timer"></div>
                     </div>
                     <div class="field">
                         <div class="field-label">
                             <b>Show the timer</b>
-                            <span>Off shows just the AFK text</span>
+                            <span>Off shows the text without the timer</span>
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="afkShowTimer"><span></span></label>
@@ -933,10 +1020,22 @@
                                 <option value="full">00:12:31</option>
                                 <option value="short">12m 31s</option>
                                 <option value="minutes">12m</option>
+                                <option value="compact">1h 12m</option>
+                                <option value="words">12 minutes</option>
                             </select>
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Timer lettering</b>
+                            <span>A Unicode style for the timer's digits and letters</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="afkTimerFont" style="width:170px"></select>
+                        </div>
+                    </div>
                 </div>
+                <div class="hint">The <b>Aa</b> button next to a text restyles it: small caps, superscript, bold, fullwidth and more.</div>
             </section>
 
             <!-- ================= WINDOW ================= -->
@@ -1232,7 +1331,8 @@
         </form>
     </dialog>
 
-
+    <!-- FernTextStyle.apply(text, style): the unicode styler, built from the same tables as the chatbox. -->
+    <script src="/textstyle.js"></script>
     <script>
         "use strict";
 
@@ -1684,9 +1784,10 @@
             $("playersInfo").textContent = "Players: " + st.players;
             const afk = st.afk || {};
             $("afkInfo").textContent = afk.active
-                ? "AFK " + fmtClock(afk.idleMs)
+                ? "AFK " + (afk.manual ? "(manual) " : "") + fmtClock(afk.idleMs)
                 : "AFK: " + (afk.talking ? "talking" : "active");
-            $("afkBadge").textContent = afk.active ? "away" : "active";
+            $("afkBadge").textContent = afk.manual ? "AFK (manual)" : (afk.active ? "away" : "active");
+            renderAfk(st);
 
             const cpu = st.perf.cpu || 0;
             $("statCpu").textContent = cpu.toFixed(0) + "%";
@@ -1755,6 +1856,9 @@
                 if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
+                $("afkTimerFont").value = c.AfkOptions.timer_font || "";
+                $("afkInputMode").value = c.AfkOptions.input_mode || "always";
+                $("afkManual").checked = !!c.AfkOptions.manual;
                 document.querySelectorAll("[data-module-toggle]").forEach((el) => {
                     el.checked = !!(st.modules && st.modules[el.dataset.moduleToggle]);
                 });
@@ -1938,6 +2042,10 @@
             ["clockNoAmPm", ["TimeOptions", "no_am_pm"]],
             ["afkMovementOnly", ["AfkOptions", "poopyafk"]],
             ["afkShowTimer", ["AfkOptions", "show_timer"]],
+            ["afkUseMovement", ["AfkOptions", "use_movement"]],
+            ["afkUseVoice", ["AfkOptions", "use_voice"]],
+            ["afkUseOsc", ["AfkOptions", "use_osc_other"]],
+            ["afkUseWindow", ["AfkOptions", "use_window"]],
             ["windowSimplified", ["WindowOptions", "simplified"]],
             ["windowOnlyListed", ["WindowOptions", "only_listed"]],
             ["windowShowMode", ["WindowOptions", "show_mode"]],
@@ -1991,6 +2099,8 @@
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
+            ["afkIcon", ["AfkOptions", "icon"], 8],
+            ["afkPlain", ["AfkOptions", "afk_message_plain"], 80],
         ];
 
         // Settings that do nothing given another setting are dimmed and locked:
@@ -2012,9 +2122,13 @@
             ["windowCountOculus", (c) => c.WindowOptions.show_mode],
             ["afkMovementOnly", (c) => c.AfkOptions.auto_detect],
             ["afkTime", (c) => c.AfkOptions.auto_detect],
-            ["afkMessage", (c) => c.AfkOptions.auto_detect],
-            ["afkShowTimer", (c) => c.AfkOptions.auto_detect],
-            ["afkTimerStyle", (c) => c.AfkOptions.auto_detect && c.AfkOptions.show_timer],
+            ["afkUseMovement", (c) => c.AfkOptions.auto_detect && !c.AfkOptions.poopyafk],
+            ["afkUseVoice", (c) => c.AfkOptions.auto_detect && !c.AfkOptions.poopyafk],
+            ["afkUseOsc", (c) => c.AfkOptions.auto_detect && !c.AfkOptions.poopyafk],
+            ["afkUseWindow", (c) => c.AfkOptions.auto_detect && !c.AfkOptions.poopyafk],
+            ["afkInputMode", (c) => c.AfkOptions.auto_detect && !c.AfkOptions.poopyafk],
+            ["afkTimerStyle", (c) => c.AfkOptions.show_timer],
+            ["afkTimerFont", (c) => c.AfkOptions.show_timer],
             ["memDecimals", (c) => c.MemoryOptions.show_used || c.MemoryOptions.show_total],
             ["cpuDecimals", (c) => c.CPUOptions.show_usage],
         ];
@@ -2535,9 +2649,178 @@
             return v.trim() !== "" && Number.isFinite(n) && n >= 0 && n <= 3600 ? Math.round(n) : null;
         }, (c, v) => { c.AfkOptions.afk_time = v; }, "AFK delay must be between 0 and 3600 seconds");
         $("afkMessage").addEventListener("input", (ev) => {
-            const value = ev.target.value || "AFK";
+            const value = Array.from(ev.target.value).slice(0, 80).join("") || "AFK";
             pushConfig((c) => { c.AfkOptions.afk_message = value; });
         });
+
+        /* ---------------- afk page ---------------- */
+        // The unicode styler from /textstyle.js. Without it (an old page or a
+        // failed load) styling is a no-op rather than an error.
+        const STYLER = window.FernTextStyle || { styles: [], apply: (t) => t };
+
+        // attachStyler puts an "Aa" button after a text input that opens a
+        // menu of unicode styles, each previewing the input's own text. Picking
+        // one rewrites the input and fires "input", so whatever already
+        // listens to the field saves it. Placeholders like {time} are kept.
+        function attachStyler(input) {
+            if (!input || !STYLER.styles.length) return;
+            const wrap = document.createElement("span");
+            wrap.className = "styler";
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "btn ghost styler-btn";
+            button.textContent = "Aa";
+            button.title = "Restyle this text";
+            button.setAttribute("aria-label", "Restyle this text");
+            button.setAttribute("aria-haspopup", "menu");
+            const menu = document.createElement("div");
+            menu.className = "styler-menu";
+            menu.setAttribute("role", "menu");
+            menu.hidden = true;
+            input.insertAdjacentElement("afterend", wrap);
+            wrap.appendChild(button);
+            wrap.appendChild(menu);
+            const close = () => { menu.hidden = true; button.setAttribute("aria-expanded", "false"); };
+            button.addEventListener("click", () => {
+                if (!menu.hidden) return close();
+                const plain = STYLER.apply(input.value || input.placeholder || "Text", "plain");
+                menu.innerHTML = "";
+                STYLER.styles.forEach((style) => {
+                    const item = document.createElement("button");
+                    item.type = "button";
+                    item.setAttribute("role", "menuitem");
+                    item.dataset.style = style.id;
+                    const name = document.createElement("span");
+                    name.textContent = style.name;
+                    const sample = document.createElement("b");
+                    sample.textContent = STYLER.apply(plain, style.id);
+                    item.appendChild(name);
+                    item.appendChild(sample);
+                    menu.appendChild(item);
+                });
+                menu.hidden = false;
+                button.setAttribute("aria-expanded", "true");
+                const first = menu.querySelector("button");
+                if (first) first.focus();
+            });
+            menu.addEventListener("click", (ev) => {
+                const item = ev.target.closest("button[data-style]");
+                if (!item) return;
+                const plain = STYLER.apply(input.value, "plain");
+                input.value = STYLER.apply(plain, item.dataset.style);
+                close();
+                input.focus();
+                input.dispatchEvent(new Event("input", { bubbles: true }));
+            });
+            document.addEventListener("click", (ev) => { if (!wrap.contains(ev.target)) close(); });
+            wrap.addEventListener("keydown", (ev) => {
+                if (ev.key === "Escape" && !menu.hidden) { close(); button.focus(); }
+            });
+        }
+        ["afkMessage", "afkPlain", "textLabel"].forEach((id) => attachStyler($(id)));
+
+        // Timer lettering: every style, previewed on a timer.
+        STYLER.styles.forEach((style) => {
+            const option = document.createElement("option");
+            option.value = style.id === "plain" ? "" : style.id;
+            option.textContent = (style.id === "plain" ? "Normal" : style.name) + " · " + STYLER.apply("5m 12s", style.id);
+            $("afkTimerFont").appendChild(option);
+        });
+        if (!STYLER.styles.length) $("afkTimerFont").innerHTML = '<option value="">Normal</option>';
+        $("afkTimerFont").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.AfkOptions.timer_font = ev.target.value; });
+        });
+        $("afkInputMode").addEventListener("change", (ev) => {
+            pushConfigNow((c) => { c.AfkOptions.input_mode = ev.target.value; });
+        });
+
+        // "I'm AFK" stays on until turned off. The start time goes with it so
+        // the timer counts from the click.
+        function setManualAfk(on) {
+            if (!pushConfigNow((c) => {
+                c.AfkOptions.manual = on;
+                c.AfkOptions.manual_since = on ? Date.now() : 0;
+            })) return;
+            S.dirtyUntil = 0;
+            const st = S.state;
+            if (on && st && st.modules && !st.modules.afk) {
+                toast("You're AFK, but the AFK line is hidden", false, {
+                    label: "Show it",
+                    run: () => send({ type: "toggle", module: "afk" })
+                });
+            } else {
+                toast(on ? "You're AFK until you turn it off" : "Welcome back");
+            }
+        }
+        $("afkManual").addEventListener("change", (ev) => setManualAfk(ev.target.checked));
+        $("btnAfk").addEventListener("click", () => {
+            const c = config();
+            if (c) setManualAfk(!c.AfkOptions.manual);
+        });
+
+        $("afkStyles").addEventListener("click", (ev) => {
+            const card = ev.target.closest("[data-afk-style]");
+            if (!card) return;
+            if (send({ type: "afkStyle", text: card.dataset.afkStyle })) {
+                S.dirtyUntil = 0;
+                toast("AFK style: " + card.dataset.name);
+            }
+        });
+
+        function fmtAgoShort(ms) {
+            const sec = Math.max(0, Math.round(ms / 1000));
+            if (sec < 2) return "just now";
+            return fmtDuration(sec) + " ago";
+        }
+
+        function renderAfk(st) {
+            const afk = st.afk || {};
+            const c = st.config.AfkOptions;
+            const manual = !!afk.manual;
+            const button = $("btnAfk");
+            button.classList.toggle("ghost", !manual);
+            button.setAttribute("aria-pressed", manual ? "true" : "false");
+            button.querySelector("span").textContent = manual ? "Back from AFK" : "I'm AFK";
+            $("afkManualInfo").textContent = manual && c.manual_since
+                ? "On since " + new Date(c.manual_since).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) + " · stays on until you turn it off"
+                : "Stays on until you turn it off, whatever detection says";
+
+            (afk.sources || []).forEach((src) => {
+                const el = document.querySelector('[data-seen="' + src.id + '"]');
+                if (!el) return;
+                el.textContent = src.counted ? fmtAgoShort(src.agoMs) : "not counted";
+                el.classList.toggle("off", !src.counted);
+            });
+
+            const styles = afk.styles || [];
+            const current = styles.find((s) => s.id === "current");
+            $("afkPreview").textContent = current ? current.sample : "";
+            const sig = JSON.stringify(styles) + "|" + afk.style;
+            if (sig === S.afkStylesSig) return;
+            S.afkStylesSig = sig;
+            const grid = $("afkStyles");
+            const focused = document.activeElement && grid.contains(document.activeElement) ? document.activeElement.dataset.afkStyle : "";
+            grid.innerHTML = "";
+            styles.filter((s) => s.id !== "current").forEach((s) => {
+                const card = document.createElement("button");
+                card.type = "button";
+                card.className = "afk-style" + (s.id === afk.style ? " on" : "");
+                card.dataset.afkStyle = s.id;
+                card.dataset.name = s.name;
+                card.setAttribute("aria-pressed", s.id === afk.style ? "true" : "false");
+                const name = document.createElement("span");
+                name.textContent = s.name;
+                const sample = document.createElement("b");
+                sample.textContent = s.sample;
+                card.appendChild(name);
+                card.appendChild(sample);
+                grid.appendChild(card);
+            });
+            if (focused) {
+                const again = grid.querySelector('[data-afk-style="' + focused + '"]');
+                if (again) again.focus();
+            }
+        }
 
         // Release notes are Markdown from CHANGELOG.md. Render the handful of
         // things a changelog uses (headings, bullets, bold, code) and escape
