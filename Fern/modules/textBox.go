@@ -136,6 +136,16 @@ func clockText(cfg Config) string {
 	return withLabel(cfg.TimeOptions.Label, now.Format(layout))
 }
 
+// ModuleSamples renders every module's line whether it is enabled or not, so
+// the panel can show what each one would add to the chatbox.
+func ModuleSamples(cfg Config) map[string]string {
+	samples := make(map[string]string, len(DefaultOrder))
+	for _, id := range DefaultOrder {
+		samples[id] = strings.TrimSpace(moduleText(id, cfg))
+	}
+	return samples
+}
+
 // buildLines renders every enabled module in the configured order.
 func buildLines(cfg Config) []string {
 	lines := make([]string, 0, len(cfg.DisplayOptions.Order))

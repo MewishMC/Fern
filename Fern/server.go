@@ -49,6 +49,7 @@ type uiState struct {
 	MaxChars  int                   `json:"maxChars"`
 	MaxLines  int                   `json:"maxLines"`
 	Modules   map[string]bool       `json:"modules"`
+	Samples   map[string]string     `json:"samples"`
 	Order     []string              `json:"order"`
 	Config    modules.Config        `json:"config"`
 	Media     modules.MediaInfo     `json:"media"`
@@ -346,6 +347,7 @@ func buildState() uiState {
 	d := cfg.DisplayOptions
 	return uiState{
 		Preview:  preview,
+		Samples:  modules.ModuleSamples(cfg),
 		Chars:    utf8.RuneCountInString(preview),
 		Lines:    lines,
 		MaxChars: d.MaxChars,
