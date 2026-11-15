@@ -101,6 +101,8 @@ func moduleText(id string, cfg Config) string {
 		return batteryLine(cfg)
 	case ModuleVRPerf:
 		return vrPerfLine(cfg)
+	case ModuleHeart:
+		return heartRateLine(cfg)
 	}
 	return ""
 }

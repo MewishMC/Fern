@@ -2050,6 +2050,12 @@ html.glass.has-bg {
     gap: 10px;
     width: 220px;
     padding: .5rem .7rem;
+/* ---------------- heart rate ---------------- */
+
+input[type="password"] {
+    font: inherit;
+    font-size: .8rem;
+    width: 100%;
     background: var(--bg-input);
     color: var(--text-secondary);
     border: 1px solid var(--border-strong);
@@ -2221,6 +2227,78 @@ html.glass.has-bg {
     min-width: 64px;
     text-align: right;
     font-size: .74rem;
+    padding: .5rem .7rem;
+    outline: none;
+    transition: border-color .15s;
+}
+
+input[type="password"]:focus {
+    border-color: var(--accent-border);
+}
+
+.field-control input[type="password"],
+.field-control input.hr-secret {
+    width: 190px;
+}
+
+[data-hr-source][hidden] {
+    display: none;
+}
+
+.field-control input.hr-icon-input {
+    width: 46px;
+    text-align: center;
+}
+
+.field-control input.hr-short-input {
+    width: 96px;
+}
+
+.field-control input.hr-num-input {
+    width: 68px;
+}
+
+.hr-now {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.hr-reading {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+}
+
+.hr-reading .fa {
+    align-self: center;
+    color: var(--red);
+    font-size: 1.15rem;
+}
+
+.hr-live.beating .hr-reading .fa {
+    animation: hr-beat var(--hr-beat, 1s) ease-out infinite;
+}
+
+@keyframes hr-beat {
+    0% { transform: scale(1); }
+    15% { transform: scale(1.22); }
+    35% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hr-live.beating .hr-reading .fa {
+        animation: none;
+    }
+}
+
+.hr-reading b {
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -.5px;
+    line-height: 1;
     font-variant-numeric: tabular-nums;
     color: var(--text-primary);
 }
@@ -2242,4 +2320,95 @@ html.glass.has-bg {
     width: 260px;
     font-family: "Cascadia Mono", Consolas, monospace;
     font-size: .74rem;
+.hr-unit {
+    font-size: .8rem;
+    color: var(--text-dim);
+}
+
+.hr-arrow {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+}
+
+.hr-conn {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: .75rem;
+    color: var(--text-muted);
+}
+
+.hr-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--text-faint);
+}
+
+.hr-dot.live {
+    background: var(--green);
+}
+
+.hr-dot.connecting,
+.hr-dot.connected,
+.hr-dot.offline {
+    background: var(--amber);
+}
+
+.hr-dot.error,
+.hr-dot.setup {
+    background: var(--red);
+}
+
+.hr-msg {
+    min-height: 15px;
+    margin-top: 6px;
+    font-size: 11px;
+    color: var(--text-dim);
+    overflow-wrap: anywhere;
+}
+
+.hr-spark {
+    display: block;
+    width: 100%;
+    height: 64px;
+    margin-top: 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+}
+
+.hr-spark path {
+    fill: none;
+    stroke: var(--red);
+    stroke-width: 1.8;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+.hr-spark-axis {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 10px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.hr-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+    gap: 8px;
+    margin-top: 10px;
+    align-items: stretch;
+}
+
+@media (max-width: 560px) {
+    .hr-stats {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .hr-stats .btn {
+        grid-column: 1 / -1;
+    }
 }

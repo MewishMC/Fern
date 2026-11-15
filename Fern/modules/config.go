@@ -23,6 +23,7 @@ const (
 	ModuleLogs    = "logs"
 	ModuleBattery = "battery"
 	ModuleVRPerf  = "vrperf"
+	ModuleHeart   = "heartrate"
 )
 
 // DefaultOrder is the order used before the user picks one.
@@ -30,6 +31,7 @@ var DefaultOrder = []string{
 	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
 	ModuleBattery, ModuleVRPerf,
+	ModuleHeart,
 }
 
 var knownModules = func() map[string]bool {
@@ -54,6 +56,7 @@ type DisplayOptions struct {
 	VRChatLogs   bool     `json:"vr_chat_logs"`
 	Battery      bool     `json:"battery"`
 	VRPerf       bool     `json:"vr_perf"`
+	HeartRate    bool     `json:"heart_rate"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -234,6 +237,61 @@ type VRPerfOptions struct {
 	ClearSeconds     int    `json:"clear_seconds"`       // how long it must run well before it counts as fine again
 }
 
+// HeartOptions controls the heart rate line and the avatar parameters it
+// can drive. The credentials are stored as typed; the panel masks them and
+// Fern never logs them or puts them in a status message.
+type HeartOptions struct {
+	Source       string `json:"source"`        // pulsoid, hyperate or custom
+	PulsoidToken string `json:"pulsoid_token"` // from pulsoid.net/ui/keys
+	HypeRateKey  string `json:"hyperate_key"`  // HypeRate websocket API key
+	HypeRateID   string `json:"hyperate_id"`   // the session/device ID shown in the HypeRate app
+	CustomURL    string `json:"custom_url"`    // ws(s):// for a socket, http(s):// to poll
+	CustomPath   string `json:"custom_path"`   // JSON field, e.g. data.heart_rate; empty guesses
+	PollMS       int    `json:"poll_ms"`       // how often an HTTP source is read
+
+	Label      string `json:"label"`
+	ShowIcon   bool   `json:"show_icon"`
+	Icon       string `json:"icon"`       // normal zone
+	ZoneIcons  bool   `json:"zone_icons"` // swap the icon below/above the thresholds
+	IconLow    string `json:"icon_low"`
+	IconHigh   string `json:"icon_high"`
+	ShowSuffix bool   `json:"show_suffix"`
+	Suffix     string `json:"suffix"`
+
+	ShowTrend        bool    `json:"show_trend"`
+	TrendSec         int     `json:"trend_sec"`         // length of each compared window
+	TrendSensitivity float64 `json:"trend_sensitivity"` // bpm change that counts as a trend
+
+	SmoothSec int `json:"smooth_sec"` // moving average window; 0 shows the raw value
+	Offset    int `json:"offset"`     // added to every reading
+
+	ShowZoneText bool   `json:"show_zone_text"`
+	LowBPM       int    `json:"low_bpm"`
+	LowText      string `json:"low_text"`
+	HighBPM      int    `json:"high_bpm"`
+	HighText     string `json:"high_text"`
+
+	OfflineSec  int    `json:"offline_sec"`  // no reading for this long counts as offline
+	OfflineText string `json:"offline_text"` // shown while offline; empty hides the line
+
+	ShowStats bool `json:"show_stats"` // session min / avg / max
+
+	SendOSC        bool   `json:"send_osc"`
+	ParamInt       string `json:"param_int"`       // int 0-255; empty skips it
+	ParamFloat     string `json:"param_float"`     // float, see FloatRange; empty skips it
+	FloatRange     string `json:"float_range"`     // signed (-1..1) or unsigned (0..1), both over 0-255 bpm
+	ParamBeat      string `json:"param_beat"`      // bool once per beat; empty skips it
+	BeatMode       string `json:"beat_mode"`       // toggle (flip each beat) or pulse (true briefly)
+	ParamConnected string `json:"param_connected"` // bool, true while readings arrive; empty skips it
+}
+
+// Heart rate sources.
+const (
+	HeartPulsoid  = "pulsoid"
+	HeartHypeRate = "hyperate"
+	HeartCustom   = "custom"
+)
+
 // OSCOptions is where chatbox messages are sent.
 type OSCOptions struct {
 	Host string `json:"host"`
@@ -255,6 +313,7 @@ type Config struct {
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	BatteryOptions BatteryOptions `json:"BatteryOptions"`
 	VRPerfOptions  VRPerfOptions  `json:"VRPerfOptions"`
+	HeartRate      HeartOptions   `json:"HeartRateOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -380,6 +439,32 @@ func DefaultConfig() Config {
 			BadDroppedPerMin: 5,
 			BadFPSPercent:    90,
 			ClearSeconds:     5,
+		},
+		HeartRate: HeartOptions{
+			Source:           HeartPulsoid,
+			PollMS:           1000,
+			ShowIcon:         true,
+			Icon:             "❤️",
+			ZoneIcons:        true,
+			IconLow:          "💙",
+			IconHigh:         "💖",
+			ShowSuffix:       true,
+			Suffix:           "bpm",
+			ShowTrend:        true,
+			TrendSec:         10,
+			TrendSensitivity: 3,
+			SmoothSec:        4,
+			LowBPM:           60,
+			LowText:          "sleepy",
+			HighBPM:          100,
+			HighText:         "hot",
+			OfflineSec:       30,
+			ParamInt:         "HR",
+			ParamFloat:       "HeartRateFloat",
+			FloatRange:       "signed",
+			ParamBeat:        "HeartBeatToggle",
+			BeatMode:         "toggle",
+			ParamConnected:   "isHRConnected",
 		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
@@ -571,6 +656,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.Battery
 	case ModuleVRPerf:
 		return &d.VRPerf
+	case ModuleHeart:
+		return &d.HeartRate
 	}
 	return nil
 }
@@ -740,6 +827,7 @@ func (c *Config) sanitize() {
 	}
 
 	c.sanitizeSteamVR()
+	c.HeartRate.sanitize()
 
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"

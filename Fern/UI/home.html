@@ -726,6 +726,319 @@
                 </div>
             </section>
 
+            <!-- ================= HEART RATE ================= -->
+            <section class="page" id="page-heartrate">
+                <div class="page-head">
+                    <div>
+                        <h2>Heart rate</h2>
+                        <p>Live BPM from Pulsoid, HypeRate or any app that serves JSON</p>
+                    </div>
+                    <span class="badge" id="hrBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the heart rate line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="heartrate"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card hr-live" style="margin-bottom:12px">
+                    <div class="hr-now">
+                        <div class="hr-reading">
+                            <i class="fa fa-heart-pulse" aria-hidden="true"></i>
+                            <b id="hrBig">—</b><span class="hr-unit">bpm</span><span class="hr-arrow" id="hrArrow"></span>
+                        </div>
+                        <div class="hr-conn"><i class="hr-dot" id="hrDot"></i><span id="hrStatus">Off</span></div>
+                    </div>
+                    <div class="hr-msg" id="hrMsg"></div>
+                    <svg class="hr-spark" id="hrSpark" viewBox="0 0 300 64" preserveAspectRatio="none" role="img" aria-label="Heart rate over the last five minutes"></svg>
+                    <div class="hr-spark-axis"><span>5 min ago</span><span id="hrRange"></span><span>now</span></div>
+                    <div class="hr-stats">
+                        <div class="stat"><span>Session min</span><b id="hrMin">—</b></div>
+                        <div class="stat"><span>Session avg</span><b id="hrAvg">—</b></div>
+                        <div class="stat"><span>Session max</span><b id="hrMax">—</b></div>
+                        <button type="button" class="btn ghost" id="hrReset" title="Start the session min / avg / max over"><i class="fa fa-rotate-left" aria-hidden="true"></i> Reset</button>
+                    </div>
+                </div>
+
+                <div class="section-title">Source</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Where the heart rate comes from</b>
+                            <span>Tokens and keys stay in your config file and are never shown in logs or messages</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="hrSource" style="width:190px">
+                                <option value="pulsoid">Pulsoid</option>
+                                <option value="hyperate">HypeRate</option>
+                                <option value="custom">Custom URL (JSON)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" data-hr-source="pulsoid">
+                        <div class="field-label">
+                            <b>Pulsoid token</b>
+                            <span>Create one at pulsoid.net/ui/keys and paste it here. The whole redirect URL works too.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="password" class="hr-secret" id="hrPulsoidToken" placeholder="paste token" autocomplete="off" spellcheck="false">
+                            <button type="button" class="chev" data-reveal="hrPulsoidToken" title="Show or hide" aria-label="Show or hide the token"><i class="fa fa-eye" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="field" data-hr-source="hyperate">
+                        <div class="field-label">
+                            <b>HypeRate API key</b>
+                            <span>HypeRate gives websocket keys to developers on request, so Fern can't ship one. Paste your own.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="password" class="hr-secret" id="hrHypeKey" placeholder="API key" autocomplete="off" spellcheck="false">
+                            <button type="button" class="chev" data-reveal="hrHypeKey" title="Show or hide" aria-label="Show or hide the key"><i class="fa fa-eye" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="field" data-hr-source="hyperate">
+                        <div class="field-label">
+                            <b>HypeRate session ID</b>
+                            <span>The short ID shown in the HypeRate app, the end of your share link</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="hrHypeId" placeholder="ABC1" maxlength="64" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field" data-hr-source="custom">
+                        <div class="field-label">
+                            <b>URL</b>
+                            <span>ws:// or wss:// to listen to a socket, http:// or https:// to poll. Hidden because it may hold a key.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="password" class="hr-secret" id="hrCustomUrl" placeholder="ws://127.0.0.1:8080" autocomplete="off" spellcheck="false">
+                            <button type="button" class="chev" data-reveal="hrCustomUrl" title="Show or hide" aria-label="Show or hide the URL"><i class="fa fa-eye" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="field" data-hr-source="custom">
+                        <div class="field-label">
+                            <b>JSON field</b>
+                            <span>Path to the number, like <code>data.heart_rate</code> or <code>items[0].bpm</code>. Empty tries the usual names; a bare number works too.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="hrCustomPath" placeholder="auto" maxlength="128" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field" data-hr-source="custom">
+                        <div class="field-label">
+                            <b>Poll every</b>
+                            <span>How often an http(s) URL is read</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="hrPoll" min="250" max="10000" step="250">
+                            <span class="val" id="hrPollVal">1s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Chatbox line</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix before the line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="hrLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show a heart</b>
+                            <span>Icon in front of the number</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="hrIcon" class="hr-icon-input" aria-label="Heart icon" autocomplete="off">
+                            <label class="switch"><input type="checkbox" id="hrShowIcon"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Change the heart with the zone</b>
+                            <span>Its own icon below the low and from the high threshold</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="hrIconLow" class="hr-icon-input" aria-label="Low zone icon" title="Low zone" autocomplete="off">
+                            <input type="text" id="hrIconHigh" class="hr-icon-input" aria-label="High zone icon" title="High zone" autocomplete="off">
+                            <label class="switch"><input type="checkbox" id="hrZoneIcons"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>BPM suffix</b>
+                            <span>Text after the number</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="hrSuffix" class="hr-short-input" maxlength="8" aria-label="Suffix" autocomplete="off">
+                            <label class="switch"><input type="checkbox" id="hrShowSuffix"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Trend arrow</b>
+                            <span>↑ ↓ or →, comparing the last window with the one before it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="hrShowTrend"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Trend window</b>
+                            <span>Length of each compared stretch</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="hrTrendSec" min="2" max="60" step="1">
+                            <span class="val" id="hrTrendSecVal">10s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Trend sensitivity</b>
+                            <span>How far the average must move before the arrow turns</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="hrSensitivity" min="0.5" max="15" step="0.5">
+                            <span class="val" id="hrSensitivityVal">3</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Smoothing</b>
+                            <span>Average the readings over this many seconds; the avatar gets the same value</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="hrSmooth" min="0" max="30" step="1">
+                            <span class="val" id="hrSmoothVal">4s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Offset</b>
+                            <span>Added to every reading, for sensors that read high or low</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="hrOffset" min="-30" max="30" step="1">
+                            <span class="val" id="hrOffsetVal">0</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Low / high words</b>
+                            <span>Say something below the low or from the high threshold</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="hrShowZoneText"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Below</b>
+                            <span>Low threshold in bpm and its word; 0 turns the low zone off</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="number" id="hrLowBpm" class="hr-num-input" min="0" max="250" step="1" aria-label="Low threshold">
+                            <input type="text" id="hrLowText" class="hr-short-input" maxlength="24" aria-label="Low word" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>From</b>
+                            <span>High threshold in bpm and its word; 0 turns the high zone off</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="number" id="hrHighBpm" class="hr-num-input" min="0" max="250" step="1" aria-label="High threshold">
+                            <input type="text" id="hrHighText" class="hr-short-input" maxlength="24" aria-label="High word" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Session min / avg / max</b>
+                            <span>Appended to the line, counted since Fern started or the last reset</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="hrShowStats"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Offline after</b>
+                            <span>No reading for this long counts as offline</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="hrOffline" min="5" max="300" step="5">
+                            <span class="val" id="hrOfflineVal">30s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Offline text</b>
+                            <span>Shown while offline. Leave empty to hide the line instead.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="hrOfflineText" placeholder="hide the line" maxlength="40" autocomplete="off"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Avatar parameters</div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Send to my avatar</b>
+                            <span>OSC parameters to the same address as the chatbox. Works with the line off too.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="hrSendOsc"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Heart rate (int)</b>
+                            <span>Whole bpm, 0–255, once a second. <code>HR</code> fits the Pulsoid and HypeRate prefabs.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="hrParamInt" placeholder="not sent" maxlength="64" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Heart rate (float)</b>
+                            <span>bpm ÷ 255. −1…1 is the <code>HeartRateFloat</code> convention; 0…1 matches <code>HRPercent</code>.</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="hrFloatRange" style="width:84px" aria-label="Float range">
+                                <option value="signed">−1…1</option>
+                                <option value="unsigned">0…1</option>
+                            </select>
+                            <input type="text" id="hrParamFloat" placeholder="not sent" maxlength="64" autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Beat (bool)</b>
+                            <span>Flips every beat (<code>HeartBeatToggle</code>) or is true for a moment each beat (<code>isHRBeat</code>)</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="hrBeatMode" style="width:84px" aria-label="Beat mode">
+                                <option value="toggle">Flip</option>
+                                <option value="pulse">Pulse</option>
+                            </select>
+                            <input type="text" id="hrParamBeat" placeholder="not sent" maxlength="64" autocomplete="off" spellcheck="false">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Connected (bool)</b>
+                            <span>True while fresh readings arrive</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="hrParamConnected" placeholder="not sent" maxlength="64" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="hint">Names go after <code>/avatar/parameters/</code>. Empty a name to stop sending that parameter.</div>
+                </div>
+            </section>
+
             <!-- ================= TIME ================= -->
             <section class="page" id="page-time">
                 <div class="page-head">
@@ -1641,6 +1954,7 @@
         const MODULES = [
             { id: "afk", name: "AFK", icon: "fa-moon", category: "vrchat", desc: "AFK timer since last activity", keywords: "idle away" },
             { id: "logs", name: "VRChat log", icon: "fa-scroll", category: "vrchat", desc: "Latest VRChat join / leave", keywords: "players join leave instance" },
+            { id: "heartrate", name: "Heart rate", icon: "fa-heart-pulse", category: "vrchat", desc: "Live BPM and avatar heartbeat", keywords: "pulsoid hyperate bpm heartbeat hr pulse avatar osc" },
             { id: "media", name: "Media", icon: "fa-music", category: "media", desc: "Now playing track with playback time", keywords: "spotify song music now playing" },
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
             { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
@@ -1799,6 +2113,7 @@
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
+            renderHeart(st);
         }
 
         function renderPreview(st) {
@@ -2612,6 +2927,57 @@
             ["vrperfBadFps", (c) => c.VRPerfOptions.only_when_bad],
             ["vrperfClear", (c) => c.VRPerfOptions.only_when_bad],
         ];
+
+        // Heart rate controls, kept together so the module's bindings are in one place.
+        const HR = "HeartRateOptions";
+        const asSec = (v) => v + "s";
+        CHECKS.push(
+            ["hrShowIcon", [HR, "show_icon"]],
+            ["hrZoneIcons", [HR, "zone_icons"]],
+            ["hrShowSuffix", [HR, "show_suffix"]],
+            ["hrShowTrend", [HR, "show_trend"]],
+            ["hrShowZoneText", [HR, "show_zone_text"]],
+            ["hrShowStats", [HR, "show_stats"]],
+            ["hrSendOsc", [HR, "send_osc"]],
+        );
+        RANGES.push(
+            ["hrPoll", [HR, "poll_ms"], "hrPollVal", (v) => (v < 1000 ? v + "ms" : v / 1000 + "s")],
+            ["hrTrendSec", [HR, "trend_sec"], "hrTrendSecVal", asSec],
+            ["hrSensitivity", [HR, "trend_sensitivity"], "hrSensitivityVal", (v) => v + " bpm"],
+            ["hrSmooth", [HR, "smooth_sec"], "hrSmoothVal", (v) => (v ? v + "s" : "off")],
+            ["hrOffset", [HR, "offset"], "hrOffsetVal", (v) => (v > 0 ? "+" : "") + v],
+            ["hrOffline", [HR, "offline_sec"], "hrOfflineVal", asSec],
+        );
+        TEXTS.push(
+            ["hrLabel", [HR, "label"], 16],
+            ["hrIcon", [HR, "icon"], 4],
+            ["hrIconLow", [HR, "icon_low"], 4],
+            ["hrIconHigh", [HR, "icon_high"], 4],
+            ["hrSuffix", [HR, "suffix"], 8],
+            ["hrLowText", [HR, "low_text"], 24],
+            ["hrHighText", [HR, "high_text"], 24],
+            ["hrOfflineText", [HR, "offline_text"], 40],
+            ["hrHypeId", [HR, "hyperate_id"], 64],
+            ["hrCustomPath", [HR, "custom_path"], 128],
+            ["hrParamInt", [HR, "param_int"], 64],
+            ["hrParamFloat", [HR, "param_float"], 64],
+            ["hrParamBeat", [HR, "param_beat"], 64],
+            ["hrParamConnected", [HR, "param_connected"], 64],
+        );
+        const hrZones = (c) => c[HR].show_zone_text || (c[HR].show_icon && c[HR].zone_icons);
+        const hrOsc = (c) => c[HR].send_osc;
+        DEPENDS.push(
+            ["hrZoneIcons", (c) => c[HR].show_icon],
+            ["hrTrendSec", (c) => c[HR].show_trend],
+            ["hrSensitivity", (c) => c[HR].show_trend],
+            ["hrLowBpm", hrZones],
+            ["hrHighBpm", hrZones],
+            ["hrPoll", (c) => /^https?:/i.test(c[HR].custom_url || "")],
+            ["hrParamInt", hrOsc],
+            ["hrParamFloat", hrOsc],
+            ["hrParamBeat", hrOsc],
+            ["hrParamConnected", hrOsc],
+        );
         function applyDepends(c) {
             if (!c) return;
             DEPENDS.forEach(([id, active]) => {
@@ -3099,6 +3465,121 @@
         $("afkTimerStyle").addEventListener("change", (ev) => {
             pushConfigNow((c) => { c.AfkOptions.timer_style = ev.target.value; });
         });
+
+        /* ---------------- heart rate ---------------- */
+        const HR_STATUS = {
+            off: "Off", setup: "Needs setup", connecting: "Connecting…", connected: "Waiting for data",
+            live: "Live", offline: "No data", error: "Retrying"
+        };
+        const HR_ARROWS = { "1": "↑", "-1": "↓", "0": "→" };
+        // Tokens, keys and the URL apply when the field is left, so the
+        // connection is not remade on every keystroke. Messages never echo them.
+        [["hrPulsoidToken", "pulsoid_token", "Pulsoid token"], ["hrHypeKey", "hyperate_key", "HypeRate key"], ["hrCustomUrl", "custom_url", "URL"]].forEach(([id, key, name]) => {
+            const el = $(id);
+            el.addEventListener("keydown", (ev) => { if (ev.key === "Enter") el.blur(); });
+            el.addEventListener("change", () => {
+                const value = el.value.trim();
+                if (pushConfigNow((c) => { c.HeartRateOptions[key] = value; })) toast(value ? name + " saved" : name + " cleared");
+            });
+        });
+        document.querySelectorAll("[data-reveal]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const input = $(button.dataset.reveal);
+                const show = input.type === "password";
+                input.type = show ? "text" : "password";
+                button.querySelector("i").className = "fa " + (show ? "fa-eye-slash" : "fa-eye");
+            });
+        });
+        [["hrSource", "source"], ["hrFloatRange", "float_range"], ["hrBeatMode", "beat_mode"]].forEach(([id, key]) => {
+            $(id).addEventListener("change", (ev) => {
+                pushConfigNow((c) => { c.HeartRateOptions[key] = ev.target.value; });
+                if (id === "hrSource" && S.state) renderHeart(S.state);
+            });
+        });
+        commitField($("hrLowBpm"), (v) => {
+            const n = Number(v);
+            return v.trim() !== "" && Number.isInteger(n) && n >= 0 && n <= 250 ? n : null;
+        }, (c, v) => { c.HeartRateOptions.low_bpm = v; }, "The low threshold must be a whole number from 0 to 250");
+        commitField($("hrHighBpm"), (v) => {
+            const n = Number(v);
+            return v.trim() !== "" && Number.isInteger(n) && n >= 0 && n <= 250 ? n : null;
+        }, (c, v) => { c.HeartRateOptions.high_bpm = v; }, "The high threshold must be a whole number from 0 to 250");
+        $("hrReset").addEventListener("click", () => {
+            if (send({ type: "heartReset" })) toast("Session stats reset");
+        });
+
+        function renderHeartSpark(points) {
+            const sig = points.join(",");
+            if (sig === S.hrSparkSig) return;
+            S.hrSparkSig = sig;
+            const vals = points.filter((v) => v > 0);
+            const svg = $("hrSpark");
+            if (!vals.length) {
+                svg.innerHTML = "";
+                $("hrRange").textContent = "no readings yet";
+                return;
+            }
+            const min = Math.min(...vals);
+            const max = Math.max(...vals);
+            let lo = min, hi = max;
+            if (hi - lo < 10) {
+                const mid = (hi + lo) / 2;
+                lo = mid - 5;
+                hi = mid + 5;
+            }
+            const n = points.length;
+            const x = (i) => (n > 1 ? (i / (n - 1)) * 300 : 150).toFixed(1);
+            const y = (v) => (60 - ((v - lo) / (hi - lo)) * 56).toFixed(1);
+            let d = "";
+            let open = false;
+            points.forEach((v, i) => {
+                if (v <= 0) { open = false; return; }
+                d += (open ? "L" : "M") + x(i) + " " + y(v) + " ";
+                // A lone reading between gaps still gets a visible dot.
+                if (!open && (i + 1 >= n || points[i + 1] <= 0)) d += "l0.01 0 ";
+                open = true;
+            });
+            svg.innerHTML = '<path vector-effect="non-scaling-stroke" d="' + d.trim() + '"></path>';
+            $("hrRange").textContent = min === max ? min + " bpm" : min + "–" + max + " bpm";
+        }
+
+        function renderHeart(st) {
+            const h = st.heartRate;
+            const c = st.config && st.config.HeartRateOptions;
+            if (!h || !c) return;
+            const live = h.status === "live";
+            let status = HR_STATUS[h.status] || h.status;
+            if (live && h.via) status += " · " + h.via;
+            $("hrStatus").textContent = status;
+            $("hrDot").className = "hr-dot " + h.status;
+            let msg = h.message || "";
+            if (!msg && h.lastMs) msg = "Last reading " + fmtDuration(Math.max(0, Math.round((Date.now() - h.lastMs) / 1000))) + " ago";
+            $("hrMsg").textContent = msg;
+            const badge = $("hrBadge");
+            badge.textContent = live && h.bpm ? h.bpm + " bpm" : status.split(" · ")[0];
+            badge.classList.toggle("on", live);
+            $("hrBig").textContent = h.bpm ? String(h.bpm) : "—";
+            $("hrArrow").textContent = h.bpm && c.show_trend ? HR_ARROWS[String(h.trend)] : "";
+            const card = document.querySelector(".hr-live");
+            card.classList.toggle("beating", live && h.bpm > 0);
+            if (h.bpm > 0) card.style.setProperty("--hr-beat", (60 / h.bpm).toFixed(3) + "s");
+            $("hrMin").textContent = h.max ? h.min : "—";
+            $("hrAvg").textContent = h.max ? h.avg : "—";
+            $("hrMax").textContent = h.max ? h.max : "—";
+            renderHeartSpark(h.spark || []);
+
+            document.querySelectorAll("[data-hr-source]").forEach((row) => { row.hidden = row.dataset.hrSource !== c.source; });
+            if (!lockForms()) {
+                const typing = document.activeElement;
+                $("hrSource").value = c.source;
+                $("hrFloatRange").value = c.float_range;
+                $("hrBeatMode").value = c.beat_mode;
+                [["hrPulsoidToken", c.pulsoid_token], ["hrHypeKey", c.hyperate_key], ["hrCustomUrl", c.custom_url],
+                ["hrLowBpm", c.low_bpm], ["hrHighBpm", c.high_bpm]].forEach(([id, v]) => {
+                    if (typing !== $(id) && $(id).value !== String(v)) $(id).value = v;
+                });
+            }
+        }
 
         /* ---------------- settings page ---------------- */
         // Host, port and AFK delay apply once the field is left (or Enter is

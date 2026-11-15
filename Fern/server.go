@@ -69,7 +69,10 @@ type uiState struct {
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
 	SteamVR   modules.SteamVRStatus `json:"steamvr"`
+	HeartRate heartState            `json:"heartRate"`
 }
+
+type heartState = modules.HeartRateStatus
 
 type afkState struct {
 	Active  bool  `json:"active"`
@@ -284,6 +287,8 @@ func handleCommand(cmd command) {
 		_ = modules.SaveNow()
 	case "update":
 		go startUpdate()
+	case "heartReset":
+		modules.ResetHeartStats()
 	}
 }
 
@@ -372,6 +377,7 @@ func buildState() uiState {
 			modules.ModuleLogs:    d.VRChatLogs,
 			modules.ModuleBattery: d.Battery,
 			modules.ModuleVRPerf:  d.VRPerf,
+			modules.ModuleHeart:   d.HeartRate,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -406,6 +412,7 @@ func buildState() uiState {
 		Version:   appVersion,
 		Update:    currentUpdate(),
 		SteamVR:   modules.SteamVRState(),
+		HeartRate: modules.CurrentHeartRate(),
 	}
 }
 
