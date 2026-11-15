@@ -588,6 +588,36 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Bar style</b>
+                            <span>Preview: <code class="bar-preview" id="mediaBarPreview"></code></span>
+                        </div>
+                        <div class="field-control">
+                            <select id="mediaBarPreset" aria-label="Bar style">
+                                <option value="blocks">▰▰▰▱▱ Blocks</option>
+                                <option value="line">━━●── Line</option>
+                                <option value="shade">███░░ Shade</option>
+                                <option value="squares">■■■□□ Squares</option>
+                                <option value="dots">●●●○○ Dots</option>
+                                <option value="classic">[==>-] Classic</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Bar characters</b>
+                            <span>Up to two characters each. Marker and ends are optional.</span>
+                        </div>
+                        <div class="field-control bar-chars">
+                            <label>Played<input type="text" id="mediaBarFilled" maxlength="4" autocomplete="off" placeholder="▰"></label>
+                            <label>Unplayed<input type="text" id="mediaBarEmpty" maxlength="4" autocomplete="off" placeholder="▱"></label>
+                            <label>Marker<input type="text" id="mediaBarHead" maxlength="4" autocomplete="off"></label>
+                            <label>Start<input type="text" id="mediaBarLeft" maxlength="4" autocomplete="off"></label>
+                            <label>End<input type="text" id="mediaBarRight" maxlength="4" autocomplete="off"></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Track length limit</b>
                             <span>Characters kept from the title and artist</span>
                         </div>
@@ -1510,6 +1540,7 @@
             $("windowBadge").textContent = d.active_window ? "on" : "off";
 
             const style = c.MediaOptions.show_progress ? (c.MediaOptions.progress_style || "both") : "none";
+            renderBarPreview();
             document.querySelectorAll("#styleSeg button").forEach((b) => {
                 b.classList.toggle("on", b.dataset.style === style);
             });
@@ -1720,6 +1751,11 @@
             ["mediaFilter", ["MediaOptions", "app_filter"], Infinity],
             ["mediaIcon", ["MediaOptions", "icon"], 4],
             ["mediaPausedIcon", ["MediaOptions", "paused_icon"], 4],
+            ["mediaBarFilled", ["MediaOptions", "bar_filled"], 2],
+            ["mediaBarEmpty", ["MediaOptions", "bar_empty"], 2],
+            ["mediaBarHead", ["MediaOptions", "bar_head"], 2],
+            ["mediaBarLeft", ["MediaOptions", "bar_left"], 2],
+            ["mediaBarRight", ["MediaOptions", "bar_right"], 2],
             ["windowLabel", ["WindowOptions", "label"], 16],
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
@@ -1733,6 +1769,12 @@
             ["loadDotsRange", (c) => c.LoadingOptions.show_dots],
             ["spinRate", (c) => c.LoadingOptions.fast],
             ["mediaBarWidth", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaBarPreset", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaBarFilled", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaBarEmpty", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaBarHead", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaBarLeft", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaBarRight", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["afkMovementOnly", (c) => c.AfkOptions.auto_detect],
             ["afkTime", (c) => c.AfkOptions.auto_detect],
             ["afkMessage", (c) => c.AfkOptions.auto_detect],
@@ -1775,8 +1817,10 @@
         });
         TEXTS.forEach(([id, path, max]) => {
             $(id).addEventListener("input", (ev) => {
-                const v = ev.target.value.slice(0, max);
+                // Count characters, not UTF-16 units, so emoji are not cut in half.
+                const v = Array.from(ev.target.value).slice(0, max).join("");
                 pushConfig((c) => setField(c, path, v));
+                if (id.startsWith("mediaBar")) renderBarPreview();
             });
         });
 
@@ -2176,6 +2220,51 @@
             S.dirtyUntil = 0;
             toast("Progress style: " + button.dataset.style);
         });
+
+        // Progress bar presets. drawBar matches progressBar in
+        // Fern/modules/media.go so the preview shows what the chatbox will.
+        const BAR_PRESETS = {
+            blocks: { bar_filled: "▰", bar_empty: "▱", bar_head: "", bar_left: "", bar_right: "" },
+            line: { bar_filled: "━", bar_empty: "─", bar_head: "●", bar_left: "", bar_right: "" },
+            shade: { bar_filled: "█", bar_empty: "░", bar_head: "", bar_left: "", bar_right: "" },
+            squares: { bar_filled: "■", bar_empty: "□", bar_head: "", bar_left: "", bar_right: "" },
+            dots: { bar_filled: "●", bar_empty: "○", bar_head: "", bar_left: "", bar_right: "" },
+            classic: { bar_filled: "=", bar_empty: "-", bar_head: ">", bar_left: "[", bar_right: "]" },
+        };
+        const BAR_FIELDS = { bar_filled: "mediaBarFilled", bar_empty: "mediaBarEmpty", bar_head: "mediaBarHead", bar_left: "mediaBarLeft", bar_right: "mediaBarRight" };
+        function drawBar(o, ratio) {
+            const width = o.bar_width || 0;
+            if (width < 2) return "";
+            const full = o.bar_filled || "▰", empty = o.bar_empty || "▱";
+            let bar;
+            if (o.bar_head) {
+                const at = Math.floor(ratio * (width - 1) + 0.5);
+                bar = full.repeat(at) + o.bar_head + empty.repeat(width - 1 - at);
+            } else {
+                const filled = Math.min(width, Math.floor(ratio * width));
+                bar = full.repeat(filled) + empty.repeat(width - filled);
+            }
+            return (o.bar_left || "") + bar + (o.bar_right || "");
+        }
+        // With no argument, preview what is in the fields right now rather
+        // than the last state Fern sent.
+        function renderBarPreview(o) {
+            if (!o) {
+                o = { bar_width: +$("mediaBarWidth").value };
+                for (const k in BAR_FIELDS) o[k] = Array.from($(BAR_FIELDS[k]).value).slice(0, 2).join("");
+            }
+            $("mediaBarPreview").textContent = drawBar(o, 0.4) || "(no bar)";
+            const match = Object.keys(BAR_PRESETS).find((name) => Object.keys(BAR_FIELDS).every((k) => (o[k] || "") === BAR_PRESETS[name][k]));
+            if (document.activeElement !== $("mediaBarPreset")) $("mediaBarPreset").value = match || "custom";
+        }
+        $("mediaBarPreset").addEventListener("change", (ev) => {
+            const preset = BAR_PRESETS[ev.target.value];
+            if (!preset) return;
+            for (const k in preset) $(BAR_FIELDS[k]).value = preset[k];
+            renderBarPreview();
+            if (pushConfigNow((c) => { Object.assign(c.MediaOptions, preset); })) toast("Bar style: " + ev.target.selectedOptions[0].textContent.replace(/^\S+\s/, ""));
+        });
+        $("mediaBarWidth").addEventListener("input", () => renderBarPreview());
 
         /* ---------------- per module options ---------------- */
         $("afkTimerStyle").addEventListener("change", (ev) => {

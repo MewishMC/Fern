@@ -362,7 +362,7 @@ func mediaLine(cfg Config) string {
 		}
 		bar := ""
 		if o.ProgressStyle == "bar" || o.ProgressStyle == "both" {
-			bar = progressBar(pos, dur, o.BarWidth)
+			bar = progressBar(pos, dur, o)
 		}
 		detail = strings.TrimSpace(strings.Join([]string{bar, clock}, " "))
 	}
@@ -391,9 +391,19 @@ func shortClock(d time.Duration) string {
 	return fmt.Sprintf("%d:%02d", m, s)
 }
 
-func progressBar(pos, dur time.Duration, width int) string {
+// progressBar draws the bar with the configured characters. With a head set,
+// the head takes one of the cells and marks the position, like ━━━●──────.
+func progressBar(pos, dur time.Duration, o MediaOptions) string {
+	width := o.BarWidth
 	if width < 2 || dur <= 0 {
 		return ""
+	}
+	full, empty := o.BarFilled, o.BarEmpty
+	if full == "" {
+		full = "▰"
+	}
+	if empty == "" {
+		empty = "▱"
 	}
 	ratio := float64(pos) / float64(dur)
 	if ratio < 0 {
@@ -402,9 +412,16 @@ func progressBar(pos, dur time.Duration, width int) string {
 	if ratio > 1 {
 		ratio = 1
 	}
-	filled := int(ratio * float64(width))
-	if filled > width {
-		filled = width
+	var bar string
+	if o.BarHead != "" {
+		at := int(ratio*float64(width-1) + 0.5)
+		bar = strings.Repeat(full, at) + o.BarHead + strings.Repeat(empty, width-1-at)
+	} else {
+		filled := int(ratio * float64(width))
+		if filled > width {
+			filled = width
+		}
+		bar = strings.Repeat(full, filled) + strings.Repeat(empty, width-filled)
 	}
-	return strings.Repeat("▰", filled) + strings.Repeat("▱", width-filled)
+	return o.BarLeft + bar + o.BarRight
 }

@@ -103,6 +103,11 @@ type MediaOptions struct {
 	ShowArtist     bool   `json:"show_artist"`
 	ShowAlbum      bool   `json:"show_album"`
 	BarWidth       int    `json:"bar_width"`     // 0 hides the bar
+	BarFilled      string `json:"bar_filled"`    // played part, e.g. ▰
+	BarEmpty       string `json:"bar_empty"`     // unplayed part, e.g. ▱
+	BarHead        string `json:"bar_head"`      // optional marker at the position, e.g. ●
+	BarLeft        string `json:"bar_left"`      // optional cap before the bar, e.g. [
+	BarRight       string `json:"bar_right"`     // optional cap after the bar, e.g. ]
 	MaxChars       int    `json:"max_chars"`     // limit for the track part
 	PreferredApp   string `json:"preferred_app"` // session to read; empty follows the current one
 }
@@ -227,6 +232,8 @@ func DefaultConfig() Config {
 			ShowArtist:     true,
 			ShowAlbum:      false,
 			BarWidth:       8,
+			BarFilled:      "▰",
+			BarEmpty:       "▱",
 			MaxChars:       90,
 			PreferredApp:   "",
 		},
@@ -533,6 +540,12 @@ func (c *Config) sanitize() {
 	c.MediaOptions.Icon = RuneLimit(strings.TrimSpace(c.MediaOptions.Icon), 4)
 	c.MediaOptions.PausedIcon = RuneLimit(strings.TrimSpace(c.MediaOptions.PausedIcon), 4)
 	c.MediaOptions.BarWidth = clampInt(c.MediaOptions.BarWidth, 0, 20)
+	// Spaces are allowed on purpose (a blank empty part is a valid style), so
+	// these are only shortened, not trimmed.
+	for _, s := range []*string{&c.MediaOptions.BarFilled, &c.MediaOptions.BarEmpty,
+		&c.MediaOptions.BarHead, &c.MediaOptions.BarLeft, &c.MediaOptions.BarRight} {
+		*s = RuneLimit(*s, 2)
+	}
 	c.MediaOptions.MaxChars = clampInt(c.MediaOptions.MaxChars, 4, 144)
 	c.MediaOptions.PreferredApp = RuneLimit(strings.TrimSpace(c.MediaOptions.PreferredApp), 128)
 

@@ -1275,6 +1275,31 @@ select option {
     width: 150px;
 }
 
+.field-control.bar-chars {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 6px;
+}
+
+.bar-chars label {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 10px;
+    color: var(--text-muted);
+}
+
+.field-control.bar-chars input[type="text"] {
+    width: 52px;
+    text-align: center;
+}
+
+.bar-preview {
+    font-family: "Cascadia Mono", Consolas, monospace;
+    color: var(--text-primary);
+    white-space: pre;
+}
+
 .field-control .val {
     font-size: 11.5px;
     color: var(--text-muted);
