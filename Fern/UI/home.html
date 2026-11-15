@@ -249,26 +249,6 @@
                             </select>
                         </div>
                     </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>Max characters</b>
-                            <span>VRChat supports 144</span>
-                        </div>
-                        <div class="field-control">
-                            <input type="range" id="maxCharsRange" min="32" max="144" step="4">
-                            <span class="val" id="maxCharsVal">144</span>
-                        </div>
-                    </div>
-                    <div class="field">
-                        <div class="field-label">
-                            <b>Max lines</b>
-                            <span>VRChat shows about 9 lines</span>
-                        </div>
-                        <div class="field-control">
-                            <input type="range" id="maxLinesRange" min="1" max="9" step="1">
-                            <span class="val" id="maxLinesVal">9</span>
-                        </div>
-                    </div>
                 </div>
 
             </section>
@@ -1695,8 +1675,6 @@
 
         // [range id, config path, value label id, label format] — debounced.
         const RANGES = [
-            ["maxCharsRange", ["display_options", "max_chars"], "maxCharsVal", asIs],
-            ["maxLinesRange", ["display_options", "max_lines"], "maxLinesVal", asIs],
             ["rateRange", ["timeout_ms"], "rateVal", asSeconds(2)],
             ["spinRate", ["LoadingOptions", "rate_ms"], "spinRateVal", asMs],
             ["loadDotsRange", ["LoadingOptions", "dots"], "loadDotsVal", asIs],

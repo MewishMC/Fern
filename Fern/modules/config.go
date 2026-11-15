@@ -424,8 +424,10 @@ func (c *Config) sanitize() {
 	trimmed := strings.Join(strings.Fields(c.LoadingOptions.Text), " ")
 	c.LoadingOptions.Text = RuneLimit(strings.TrimRight(trimmed, "."), 40)
 	c.TextOptions.Speed = clampInt(c.TextOptions.Speed, 400, 60000)
-	c.DisplayOptions.MaxChars = clampInt(c.DisplayOptions.MaxChars, 32, 144)
-	c.DisplayOptions.MaxLines = clampInt(c.DisplayOptions.MaxLines, 1, 9)
+	// Always VRChat's own limits. The panel no longer offers these, so an old
+	// config with a lower value would otherwise cut the chatbox short for good.
+	c.DisplayOptions.MaxChars = 144
+	c.DisplayOptions.MaxLines = 9
 	switch c.DisplayOptions.Separator {
 	case " | ", " · ", " — ", " / ", "  ":
 	default:

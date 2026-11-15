@@ -36,8 +36,8 @@ func TestSanitizeRepairsOutOfRangeValues(t *testing.T) {
 		got, want any
 	}{
 		{"separator", c.DisplayOptions.Separator, "\n"},
-		{"max chars", c.DisplayOptions.MaxChars, 32},
-		{"max lines", c.DisplayOptions.MaxLines, 1},
+		{"max chars", c.DisplayOptions.MaxChars, 144},
+		{"max lines", c.DisplayOptions.MaxLines, 9},
 		{"loading rate", c.LoadingOptions.RateMS, 1000},
 		{"loading text", c.LoadingOptions.Text, "brb "},
 		{"loading dots", c.LoadingOptions.Dots, 6},
