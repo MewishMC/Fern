@@ -22,11 +22,12 @@ const (
 	ModuleWindow  = "window"
 	ModuleLogs    = "logs"
 	ModuleLyrics  = "lyrics"
+	ModuleWeather = "weather"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
-	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
+	ModuleAFK, ModuleLoading, ModuleTime, ModuleWeather, ModuleText,
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleLyrics, ModuleWindow, ModuleLogs,
 }
 
@@ -51,6 +52,7 @@ type DisplayOptions struct {
 	CPU          bool     `json:"cpu"`
 	VRChatLogs   bool     `json:"vr_chat_logs"`
 	Lyrics       bool     `json:"lyrics"`
+	Weather      bool     `json:"weather"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -220,6 +222,23 @@ type LyricsOptions struct {
 	MaxChars     int    `json:"max_chars"`
 }
 
+// WeatherOptions controls the weather line, from Open-Meteo.
+type WeatherOptions struct {
+	City          string `json:"city"` // a place name, or "lat, lon"
+	Label         string `json:"label"`
+	ShowCondition bool   `json:"show_condition"`
+	ShowEmoji     bool   `json:"show_emoji"`
+	ShowTemp      bool   `json:"show_temp"`
+	ShowFeels     bool   `json:"show_feels_like"`
+	ShowHumidity  bool   `json:"show_humidity"`
+	ShowWind      bool   `json:"show_wind"`
+	TempUnit      string `json:"temp_unit"`    // c or f
+	WindUnit      string `json:"wind_unit"`    // kmh, mph or ms
+	Decimals      int    `json:"decimals"`     // 0 or 1
+	IntervalMin   int    `json:"interval_min"` // minutes between refreshes, 10-60
+	InTime        bool   `json:"in_time"`      // show on the time line instead
+}
+
 // OSCOptions is where chatbox messages are sent.
 type OSCOptions struct {
 	Host string `json:"host"`
@@ -240,6 +259,7 @@ type Config struct {
 	CPUOptions     CPUOptions     `json:"CPUOptions"`
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	LyricsOptions  LyricsOptions  `json:"LyricsOptions"`
+	WeatherOptions WeatherOptions `json:"WeatherOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -351,6 +371,14 @@ func DefaultConfig() Config {
 			GapMarker:   "♪ ♪ ♪",
 			Online:      true,
 			MaxChars:    90,
+		},
+		WeatherOptions: WeatherOptions{
+			ShowCondition: true,
+			ShowEmoji:     true,
+			ShowTemp:      true,
+			TempUnit:      "c",
+			WindUnit:      "kmh",
+			IntervalMin:   15,
 		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
@@ -531,6 +559,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.VRChatLogs
 	case ModuleLyrics:
 		return &d.Lyrics
+	case ModuleWeather:
+		return &d.Weather
 	}
 	return nil
 }
@@ -701,6 +731,7 @@ func (c *Config) sanitize() {
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
 	sanitizeLyrics(&c.LyricsOptions)
 	sanitizeTime(&c.TimeOptions)
+	sanitizeWeather(&c.WeatherOptions)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
 	if c.LoadingOptions.Dots == 0 {
 		c.LoadingOptions.Dots = 6

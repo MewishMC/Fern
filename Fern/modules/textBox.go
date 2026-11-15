@@ -99,6 +99,8 @@ func moduleText(id string, cfg Config) string {
 		return logsLine(cfg)
 	case ModuleLyrics:
 		return lyricsLine(cfg)
+	case ModuleWeather:
+		return weatherLine(cfg)
 	}
 	return ""
 }

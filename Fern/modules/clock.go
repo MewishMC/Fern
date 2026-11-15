@@ -59,17 +59,24 @@ func validZone(name string) bool {
 }
 
 func clockText(cfg Config) string {
-	return formatClockLine(cfg, time.Now())
+	weather := ""
+	if weatherMerged(cfg) {
+		weather = weatherText(cfg)
+	}
+	return formatClockLine(cfg, time.Now(), weather)
 }
 
 // formatClockLine renders the time line at now: the clock, an optional second
-// clock, the counters, and the weather when it is merged into this line.
-func formatClockLine(cfg Config, now time.Time) string {
+// clock, the weather when it is merged into this line, and the counters.
+func formatClockLine(cfg Config, now time.Time, weather string) string {
 	o := cfg.TimeOptions
 	parts := []string{withLabel(o.Label, formatClock(o, now.In(zone(o.Zone)), o.ShowZone))}
 	if o.Zone2 != "" {
 		// The second clock always says which zone it is unless it has a label.
 		parts = append(parts, withLabel(o.Label2, formatClock(o, now.In(zone(o.Zone2)), o.Label2 == "")))
+	}
+	if weather != "" {
+		parts = append(parts, weather)
 	}
 	line := strings.Join(parts, " · ")
 	if counters := counterText(o, now); counters != "" {

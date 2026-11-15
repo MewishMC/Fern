@@ -69,6 +69,7 @@ type uiState struct {
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
 	Lyrics    modules.LyricsStatus  `json:"lyrics"`
+	Weather   modules.WeatherStatus `json:"weather"`
 }
 
 type afkState struct {
@@ -369,6 +370,7 @@ func buildState() uiState {
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
 			modules.ModuleLyrics:  d.Lyrics,
+			modules.ModuleWeather: d.Weather,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -403,6 +405,7 @@ func buildState() uiState {
 		Version:   appVersion,
 		Update:    currentUpdate(),
 		Lyrics:    modules.CurrentLyricsStatus(),
+		Weather:   modules.CurrentWeatherStatus(),
 	}
 }
 

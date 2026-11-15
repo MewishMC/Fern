@@ -7,6 +7,7 @@ func StartWorkers() {
 	startAfkWorker()
 	startMediaWorker()
 	startLyricsWorker()
+	startWeatherWorker()
 	startLogWorker()
 	startSpecsWorker()
 	go watchVRChatProcess()

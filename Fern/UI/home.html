@@ -1069,6 +1069,145 @@
                 <div class="hint">Time since a past date, or until a future one, after its label: “together 1y 2m”, “trip in 4d 17h”. The time is optional.</div>
             </section>
 
+            <!-- ================= WEATHER ================= -->
+            <section class="page" id="page-weather">
+                <div class="page-head">
+                    <div>
+                        <h2>Weather</h2>
+                        <p>Current conditions from Open-Meteo, no account needed</p>
+                    </div>
+                    <span class="badge" id="weatherBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the weather</b>
+                            <span>Adds it to the chatbox in the order set on Lines, or after the clock (below)</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="weather"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="lyrics-now" id="weatherNow">Weather is off</div>
+                    <div class="np-sub" id="weatherState">Turn it on and pick a place</div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Place</b>
+                            <span>A city like “Berlin” or “Paris, France”, or coordinates like 48.85, 2.35. Fern never guesses where you are. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="weatherCity" maxlength="80" autocomplete="off" spellcheck="false" placeholder="City"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Put it on the time line</b>
+                            <span>Shows the weather after the clock, like 3:04 PM · ☀️ 21°C, while the time line is on</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherInTime"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Emoji</b>
+                            <span>☀️ ⛅ 🌧️ for the conditions</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherEmoji"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Conditions</b>
+                            <span>Words like “Partly cloudy”</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherCondition"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Temperature</b>
+                            <span>Unit and decimals are set below</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherTemp"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Feels like</b>
+                            <span>“feels 10°C”, counting wind and humidity</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherFeels"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Humidity</b>
+                            <span>“💧81%”</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherHumidity"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Wind</b>
+                            <span>“💨18 km/h”</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherWind"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Units</b>
+                            <span>Temperature, wind speed and decimals</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="weatherTempUnit" aria-label="Temperature unit" style="width:84px">
+                                <option value="c">°C</option>
+                                <option value="f">°F</option>
+                            </select>
+                            <select id="weatherWindUnit" aria-label="Wind unit" style="width:92px">
+                                <option value="kmh">km/h</option>
+                                <option value="mph">mph</option>
+                                <option value="ms">m/s</option>
+                            </select>
+                            <select id="weatherDecimals" aria-label="Decimals" style="width:92px">
+                                <option value="0">21°</option>
+                                <option value="1">21.4°</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Refresh every</b>
+                            <span>Weather changes slowly; one small request each time</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="weatherInterval" min="10" max="60" step="5">
+                            <span class="val" id="weatherIntervalVal">15 min</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix on the weather line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="weatherLabel" maxlength="16" autocomplete="off" placeholder="none"></div>
+                    </div>
+                </div>
+            </section>
+
             <!-- ================= LOADING ================= -->
             <section class="page" id="page-loading">
                 <div class="page-head">
@@ -1537,6 +1676,7 @@
             { id: "lyrics", name: "Lyrics", icon: "fa-microphone", category: "media", desc: "Synced lyrics for the playing track", keywords: "lrc lrclib karaoke song words" },
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
             { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
+            { id: "weather", name: "Weather", icon: "fa-cloud-sun", category: "system", desc: "Conditions and temperature from Open-Meteo", keywords: "temperature forecast rain wind humidity" },
             { id: "time", name: "Time", icon: "fa-clock", category: "system", desc: "Current clock", keywords: "clock hour" },
             { id: "memory", name: "Memory", icon: "fa-memory", category: "system", desc: "RAM usage", keywords: "ram" },
             { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
@@ -1691,6 +1831,7 @@
             renderLogs(st);
             renderLyrics(st);
             renderCounters(st);
+            renderWeather(st);
         }
 
         function renderPreview(st) {
@@ -2236,6 +2377,13 @@
             ["clockNoAmPm", ["TimeOptions", "no_am_pm"]],
             ["clockShowZone", ["TimeOptions", "show_zone"]],
             ["counterLine", ["TimeOptions", "counter_line"]],
+            ["weatherInTime", ["WeatherOptions", "in_time"]],
+            ["weatherEmoji", ["WeatherOptions", "show_emoji"]],
+            ["weatherCondition", ["WeatherOptions", "show_condition"]],
+            ["weatherTemp", ["WeatherOptions", "show_temp"]],
+            ["weatherFeels", ["WeatherOptions", "show_feels_like"]],
+            ["weatherHumidity", ["WeatherOptions", "show_humidity"]],
+            ["weatherWind", ["WeatherOptions", "show_wind"]],
             ["afkMovementOnly", ["AfkOptions", "poopyafk"]],
             ["afkShowTimer", ["AfkOptions", "show_timer"]],
             ["windowSimplified", ["WindowOptions", "simplified"]],
@@ -2270,6 +2418,7 @@
             ["lyricsGap", ["LyricsOptions", "gap_seconds"], "lyricsGapVal", (v) => v ? v + "s" : "never"],
             ["lyricsMaxChars", ["LyricsOptions", "max_chars"], "lyricsMaxCharsVal", asIs],
             ["counterUnits", ["TimeOptions", "counter_units"], "counterUnitsVal", asIs],
+            ["weatherInterval", ["WeatherOptions", "interval_min"], "weatherIntervalVal", (v) => v + " min"],
             ["windowMaxChars", ["WindowOptions", "max_chars"], "windowMaxCharsVal", asIs],
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
@@ -2292,6 +2441,7 @@
             ["lyricsGapMarker", ["LyricsOptions", "gap_marker"], 16],
             ["lyricsLabel", ["LyricsOptions", "label"], 16],
             ["clockLabel2", ["TimeOptions", "label2"], 16],
+            ["weatherLabel", ["WeatherOptions", "label"], 16],
             ["mediaBarFilled", ["MediaOptions", "bar_filled"], 2],
             ["mediaBarEmpty", ["MediaOptions", "bar_empty"], 2],
             ["mediaBarHead", ["MediaOptions", "bar_head"], 2],
@@ -2324,6 +2474,7 @@
             ["mediaChangeSecs", (c) => c.MediaOptions.only_on_change],
             ["lyricsLabel", (c) => !(c.LyricsOptions.replace_track && c.display_options.media)],
             ["lyricsGap", (c) => !!c.LyricsOptions.gap_marker],
+            ["weatherLabel", (c) => !(c.WeatherOptions.in_time && c.display_options.time)],
             ["mediaStoppedIcon", (c) => c.MediaOptions.show_when_stopped],
             ["mediaSuperTime", (c) => c.MediaOptions.show_progress && ["time", "both"].includes(c.MediaOptions.progress_style)],
             ["windowVrText", (c) => c.WindowOptions.show_mode],
@@ -3067,6 +3218,46 @@
                 });
             }
         });
+
+        /* ---------------- weather page ---------------- */
+        const WEATHER_STATES = {
+            off: ["off", "Weather is off", "Turn it on and pick a place"],
+            nocity: ["no place", "Pick a place", "Type a city or coordinates below"],
+            locating: ["looking", "Finding the place…", ""],
+            notfound: ["not found", "Couldn't find that place", "Try another spelling, add the country, or use coordinates"],
+            ok: ["live", "", ""],
+            offline: ["offline", "Couldn't reach Open-Meteo", "Trying again in a little while"],
+            limited: ["paused", "Open-Meteo asked Fern to slow down", "Trying again in a few minutes"],
+        };
+        const WEATHER_SELECTS = [
+            ["weatherTempUnit", ["WeatherOptions", "temp_unit"], String],
+            ["weatherWindUnit", ["WeatherOptions", "wind_unit"], String],
+            ["weatherDecimals", ["WeatherOptions", "decimals"], Number],
+        ];
+        WEATHER_SELECTS.forEach(([id, path, cast]) => {
+            $(id).addEventListener("change", (ev) => { pushConfigNow((c) => setField(c, path, cast(ev.target.value))); });
+        });
+        function renderWeather(st) {
+            const w = st.weather || { state: "off" };
+            const info = WEATHER_STATES[w.state] || WEATHER_STATES.off;
+            $("weatherBadge").textContent = info[0];
+            let now = info[1], sub = info[2];
+            if (w.state === "ok" || (w.line && w.state !== "off")) {
+                now = w.line || "(nothing selected to show)";
+                sub = w.updatedMs ? "Updated " + fmtAgo(w.updatedMs) : "";
+            }
+            if (w.place && w.state !== "off") sub = w.place + (sub ? " · " + sub : "");
+            $("weatherNow").textContent = now;
+            $("weatherState").textContent = sub;
+            const c = st.config;
+            if (!lockForms()) {
+                WEATHER_SELECTS.forEach(([id, path]) => {
+                    if (document.activeElement !== $(id)) $(id).value = String(field(c, path));
+                });
+                if (document.activeElement !== $("weatherCity")) $("weatherCity").value = c.WeatherOptions.city || "";
+            }
+        }
+        commitField($("weatherCity"), (v) => v.trim(), (c, v) => { c.WeatherOptions.city = v; }, "");
 
         /* ---------------- per module options ---------------- */
         $("afkTimerStyle").addEventListener("change", (ev) => {

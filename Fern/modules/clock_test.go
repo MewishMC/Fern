@@ -57,13 +57,13 @@ func TestFormatClockLine(t *testing.T) {
 	now := time.Date(2026, 1, 15, 14, 5, 0, 0, time.UTC)
 	cfg := DefaultConfig()
 	cfg.TimeOptions.Zone = "Europe/Berlin"
-	if got := formatClockLine(cfg, now); got != "3:05 PM" {
+	if got := formatClockLine(cfg, now, ""); got != "3:05 PM" {
 		t.Errorf("zone: got %q", got)
 	}
 	cfg.TimeOptions.ShowZone = true
 	cfg.TimeOptions.Use24h = true
 	cfg.TimeOptions.Zone2 = "America/New_York"
-	if got := formatClockLine(cfg, now); got != "15:05 CET · 09:05 EST" {
+	if got := formatClockLine(cfg, now, ""); got != "15:05 CET · 09:05 EST" {
 		t.Errorf("two clocks: got %q", got)
 	}
 	cfg.TimeOptions.Label2 = "NY"
@@ -72,12 +72,12 @@ func TestFormatClockLine(t *testing.T) {
 		{Label: "half typed", Date: "2025-1"},
 		{Label: "trip in", Date: "2026-01-20T09:00"},
 	}
-	if got := formatClockLine(cfg, now); got != "15:05 CET · NY 09:05 · together 1y 2m · trip in 4d 17h" {
+	if got := formatClockLine(cfg, now, ""); got != "15:05 CET · NY 09:05 · together 1y 2m · trip in 4d 17h" {
 		t.Errorf("counters: got %q", got)
 	}
 	cfg.TimeOptions.CounterLine = true
 	cfg.TimeOptions.Counters = cfg.TimeOptions.Counters[:1]
-	if got := formatClockLine(cfg, now); got != "15:05 CET · NY 09:05\ntogether 1y 2m" {
+	if got := formatClockLine(cfg, now, "☀️ 21°C"); got != "15:05 CET · NY 09:05 · ☀️ 21°C\ntogether 1y 2m" {
 		t.Errorf("counter line: got %q", got)
 	}
 }
