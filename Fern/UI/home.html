@@ -1139,6 +1139,24 @@
                     </div>
                 </div>
 
+                <div class="section-title">Sound</div>
+                <div class="card" id="chatCard">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Sound for sent messages</b>
+                            <span>VRChat plays its chatbox sound once for each message from &ldquo;Send now&rdquo;</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="notifySend"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Sound for automatic updates</b>
+                            <span>Plays whenever the chatbox text changes. With the clock or loading dots on, that is often.</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="notifyAuto"><span></span></label></div>
+                    </div>
+                </div>
+
                 <div class="section-title">More outputs</div>
                 <div class="card">
                     <div class="card-head">
@@ -2072,6 +2090,8 @@
             ["masterSwitch", ["display_options", "show"]],
             ["out0On", ["OSC", "extra", 0, "enabled"]],
             ["out1On", ["OSC", "extra", 1, "enabled"]],
+            ["notifySend", ["ChatOptions", "notify_send"]],
+            ["notifyAuto", ["ChatOptions", "notify_auto"]],
             ["spinFast", ["LoadingOptions", "fast"]],
             ["loadDots", ["LoadingOptions", "show_dots"]],
             ["cycleSwitch", ["TextOptions", "cycle"]],

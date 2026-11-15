@@ -207,6 +207,12 @@ func defaultExtraOutput(i int) OSCTarget {
 	return OSCTarget{Host: "127.0.0.1", Port: 9002 + i}
 }
 
+// ChatOptions controls messages typed on the Live page and how sends sound.
+type ChatOptions struct {
+	NotifySend bool `json:"notify_send"` // play VRChat's sound for "Send now" messages
+	NotifyAuto bool `json:"notify_auto"` // play it when the automatic chatbox changes
+}
+
 // Config is the persisted application configuration.
 type Config struct {
 	DisplayOptions DisplayOptions `json:"display_options"`
@@ -221,6 +227,7 @@ type Config struct {
 	CPUOptions     CPUOptions     `json:"CPUOptions"`
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
+	ChatOptions    ChatOptions    `json:"ChatOptions"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
 
@@ -326,6 +333,9 @@ func DefaultConfig() Config {
 			Host:  "127.0.0.1",
 			Port:  9000,
 			Extra: []OSCTarget{defaultExtraOutput(0), defaultExtraOutput(1)},
+		},
+		ChatOptions: ChatOptions{
+			NotifySend: true,
 		},
 		TimeoutMS: 2500,
 	}

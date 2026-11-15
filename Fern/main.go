@@ -43,6 +43,8 @@ func main() {
 // sendLoop pushes the chatbox to VRChat, re-sending instantly when the config
 // changes instead of always waiting for the full timeout.
 func sendLoop() {
+	var lastBody string
+	var lastSeq uint64
 	for {
 		cfg := modules.GetConfig()
 		oscClients(cfg.OSCOptions)
@@ -51,13 +53,16 @@ func sendLoop() {
 			if cfg.DisplayOptions.Loading {
 				modules.AdvanceLoading(int(modules.EffectiveRateMS(cfg)))
 			}
-			body, payload := modules.BuildPayload()
+			box := modules.ComposeChatbox()
+			body, payload := modules.PayloadFor(box)
 			if body != "" {
-				// Third argument false: do not play the notification sound on every
-				// update. While the loading animation is on this fires about once a
-				// second, which would ding everyone nearby non-stop.
-				msg := osc.NewMessage("/chatbox/input", payload, true, false)
+				notify := shouldNotify(cfg.ChatOptions, box, body, lastBody, lastSeq)
+				msg := osc.NewMessage("/chatbox/input", payload, true, notify)
 				if sendOSC(cfg.OSCOptions, msg) > 0 {
+					lastBody = body
+					if box.Hold {
+						lastSeq = box.Seq
+					}
 					atomic.AddInt64(&sentCount, 1)
 					atomic.StoreInt64(&lastSentAt, time.Now().UnixMilli())
 					modules.AddHistory(body)
@@ -74,4 +79,15 @@ func sendLoop() {
 		case <-time.After(timeout):
 		}
 	}
+}
+
+// shouldNotify decides whether VRChat plays its sound for this send. A sent
+// message dings once, not on every re-send while it is held. The automatic
+// chatbox dings only when its text changed, and only if asked: with the
+// loading dots on that is about once a second.
+func shouldNotify(opts modules.ChatOptions, box modules.Chatbox, body, lastBody string, lastSeq uint64) bool {
+	if box.Hold {
+		return opts.NotifySend && box.Seq != lastSeq
+	}
+	return opts.NotifyAuto && body != lastBody
 }
