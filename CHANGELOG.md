@@ -10,11 +10,13 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+## v2.1 - Modules and updates
+
 ### Added
 - A Modules page lists every chatbox line with search, on/off filters, a live preview of
   what each one sends and a shortcut to its settings.
-- Fern checks for new releases and offers an **Update** button that installs them and
-  restarts.
+- Fern checks for new releases and offers an **Update** button that shows the release's
+  name and changelog, then installs it and restarts.
 - An **Output** page for the OSC host, port and update rate.
 - Undo after removing a text message.
 
