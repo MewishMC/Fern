@@ -147,6 +147,7 @@ type MediaOptions struct {
 	// playback is paused or resumed, then hides it until the next change.
 	OnlyOnChange  bool `json:"only_on_change"`
 	ChangeSeconds int  `json:"change_seconds"`
+	TidyTitles    bool `json:"tidy_titles"` // drop "(Official Video)", "[HD]" and the like
 }
 
 // TimeOptions controls the clock line.
@@ -280,6 +281,7 @@ func DefaultConfig() Config {
 			StoppedIcon:    "⏹",
 			Separator:      " — ",
 			ChangeSeconds:  25,
+			TidyTitles:     true,
 		},
 		TimeOptions: TimeOptions{
 			Use24h: false,

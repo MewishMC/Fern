@@ -389,7 +389,11 @@ func formatMediaLine(o MediaOptions, info MediaInfo) string {
 		return ""
 	}
 
-	track := mediaTrack(o, info.Title, info.Artist, info.Album)
+	title, artist := info.Title, info.Artist
+	if o.TidyTitles {
+		title, artist = TidyTrack(title, artist)
+	}
+	track := mediaTrack(o, title, artist, info.Album)
 	if track == "" {
 		return ""
 	}

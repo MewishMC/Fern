@@ -665,6 +665,15 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Tidy titles</b>
+                            <span>Drops “(Official Video)”, “[HD]”, “| Official Music Video”, repeated “ft.” credits and “Artist - ” prefixes from video sites</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaTidy"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Bar width</b>
                             <span>How many blocks the progress bar uses</span>
                         </div>
@@ -2022,6 +2031,7 @@
             ["mediaAlbum", ["MediaOptions", "show_album"]],
             ["mediaStopped", ["MediaOptions", "show_when_stopped"]],
             ["mediaOnChange", ["MediaOptions", "only_on_change"]],
+            ["mediaTidy", ["MediaOptions", "tidy_titles"]],
             ["mediaUpper", ["MediaOptions", "uppercase"]],
             ["mediaSuperTime", ["MediaOptions", "superscript_time"]],
             ["clock24", ["TimeOptions", "use_24h"]],
