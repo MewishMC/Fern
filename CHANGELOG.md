@@ -14,6 +14,10 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 - The window line can rename apps, show an app's window title or both, or hide it, per app.
   Recently focused apps can be picked from a list, "Only show listed apps" hides everything
   else, and hidden apps can send a replacement text such as "busy".
+- Windows whose title contains a word or matches a /regex/ can be hidden. Incognito and
+  InPrivate windows are hidden by default.
+- The window line can start with "In VR" or "On desktop", detected from SteamVR (and
+  optionally Oculus), with your own wording.
 - Apps without a custom name show their real product name (from the executable) instead of
   the window title.
 
