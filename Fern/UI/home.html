@@ -49,19 +49,8 @@
                 <div class="nav-group">
                     <span class="nav-title">Dashboard</span>
                     <button class="nav-item active" data-page="live" data-label="Live"><i class="fa fa-comment-dots" aria-hidden="true"></i><span class="nav-label">Live</span></button>
+                    <button class="nav-item" data-page="modules" data-label="Modules"><i class="fa fa-puzzle-piece" aria-hidden="true"></i><span class="nav-label">Modules</span><span class="nav-count" id="navModCount"></span></button>
                     <button class="nav-item" data-page="lines" data-label="Lines"><i class="fa fa-list" aria-hidden="true"></i><span class="nav-label">Lines</span></button>
-                </div>
-                <div class="nav-group">
-                    <span class="nav-title">Modules</span>
-                    <button class="nav-item" data-page="time" data-label="Time"><i class="fa fa-clock" aria-hidden="true"></i><span class="nav-label">Time</span></button>
-                    <button class="nav-item" data-page="loading" data-label="Loading"><i class="fa fa-ellipsis" aria-hidden="true"></i><span class="nav-label">Loading</span></button>
-                    <button class="nav-item" data-page="media" data-label="Media"><i class="fa fa-music" aria-hidden="true"></i><span class="nav-label">Media</span></button>
-                    <button class="nav-item" data-page="afk" data-label="AFK"><i class="fa fa-moon" aria-hidden="true"></i><span class="nav-label">AFK</span></button>
-                    <button class="nav-item" data-page="text" data-label="Text"><i class="fa fa-pen" aria-hidden="true"></i><span class="nav-label">Text</span></button>
-                    <button class="nav-item" data-page="memory" data-label="Memory"><i class="fa fa-memory" aria-hidden="true"></i><span class="nav-label">Memory</span></button>
-                    <button class="nav-item" data-page="cpu" data-label="CPU"><i class="fa fa-microchip" aria-hidden="true"></i><span class="nav-label">CPU</span></button>
-                    <button class="nav-item" data-page="window" data-label="Window"><i class="fa fa-window-maximize" aria-hidden="true"></i><span class="nav-label">Window</span></button>
-                    <button class="nav-item" data-page="logs" data-label="Logs"><i class="fa fa-scroll" aria-hidden="true"></i><span class="nav-label">Logs</span></button>
                 </div>
                 <div class="nav-group">
                     <span class="nav-title">Settings</span>
@@ -188,6 +177,32 @@
                         </div>
                     </div>
                 </div>
+            </section>
+
+            <!-- ================= MODULES ================= -->
+            <section class="page" id="page-modules">
+                <div class="page-head">
+                    <div>
+                        <h2>Modules</h2>
+                        <p>Everything Fern can put in the chatbox. Open one to change how its line looks.</p>
+                    </div>
+                    <span class="badge" id="modCount">0 on</span>
+                </div>
+
+                <div class="mod-toolbar">
+                    <label class="mod-search">
+                        <i class="fa fa-magnifying-glass" aria-hidden="true"></i>
+                        <input type="search" id="modSearch" placeholder="Search modules" autocomplete="off" aria-label="Search modules">
+                    </label>
+                    <div class="seg" id="modFilter" role="group" aria-label="Show">
+                        <button type="button" data-filter="all" class="on">All</button>
+                        <button type="button" data-filter="on">On</button>
+                        <button type="button" data-filter="off">Off</button>
+                    </div>
+                </div>
+
+                <div id="modGroups"></div>
+                <div class="log-empty" id="modEmpty" hidden>No modules match that search.</div>
             </section>
 
             <!-- ================= LINES ================= -->
@@ -1104,21 +1119,28 @@
         "use strict";
 
         const $ = (id) => document.getElementById(id);
-        const MODULE_DESC = {
-            afk: "AFK timer since last activity",
-            loading: "Your text with growing dots",
-            time: "Current clock",
-            text: "Your rotating messages",
-            memory: "RAM usage",
-            cpu: "CPU name and load",
-            media: "Now playing track with playback time",
-            window: "Active window title",
-            logs: "Latest VRChat join / leave"
-        };
-        const MODULE_NAME = {
-            afk: "AFK", loading: "Loading", time: "Time", text: "Text", memory: "Memory",
-            cpu: "CPU", media: "Media", window: "Active window", logs: "VRChat log"
-        };
+        // Every chatbox module, in one place. Adding a module means adding an
+        // entry here and a <section id="page-<id>"> with its settings; the
+        // Modules page, Lines list and navigation all follow this table.
+        const CATEGORIES = [
+            ["vrchat", "VRChat"],
+            ["media", "Music & text"],
+            ["system", "System"],
+        ];
+        const MODULES = [
+            { id: "afk", name: "AFK", icon: "fa-moon", category: "vrchat", desc: "AFK timer since last activity", keywords: "idle away" },
+            { id: "logs", name: "VRChat log", icon: "fa-scroll", category: "vrchat", desc: "Latest VRChat join / leave", keywords: "players join leave instance" },
+            { id: "media", name: "Media", icon: "fa-music", category: "media", desc: "Now playing track with playback time", keywords: "spotify song music now playing" },
+            { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
+            { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
+            { id: "time", name: "Time", icon: "fa-clock", category: "system", desc: "Current clock", keywords: "clock hour" },
+            { id: "memory", name: "Memory", icon: "fa-memory", category: "system", desc: "RAM usage", keywords: "ram" },
+            { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
+            { id: "window", name: "Active window", icon: "fa-window-maximize", category: "system", desc: "Active window title", keywords: "focus app program" },
+        ];
+        const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
+        const MODULE_NAME = Object.fromEntries(MODULES.map((m) => [m.id, m.name]));
+        const MODULE_DESC = Object.fromEntries(MODULES.map((m) => [m.id, m.desc]));
 
         const S = {
             state: null,
@@ -1259,6 +1281,7 @@
             renderFooter(st);
             syncControls(st);
             renderOrder(st);
+            renderModules(st);
             syncMessages(st);
             renderLogs(st);
         }
@@ -1506,6 +1529,7 @@
                     '<div class="row-main"><div class="row-name">' + (MODULE_NAME[id] || id) +
                     '</div><span class="row-desc">' + (MODULE_DESC[id] || "") + "</span></div>" +
                     '<div class="row-actions">' +
+                    '<button class="chev" data-open="' + id + '" title="Settings" aria-label="' + (MODULE_NAME[id] || id) + ' settings"><i class="fa fa-gear" aria-hidden="true"></i></button>' +
                     '<button class="chev" data-move="up" title="Move up">▲</button>' +
                     '<button class="chev" data-move="down" title="Move down">▼</button>' +
                     '<label class="switch"><input type="checkbox" data-mod="' + id + '"' +
@@ -1746,12 +1770,142 @@
         });
 
         /* ---------------- navigation ---------------- */
+        function showPage(page) {
+            if (!$("page-" + page)) page = "live";
+            const navPage = MODULE_BY_ID[page] ? "modules" : page;
+            document.querySelectorAll(".nav-item").forEach((b) => {
+                const on = b.dataset.page === navPage;
+                b.classList.toggle("active", on);
+                if (on) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current");
+            });
+            document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === "page-" + page));
+            $("main").scrollTop = 0;
+        }
+
         $("nav").addEventListener("click", (ev) => {
             const button = ev.target.closest(".nav-item");
+            if (button) showPage(button.dataset.page);
+        });
+
+        // Any [data-open="<module>"] opens that module's settings; [data-back]
+        // returns to the Modules page.
+        document.addEventListener("click", (ev) => {
+            if (ev.target.closest(".switch")) return;
+            const open = ev.target.closest("[data-open]");
+            if (open) {
+                showPage(open.dataset.open);
+                return;
+            }
+            if (ev.target.closest("[data-back]")) showPage("modules");
+        });
+
+        // Each module page gets a way back to the list it was opened from.
+        MODULES.forEach((m) => {
+            const head = document.querySelector("#page-" + m.id + " .page-head > div");
+            if (!head) return;
+            const back = document.createElement("button");
+            back.type = "button";
+            back.className = "back-link";
+            back.dataset.back = "";
+            back.innerHTML = '<i class="fa fa-chevron-left" aria-hidden="true"></i> Modules';
+            head.prepend(back);
+        });
+
+        /* ---------------- modules page ---------------- */
+        const modView = { search: "", filter: "all" };
+
+        function buildModuleCards() {
+            const groups = $("modGroups");
+            groups.innerHTML = "";
+            CATEGORIES.forEach(([cat, label]) => {
+                const items = MODULES.filter((m) => m.category === cat);
+                if (!items.length) return;
+                const group = document.createElement("div");
+                group.className = "mod-group";
+                group.dataset.category = cat;
+                group.innerHTML = '<div class="section-title">' + label + "</div>";
+                const grid = document.createElement("div");
+                grid.className = "mod-grid";
+                items.forEach((m) => {
+                    const card = document.createElement("div");
+                    card.className = "mod-card";
+                    card.dataset.id = m.id;
+                    card.innerHTML =
+                        '<button type="button" class="mod-open" data-open="' + m.id + '" aria-label="' + m.name + ' settings">' +
+                        '<span class="mod-icon"><i class="fa ' + m.icon + '" aria-hidden="true"></i></span>' +
+                        '<span class="mod-body"><span class="mod-name">' + m.name + "</span>" +
+                        '<span class="mod-desc">' + m.desc + "</span>" +
+                        '<span class="mod-sample"></span></span>' +
+                        '<i class="fa fa-chevron-right mod-chev" aria-hidden="true"></i>' +
+                        "</button>" +
+                        '<label class="switch" title="Show in the chatbox"><input type="checkbox" data-mod-card="' + m.id + '" aria-label="Show ' + m.name + ' in the chatbox"><span></span></label>';
+                    grid.appendChild(card);
+                });
+                group.appendChild(grid);
+                groups.appendChild(group);
+            });
+        }
+
+        function filterModules() {
+            const q = modView.search.trim().toLowerCase();
+            const modulesOn = (S.state && S.state.modules) || {};
+            let shown = 0;
+            document.querySelectorAll(".mod-card").forEach((card) => {
+                const m = MODULE_BY_ID[card.dataset.id];
+                const text = (m.name + " " + m.desc + " " + (m.keywords || "")).toLowerCase();
+                const on = !!modulesOn[m.id];
+                const visible = (!q || text.includes(q)) &&
+                    (modView.filter === "all" || (modView.filter === "on") === on);
+                card.hidden = !visible;
+                if (visible) shown++;
+            });
+            document.querySelectorAll(".mod-group").forEach((g) => {
+                g.hidden = !g.querySelector(".mod-card:not([hidden])");
+            });
+            $("modEmpty").hidden = shown > 0;
+            $("modEmpty").textContent = q ? "No modules match \u201c" + modView.search.trim() + "\u201d." : "No modules here.";
+        }
+
+        function renderModules(st) {
+            const modulesOn = st.modules || {};
+            const samples = st.samples || {};
+            let count = 0;
+            document.querySelectorAll(".mod-card").forEach((card) => {
+                const id = card.dataset.id;
+                const on = !!modulesOn[id];
+                if (on) count++;
+                card.classList.toggle("on", on);
+                const input = card.querySelector("input[data-mod-card]");
+                if (document.activeElement !== input) input.checked = on;
+                const sample = card.querySelector(".mod-sample");
+                const text = samples[id] || "";
+                if (sample.textContent !== (text || "nothing to show right now")) {
+                    sample.textContent = text || "nothing to show right now";
+                }
+                sample.classList.toggle("empty", !text);
+            });
+            $("modCount").textContent = count + " of " + MODULES.length + " on";
+            $("navModCount").textContent = count + "/" + MODULES.length;
+            if (modView.filter !== "all") filterModules();
+        }
+
+        buildModuleCards();
+        $("modSearch").addEventListener("input", (ev) => {
+            modView.search = ev.target.value;
+            filterModules();
+        });
+        $("modFilter").addEventListener("click", (ev) => {
+            const button = ev.target.closest("button[data-filter]");
             if (!button) return;
-            document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("active", b === button));
-            document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === "page-" + button.dataset.page));
-            $("main").scrollTop = 0;
+            modView.filter = button.dataset.filter;
+            document.querySelectorAll("#modFilter button").forEach((b) => b.classList.toggle("on", b === button));
+            filterModules();
+        });
+        $("modGroups").addEventListener("change", (ev) => {
+            const input = ev.target.closest("input[data-mod-card]");
+            if (!input) return;
+            toggleModule(input.dataset.modCard, input.checked);
+            if (S.state) renderModules(S.state);
         });
 
         /* ---------------- live actions ---------------- */

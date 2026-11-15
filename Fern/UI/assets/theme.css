@@ -1318,6 +1318,192 @@ input[type="range"]::-webkit-slider-thumb {
     background: var(--accent);
 }
 
+/* ---------------- modules page ---------------- */
+
+[hidden] {
+    display: none !important;
+}
+
+.nav-count {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.nav-item.active .nav-count {
+    color: var(--accent);
+}
+
+.mod-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.mod-search {
+    flex: 1 1 220px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 34px;
+    padding: 0 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    color: var(--text-faint);
+    cursor: text;
+}
+
+.mod-search:focus-within {
+    border-color: var(--border-focus);
+}
+
+.mod-search input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    color: var(--text-primary);
+    font: inherit;
+    font-size: .8rem;
+    outline: none;
+}
+
+.mod-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 8px;
+}
+
+.mod-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding-right: 14px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-default);
+    border-radius: 12px;
+    transition: border-color .15s, background .15s;
+    min-width: 0;
+}
+
+.mod-card:hover {
+    border-color: var(--border-strong);
+}
+
+.mod-card.on {
+    border-color: var(--accent-border2);
+}
+
+.mod-open {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0 12px 14px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 12px 0 0 12px;
+}
+
+.mod-open:focus-visible {
+    outline: 2px solid var(--accent-border);
+    outline-offset: -2px;
+}
+
+.mod-icon {
+    flex: 0 0 34px;
+    height: 34px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    background: var(--bg-hover-1);
+    color: var(--text-muted);
+    font-size: 15px;
+}
+
+.mod-card.on .mod-icon {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.mod-body {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.mod-name {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.mod-desc {
+    font-size: .7rem;
+    color: var(--text-dim);
+}
+
+.mod-sample,
+.mod-desc {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mod-sample {
+    margin-top: 3px;
+    font-family: "Cascadia Mono", Consolas, "Noto Emoji", ui-monospace, monospace;
+    font-size: .7rem;
+    color: var(--text-muted);
+}
+
+.mod-sample.empty {
+    color: var(--text-faint);
+    font-style: italic;
+}
+
+.mod-chev {
+    margin-left: auto;
+    color: var(--text-faint);
+    font-size: 10px;
+    padding-left: 4px;
+}
+
+.mod-open:hover .mod-chev {
+    color: var(--text-secondary);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--text-dim);
+    font: inherit;
+    font-size: .72rem;
+    cursor: pointer;
+}
+
+.back-link:hover {
+    color: var(--accent-light);
+}
+
+.back-link i {
+    font-size: 9px;
+}
+
 /* ---------------- logs ---------------- */
 
 .log-list {
