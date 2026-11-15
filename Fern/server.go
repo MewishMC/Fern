@@ -68,6 +68,16 @@ type uiState struct {
 	OSC       string                `json:"osc"`
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
+	Assist    assistState           `json:"assist"`
+}
+
+// assistState is the Assist page: AI tools, text to speech and speech to
+// text. Keys appear only as masked hints.
+type assistState struct {
+	AI   modules.AIStatus  `json:"ai"`
+	TTS  modules.TTSStatus `json:"tts"`
+	STT  modules.STTStatus `json:"stt"`
+	Keys map[string]string `json:"keys"`
 }
 
 type afkState struct {
@@ -269,6 +279,7 @@ func handleCommand(cmd command) {
 	case "send":
 		hold := time.Duration(cmd.Hold) * time.Second
 		modules.SetHold(cmd.Text, hold)
+		modules.SpeakSent(cmd.Text)
 	case "clearHold":
 		modules.ClearHold()
 	case "media":
@@ -281,6 +292,43 @@ func handleCommand(cmd command) {
 		_ = modules.SaveNow()
 	case "update":
 		go startUpdate()
+	case "assist", "assistCancel", "assistKey", "tts", "stt":
+		handleAssistCommand(cmd)
+	}
+}
+
+func handleAssistCommand(cmd command) {
+	switch cmd.Type {
+	case "assist":
+		modules.StartAssist(cmd.Action, cmd.Text)
+	case "assistCancel":
+		modules.CancelAssist()
+	case "assistKey":
+		if err := modules.SetAssistKey(cmd.Module, cmd.Text); err != nil {
+			modules.ReportAssistError(err)
+		}
+	case "tts":
+		switch cmd.Action {
+		case "speak":
+			modules.SpeakPreview(cmd.Text)
+		case "stop":
+			modules.StopSpeaking()
+		case "refresh":
+			go modules.RefreshSpeechDevices()
+		}
+	case "stt":
+		switch cmd.Action {
+		case "hold":
+			modules.StartListening(true)
+		case "start":
+			modules.StartListening(false)
+		case "release":
+			modules.ReleaseListening()
+		case "stop":
+			modules.StopListening()
+		case "cancel":
+			modules.CancelListening()
+		}
 	}
 }
 
@@ -369,7 +417,7 @@ func buildState() uiState {
 			modules.ModuleLogs:    d.VRChatLogs,
 		},
 		Order:   d.Order,
-		Config:  cfg,
+		Config:  cfg.Public(),
 		Media:   modules.CurrentMedia(),
 		Sources: orEmpty(modules.MediaSources()),
 		Apps:    orEmpty(modules.RecentWindowApps()),
@@ -400,6 +448,12 @@ func buildState() uiState {
 		OSC:       oscTarget(),
 		Version:   appVersion,
 		Update:    currentUpdate(),
+		Assist: assistState{
+			AI:   modules.CurrentAI(),
+			TTS:  modules.CurrentTTS(),
+			STT:  modules.CurrentSTT(),
+			Keys: modules.KeyHints(cfg),
+		},
 	}
 }
 

@@ -51,6 +51,7 @@
                     <button class="nav-item active" data-page="live" data-label="Live"><i class="fa fa-comment-dots" aria-hidden="true"></i><span class="nav-label">Live</span></button>
                     <button class="nav-item" data-page="modules" data-label="Modules"><i class="fa fa-puzzle-piece" aria-hidden="true"></i><span class="nav-label">Modules</span><span class="nav-count" id="navModCount"></span></button>
                     <button class="nav-item" data-page="lines" data-label="Lines"><i class="fa fa-list" aria-hidden="true"></i><span class="nav-label">Lines</span></button>
+                    <button class="nav-item" data-page="assist" data-label="Assist"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i><span class="nav-label">Assist</span></button>
                 </div>
                 <div class="nav-group">
                     <span class="nav-title">Settings</span>
@@ -146,6 +147,34 @@
                             <button class="btn" id="btnSend">Send</button>
                         </div>
                         <div class="hint">Overrides the rotation for a while, then Fern goes back to normal. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> also sends.</div>
+                        <div class="assist-bar" id="assistBar">
+                            <button class="btn ghost small stt-btn" type="button" id="sttButton" title="Hold to talk, or click once and it stops when you go quiet" aria-label="Dictate"><i class="fa fa-microphone" aria-hidden="true"></i></button>
+                            <button class="btn ghost small" type="button" data-assist="fix" title="Fix spelling and grammar"><i class="fa fa-spell-check" aria-hidden="true"></i> Fix</button>
+                            <button class="btn ghost small" type="button" data-assist="shorten" title="Shorten to fit the chatbox"><i class="fa fa-scissors" aria-hidden="true"></i> Shorten</button>
+                            <button class="btn ghost small" type="button" data-assist="rewrite" title="Rewrite in your chosen style"><i class="fa fa-feather" aria-hidden="true"></i> Rewrite</button>
+                            <button class="btn ghost small" type="button" data-assist="translate" title="Translate into your chosen language"><i class="fa fa-language" aria-hidden="true"></i> Translate</button>
+                            <button class="btn ghost small" type="button" data-assist="reply" title="Paste what someone said and get a reply"><i class="fa fa-reply" aria-hidden="true"></i> Reply</button>
+                            <button class="btn ghost small" type="button" data-assist="starter" title="Suggest a conversation starter (type a topic, or leave it empty)"><i class="fa fa-lightbulb" aria-hidden="true"></i> Idea</button>
+                            <button class="btn ghost small" type="button" id="ttsSay" title="Read the box aloud" aria-label="Read aloud"><i class="fa fa-volume-high" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="assist-status" id="assistStatus" hidden>
+                            <span id="assistStatusText"></span>
+                            <div class="stt-level small" id="sttLiveLevel" hidden><i id="sttLiveBar"></i></div>
+                            <button class="btn ghost small" type="button" id="assistCancel">Cancel</button>
+                        </div>
+                        <div class="assist-result" id="assistResult" hidden>
+                            <div class="assist-result-head">
+                                <span id="assistResultLabel">Suggestion</span>
+                                <span class="badge" id="assistResultCount">0 / 144</span>
+                            </div>
+                            <textarea id="assistResultText" rows="2" aria-label="Suggested text"></textarea>
+                            <div class="assist-result-foot">
+                                <span class="assist-usage" id="assistResultUsage"></span>
+                                <button class="btn ghost small" type="button" id="assistDiscard">Discard</button>
+                                <button class="btn ghost small" type="button" id="assistUse">Use</button>
+                                <button class="btn small" type="button" id="assistUseSend">Use &amp; send</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="card">
@@ -1074,6 +1103,421 @@
                     </div>
                 </div>
             </section>
+            <!-- ================= ASSIST ================= -->
+            <section class="page" id="page-assist">
+                <div class="page-head">
+                    <div>
+                        <h2>Assist</h2>
+                        <p>AI writing tools, text to speech and dictation for the Send now box</p>
+                    </div>
+                    <span class="badge" id="assistBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>AI provider</h3>
+                        <span class="badge" id="assistUsageBadge">0 requests</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Provider</b>
+                            <span>OpenAI-compatible also covers local servers such as Ollama or LM Studio</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="assistProvider" style="width:210px">
+                                <option value="openai">OpenAI-compatible</option>
+                                <option value="anthropic">Anthropic</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="assist-provider" data-provider="openai">
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Base URL</b>
+                                <span>https://api.openai.com/v1, or e.g. http://localhost:11434/v1 for Ollama</span>
+                            </div>
+                            <div class="field-control"><input type="text" id="assistOpenAIBase" autocomplete="off" spellcheck="false"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Model</b>
+                                <span>Small, fast models are plenty for these tools</span>
+                            </div>
+                            <div class="field-control"><input type="text" id="assistOpenAIModel" list="assistOpenAIModels" autocomplete="off" spellcheck="false"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>API key</b>
+                                <span id="assistOpenAIKeyHint">Not set. Local servers usually need none.</span>
+                            </div>
+                            <div class="field-control assist-key">
+                                <input type="password" id="assistOpenAIKey" autocomplete="off" spellcheck="false" placeholder="sk-…">
+                                <button class="btn small" type="button" data-key-save="openai">Save</button>
+                                <button class="btn ghost small" type="button" data-key-clear="openai">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="assist-provider" data-provider="anthropic">
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Base URL</b>
+                                <span>https://api.anthropic.com unless you use a proxy</span>
+                            </div>
+                            <div class="field-control"><input type="text" id="assistAnthropicBase" autocomplete="off" spellcheck="false"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Model</b>
+                                <span>claude-haiku-5-5 is fast and cheap</span>
+                            </div>
+                            <div class="field-control"><input type="text" id="assistAnthropicModel" list="assistAnthropicModels" autocomplete="off" spellcheck="false"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Effort</b>
+                                <span>Low keeps short edits quick. Turn it off for models that don't support effort.</span>
+                            </div>
+                            <div class="field-control">
+                                <select id="assistAnthropicEffort" style="width:170px">
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="">Don't send</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>API key</b>
+                                <span id="assistAnthropicKeyHint">Not set</span>
+                            </div>
+                            <div class="field-control assist-key">
+                                <input type="password" id="assistAnthropicKey" autocomplete="off" spellcheck="false" placeholder="sk-ant-…">
+                                <button class="btn small" type="button" data-key-save="anthropic">Save</button>
+                                <button class="btn ghost small" type="button" data-key-clear="anthropic">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Timeout</b>
+                            <span>Give up on a request after this long</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="assistTimeout" min="5" max="120" step="5">
+                            <span class="val" id="assistTimeoutVal">20s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Test the connection</b>
+                            <span id="assistTestInfo">Sends one tiny request</span>
+                        </div>
+                        <div class="field-control"><button class="btn ghost" type="button" id="assistTest">Test</button></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Writing tools</h3>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the tools under Send now</b>
+                            <span>Fix, shorten, rewrite, translate, reply and idea buttons, plus the microphone</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="assistShowBar"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Style</b>
+                            <span>Tone for Rewrite, Reply and Idea. Pick one or type your own.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="assistStyle" list="assistStyles" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Translate into</b>
+                            <span>The language Translate writes in</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="assistLanguage" list="assistLanguages" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length limit</b>
+                            <span>Shorten aims for this, and the other tools stay under it</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="assistMaxChars" min="20" max="144" step="1">
+                            <span class="val" id="assistMaxCharsVal">144</span>
+                        </div>
+                    </div>
+                    <div class="hint">Every result is shown under Send now first. Nothing reaches VRChat until you choose <b>Use</b> or <b>Use &amp; send</b>. Keys are stored encrypted for your Windows account and never shown again.</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Text to speech</h3>
+                        <span class="badge" id="ttsBadge">idle</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Read sent messages aloud</b>
+                            <span>Speaks what you send from Send now with a Windows voice</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="ttsSpeakSent"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Voice</b>
+                            <span>Add more in Windows Settings › Time &amp; language › Speech</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="ttsVoice" style="width:260px"></select>
+                            <button class="btn icon" type="button" id="ttsRefresh" title="Refresh voices and devices" aria-label="Refresh voices and devices"><i class="fa fa-rotate" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Play through</b>
+                            <span>For others in VRChat to hear it, pick a virtual cable (e.g. CABLE Input) and use its output as your VRChat mic</span>
+                        </div>
+                        <div class="field-control"><select id="ttsOutput" style="width:260px"></select></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Speed</b>
+                            <span>0 is the voice's normal pace</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="ttsRate" min="-10" max="10" step="1">
+                            <span class="val" id="ttsRateVal">0</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Volume</b>
+                            <span>Of the voice itself</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="ttsVolume" min="0" max="100" step="5">
+                            <span class="val" id="ttsVolumeVal">60%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Cut off the previous message</b>
+                            <span>A new message stops the one being read instead of queueing after it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="ttsCutOff"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Open my VRChat mic while speaking</b>
+                            <span id="ttsMuteInfo">Unmutes over OSC while the voice talks, then puts it back</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="ttsUnmute"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>VRChat mic mode</b>
+                            <span>Match VRChat's own setting: toggle, or push to talk</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="ttsVoiceMode" style="width:170px">
+                                <option value="toggle">Toggle</option>
+                                <option value="ptt">Push to talk</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Try it</b>
+                            <span id="ttsError">Plays on the device picked above</span>
+                        </div>
+                        <div class="field-control assist-key">
+                            <input type="text" id="ttsTestText" value="Hi, I'm using Fern." autocomplete="off">
+                            <button class="btn small" type="button" id="ttsTest">Speak</button>
+                            <button class="btn ghost small" type="button" id="ttsStop">Stop</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Speech to text</h3>
+                        <span class="badge" id="sttBadge">idle</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Microphone</b>
+                            <span>Windows shortens device names to 31 characters</span>
+                        </div>
+                        <div class="field-control"><select id="sttDevice" style="width:260px"></select></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Noise gate</b>
+                            <span>How loud you must be before it counts as speech. The bar shows your level.</span>
+                        </div>
+                        <div class="field-control stt-gate">
+                            <div class="stt-level" id="sttLevel"><i id="sttLevelBar"></i><b id="sttGateMark"></b></div>
+                            <input type="range" id="sttGate" min="0" max="50" step="1">
+                            <span class="val" id="sttGateVal">6%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Stop after silence</b>
+                            <span>Click the mic once and it stops by itself after this much quiet. Holding it records until you let go.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="sttSilence" min="300" max="6000" step="100">
+                            <span class="val" id="sttSilenceVal">1.5s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Longest recording</b>
+                            <span>A safety limit</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="sttMaxSec" min="5" max="120" step="5">
+                            <span class="val" id="sttMaxSecVal">30s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Model</b>
+                            <span>gpt-4o-mini-transcribe, gpt-4o-transcribe or whisper-1</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sttModel" list="sttModels" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Spoken language</b>
+                            <span>Two-letter code such as en or ja. Empty detects it.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sttLanguage" autocomplete="off" spellcheck="false" placeholder="auto" style="width:90px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Send as soon as I stop talking</b>
+                            <span>Off puts the text in Send now for you to check first</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="sttAutoSend"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Translate what I say</b>
+                            <span>Runs the transcript through the AI provider above</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="sttTranslate"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Into</b>
+                            <span>Target language for spoken messages</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sttTranslateTo" list="assistLanguages" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Transcription base URL</b>
+                            <span>Empty uses the OpenAI-compatible base URL above</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sttBase" autocomplete="off" spellcheck="false" placeholder="same as above"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Transcription key</b>
+                            <span id="sttKeyHint">Empty uses the OpenAI-compatible key</span>
+                        </div>
+                        <div class="field-control assist-key">
+                            <input type="password" id="sttKey" autocomplete="off" spellcheck="false" placeholder="optional">
+                            <button class="btn small" type="button" data-key-save="stt">Save</button>
+                            <button class="btn ghost small" type="button" data-key-clear="stt">Remove</button>
+                        </div>
+                    </div>
+                    <div class="hint">Audio is recorded only while the mic button is active and is sent to the transcription server you set. Nothing is kept on disk.</div>
+                </div>
+
+                <datalist id="assistOpenAIModels">
+                    <option value="gpt-4o-mini"></option>
+                    <option value="gpt-4.1-mini"></option>
+                    <option value="gpt-4.1-nano"></option>
+                    <option value="gpt-5-nano"></option>
+                    <option value="gpt-5-mini"></option>
+                    <option value="llama3.2"></option>
+                    <option value="qwen2.5"></option>
+                </datalist>
+                <datalist id="assistAnthropicModels">
+                    <option value="claude-haiku-5-5"></option>
+                    <option value="claude-sonnet-5-5"></option>
+                    <option value="claude-opus-5-5"></option>
+                </datalist>
+                <datalist id="sttModels">
+                    <option value="gpt-4o-mini-transcribe"></option>
+                    <option value="gpt-4o-transcribe"></option>
+                    <option value="whisper-1"></option>
+                </datalist>
+                <datalist id="assistStyles">
+                    <option value="friendly"></option>
+                    <option value="casual"></option>
+                    <option value="formal"></option>
+                    <option value="playful"></option>
+                    <option value="witty"></option>
+                    <option value="flirty"></option>
+                    <option value="poetic"></option>
+                    <option value="dramatic"></option>
+                    <option value="pirate"></option>
+                    <option value="cute, with emoticons"></option>
+                    <option value="Gen Z slang"></option>
+                </datalist>
+                <datalist id="assistLanguages">
+                    <option value="English"></option>
+                    <option value="Japanese"></option>
+                    <option value="Korean"></option>
+                    <option value="Chinese (Simplified)"></option>
+                    <option value="Chinese (Traditional)"></option>
+                    <option value="Spanish"></option>
+                    <option value="Portuguese (Brazil)"></option>
+                    <option value="French"></option>
+                    <option value="German"></option>
+                    <option value="Italian"></option>
+                    <option value="Dutch"></option>
+                    <option value="Polish"></option>
+                    <option value="Russian"></option>
+                    <option value="Ukrainian"></option>
+                    <option value="Turkish"></option>
+                    <option value="Arabic"></option>
+                    <option value="Hindi"></option>
+                    <option value="Indonesian"></option>
+                    <option value="Thai"></option>
+                    <option value="Vietnamese"></option>
+                    <option value="Swedish"></option>
+                    <option value="Finnish"></option>
+                    <option value="Norwegian"></option>
+                    <option value="Danish"></option>
+                    <option value="Czech"></option>
+                    <option value="Greek"></option>
+                    <option value="Hebrew"></option>
+                    <option value="Tagalog"></option>
+                </datalist>
+            </section>
+
             <!-- ================= OUTPUT ================= -->
             <section class="page" id="page-output">
                 <div class="page-head">
@@ -1403,6 +1847,7 @@
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
+            if (typeof renderAssist === "function") renderAssist(st);
         }
 
         function renderPreview(st) {
@@ -1950,6 +2395,13 @@
             ["cpuName", ["CPUOptions", "show_name"]],
             ["cpuCores", ["CPUOptions", "show_cores"]],
             ["cpuUsage", ["CPUOptions", "show_usage"]],
+            // Assist
+            ["assistShowBar", ["AssistOptions", "show_bar"]],
+            ["ttsSpeakSent", ["TTSOptions", "speak_sent"]],
+            ["ttsCutOff", ["TTSOptions", "cut_off"]],
+            ["ttsUnmute", ["TTSOptions", "unmute"]],
+            ["sttAutoSend", ["STTOptions", "auto_send"]],
+            ["sttTranslate", ["STTOptions", "translate"]],
         ];
 
         const asIs = (v) => String(v);
@@ -1968,6 +2420,14 @@
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
             ["cpuDecimals", ["CPUOptions", "decimals"], "cpuDecimalsVal", asIs],
+            // Assist
+            ["assistTimeout", ["AssistOptions", "timeout_sec"], "assistTimeoutVal", (v) => v + "s"],
+            ["assistMaxChars", ["AssistOptions", "max_chars"], "assistMaxCharsVal", asIs],
+            ["ttsRate", ["TTSOptions", "rate"], "ttsRateVal", (v) => (v > 0 ? "+" : "") + v],
+            ["ttsVolume", ["TTSOptions", "volume"], "ttsVolumeVal", (v) => v + "%"],
+            ["sttGate", ["STTOptions", "gate"], "sttGateVal", (v) => v + "%"],
+            ["sttSilence", ["STTOptions", "silence_ms"], "sttSilenceVal", asSeconds(1)],
+            ["sttMaxSec", ["STTOptions", "max_sec"], "sttMaxSecVal", (v) => v + "s"],
         ];
 
         // [text input id, config path, max length] — debounced.
@@ -1991,6 +2451,14 @@
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
+            // Assist
+            ["assistOpenAIModel", ["AssistOptions", "openai_model"], 100],
+            ["assistAnthropicModel", ["AssistOptions", "anthropic_model"], 100],
+            ["assistStyle", ["AssistOptions", "style"], 40],
+            ["assistLanguage", ["AssistOptions", "language"], 40],
+            ["sttModel", ["STTOptions", "model"], 100],
+            ["sttLanguage", ["STTOptions", "language"], 8],
+            ["sttTranslateTo", ["STTOptions", "translate_to"], 40],
         ];
 
         // Settings that do nothing given another setting are dimmed and locked:
@@ -2017,6 +2485,9 @@
             ["afkTimerStyle", (c) => c.AfkOptions.auto_detect && c.AfkOptions.show_timer],
             ["memDecimals", (c) => c.MemoryOptions.show_used || c.MemoryOptions.show_total],
             ["cpuDecimals", (c) => c.CPUOptions.show_usage],
+            // Assist
+            ["ttsVoiceMode", (c) => c.TTSOptions.unmute],
+            ["sttTranslateTo", (c) => c.STTOptions.translate],
         ];
         function applyDepends(c) {
             if (!c) return;
@@ -2618,6 +3089,284 @@
         $("heroPortrait").src = $("fernAvatar").src;
 
         connect();
+    </script>
+    <script>
+        "use strict";
+        /* ---------------- assist: AI tools, text to speech, speech to text ----------------
+           Lives in its own block and talks to the Send now box only through
+           #sendText and #btnSend, so changes to the composer stay separate. */
+        const ASSIST = { aiSeq: null, sttSeq: null, recording: false, downAt: 0, ignoreUp: false, sig: "" };
+        const ASSIST_LABELS = {
+            fix: "Fixed", shorten: "Shortened", rewrite: "Rewritten", translate: "Translated",
+            reply: "Suggested reply", starter: "Conversation idea", test: "Test"
+        };
+
+        function assistComposerText() { return $("sendText").value; }
+
+        // Put text into the composer as if typed, so anything listening to it
+        // (counters, autocomplete) sees the change.
+        function assistFillComposer(text, append) {
+            const box = $("sendText");
+            const current = box.value.trim();
+            box.value = append && current ? current + " " + text : text;
+            box.dispatchEvent(new Event("input", { bubbles: true }));
+            box.focus();
+        }
+
+        function assistSendComposer() { $("btnSend").click(); }
+
+        function fmtUsage(u) {
+            if (!u || (!u.input && !u.output)) return "";
+            return (u.estimated ? "≈ " : "") + u.input + " in · " + u.output + " out tokens";
+        }
+
+        document.addEventListener("click", (ev) => {
+            const tool = ev.target.closest("[data-assist]");
+            if (!tool || tool.disabled) return;
+            const op = tool.dataset.assist;
+            const text = assistComposerText().trim();
+            if (!text && op !== "starter") {
+                toast(op === "reply" ? "Paste what they said into the box first" : "Type a message first", true);
+                return;
+            }
+            send({ type: "assist", action: op, text: text });
+        });
+        $("assistCancel").addEventListener("click", () => {
+            const st = S.state && S.state.assist;
+            if (st && (st.stt.recording || st.stt.busy)) send({ type: "stt", action: "cancel" });
+            else send({ type: "assistCancel" });
+        });
+        $("assistTest").addEventListener("click", () => send({ type: "assist", action: "test", text: "" }));
+
+        function hideResult() { $("assistResult").hidden = true; }
+        function resultText() { return $("assistResultText").value.trim(); }
+        function countResult() {
+            const n = Array.from($("assistResultText").value).length;
+            const max = (config() && config().display_options.max_chars) || 144;
+            $("assistResultCount").textContent = n + " / " + max;
+            $("assistResultCount").classList.toggle("over", n > max);
+        }
+        $("assistResultText").addEventListener("input", countResult);
+        $("assistDiscard").addEventListener("click", hideResult);
+        $("assistUse").addEventListener("click", () => {
+            const text = resultText();
+            if (!text) return;
+            assistFillComposer(text, false);
+            hideResult();
+        });
+        $("assistUseSend").addEventListener("click", () => {
+            const text = resultText();
+            if (!text) return;
+            assistFillComposer(text, false);
+            hideResult();
+            assistSendComposer();
+        });
+
+        $("ttsSay").addEventListener("click", () => {
+            const st = S.state && S.state.assist;
+            if (st && st.tts.speaking) { send({ type: "tts", action: "stop" }); return; }
+            const text = assistComposerText().trim();
+            if (!text) { toast("Type something to read out", true); return; }
+            send({ type: "tts", action: "speak", text: text });
+        });
+        $("ttsTest").addEventListener("click", () => {
+            const text = $("ttsTestText").value.trim();
+            if (text) send({ type: "tts", action: "speak", text: text });
+        });
+        $("ttsStop").addEventListener("click", () => send({ type: "tts", action: "stop" }));
+        $("ttsRefresh").addEventListener("click", () => {
+            if (send({ type: "tts", action: "refresh" })) toast("Looking for voices and devices…");
+        });
+
+        /* Push to talk: hold the button to record until release, or click it
+           once to record until you go quiet. Clicking while recording stops. */
+        const sttButton = $("sttButton");
+        sttButton.addEventListener("pointerdown", (ev) => {
+            if (ev.button !== 0) return;
+            sttButton.setPointerCapture(ev.pointerId);
+            if (ASSIST.recording) {
+                ASSIST.ignoreUp = true;
+                send({ type: "stt", action: "stop" });
+                return;
+            }
+            ASSIST.ignoreUp = false;
+            ASSIST.downAt = Date.now();
+            ASSIST.recording = true;
+            send({ type: "stt", action: "hold" });
+        });
+        sttButton.addEventListener("pointerup", () => {
+            if (ASSIST.ignoreUp || !ASSIST.downAt) return;
+            const held = Date.now() - ASSIST.downAt;
+            ASSIST.downAt = 0;
+            send({ type: "stt", action: held > 350 ? "stop" : "release" });
+        });
+        sttButton.addEventListener("click", (ev) => {
+            if (ev.detail !== 0) return; // pointer clicks are handled above; this is the keyboard
+            send({ type: "stt", action: ASSIST.recording ? "stop" : "start" });
+        });
+
+        /* keys: never filled from the server, which only reports a masked hint */
+        document.addEventListener("click", (ev) => {
+            const save = ev.target.closest("[data-key-save]");
+            const clear = ev.target.closest("[data-key-clear]");
+            if (!save && !clear) return;
+            const which = (save || clear).dataset.keySave || (save || clear).dataset.keyClear;
+            const input = $({ openai: "assistOpenAIKey", anthropic: "assistAnthropicKey", stt: "sttKey" }[which]);
+            if (save) {
+                const key = input.value.trim();
+                if (!key) { toast("Paste the key first", true); return; }
+                if (/\s/.test(key)) { toast("A key can't contain spaces", true); return; }
+                if (send({ type: "assistKey", module: which, text: key })) toast("Key saved (encrypted)");
+            } else if (send({ type: "assistKey", module: which, text: "" })) {
+                toast("Key removed");
+            }
+            input.value = "";
+        });
+        ["assistOpenAIKey", "assistAnthropicKey", "sttKey"].forEach((id) => {
+            $(id).addEventListener("keydown", (ev) => {
+                if (ev.key === "Enter") $(id).parentElement.querySelector("[data-key-save]").click();
+            });
+        });
+
+        /* settings that are not in the shared tables */
+        const ASSIST_SELECTS = [
+            ["assistProvider", ["AssistOptions", "provider"]],
+            ["assistAnthropicEffort", ["AssistOptions", "anthropic_effort"]],
+            ["ttsVoice", ["TTSOptions", "voice"]],
+            ["ttsOutput", ["TTSOptions", "output"]],
+            ["ttsVoiceMode", ["TTSOptions", "voice_mode"]],
+            ["sttDevice", ["STTOptions", "device"]],
+        ];
+        ASSIST_SELECTS.forEach(([id, path]) => {
+            $(id).addEventListener("change", (ev) => pushConfigNow((c) => setField(c, path, ev.target.value)));
+        });
+        // URLs apply when the field is left: half-typed URLs are rejected by Fern.
+        commitField($("assistOpenAIBase"), (v) => (/^https?:\/\/\S+$/i.test(v.trim()) ? v.trim() : null),
+            (c, v) => { c.AssistOptions.openai_base_url = v; }, "The base URL must start with http:// or https://");
+        commitField($("assistAnthropicBase"), (v) => (/^https?:\/\/\S+$/i.test(v.trim()) ? v.trim() : null),
+            (c, v) => { c.AssistOptions.anthropic_base_url = v; }, "The base URL must start with http:// or https://");
+        commitField($("sttBase"), (v) => (v.trim() === "" || /^https?:\/\/\S+$/i.test(v.trim()) ? v.trim() : null),
+            (c, v) => { c.STTOptions.base_url = v; }, "The base URL must start with http:// or https://, or be empty");
+
+        // Rebuilds a select only when its options change, so an open list is not reset.
+        function fillSelect(id, items, value, emptyLabel) {
+            const el = $(id);
+            const all = [{ value: "", label: emptyLabel }].concat(items);
+            // A saved device that is unplugged stays selected and labelled.
+            if (value && !items.some((i) => i.value === value)) {
+                all.push({ value: value, label: value.split("\\").pop() + " (not found)" });
+            }
+            const sig = JSON.stringify(all);
+            if (el.dataset.sig !== sig) {
+                el.dataset.sig = sig;
+                el.innerHTML = "";
+                all.forEach((item) => {
+                    const o = document.createElement("option");
+                    o.value = item.value;
+                    o.textContent = item.label;
+                    el.appendChild(o);
+                });
+            }
+            if (document.activeElement !== el) el.value = value || "";
+        }
+
+        function renderAssist(st) {
+            const a = st.assist;
+            if (!a) return;
+            const c = st.config;
+            const o = c.AssistOptions, t = c.TTSOptions, s = c.STTOptions;
+            const locked = lockForms();
+            const typing = document.activeElement;
+
+            if (!locked) {
+                ASSIST_SELECTS.forEach(([id, path]) => {
+                    if (["ttsVoice", "ttsOutput", "sttDevice"].includes(id)) return;
+                    if (typing !== $(id)) $(id).value = field(c, path);
+                });
+                if (typing !== $("assistOpenAIBase")) $("assistOpenAIBase").value = o.openai_base_url;
+                if (typing !== $("assistAnthropicBase")) $("assistAnthropicBase").value = o.anthropic_base_url;
+                if (typing !== $("sttBase")) $("sttBase").value = s.base_url || "";
+                fillSelect("ttsVoice", (a.tts.voices || []).map((v) => ({ value: v.id, label: v.name })), t.voice, "Windows default voice");
+                fillSelect("ttsOutput", (a.tts.outputs || []).map((v) => ({ value: v.id, label: v.name })), t.output, "Default playback device");
+                fillSelect("sttDevice", (a.stt.mics || []).map((m) => ({ value: m.name, label: m.name })), s.device, "Default microphone");
+            }
+            document.querySelectorAll(".assist-provider").forEach((el) => {
+                el.hidden = el.dataset.provider !== o.provider;
+            });
+            $("assistBar").hidden = !o.show_bar;
+
+            const keys = a.keys || {};
+            $("assistOpenAIKeyHint").textContent = keys.openai ? "Saved: " + keys.openai : "Not set. Local servers usually need none.";
+            $("assistAnthropicKeyHint").textContent = keys.anthropic ? "Saved: " + keys.anthropic : "Not set";
+            $("sttKeyHint").textContent = keys.stt ? "Saved: " + keys.stt : "Empty uses the OpenAI-compatible key";
+            const model = o.provider === "anthropic" ? o.anthropic_model : o.openai_model;
+            $("assistBadge").textContent = model;
+
+            const ai = a.ai;
+            $("assistUsageBadge").textContent = ai.requests + (ai.requests === 1 ? " request" : " requests") +
+                (ai.requests ? " · " + ai.input + " in / " + ai.output + " out tokens" : "");
+
+            // Results arrive with a new sequence number; the first state only
+            // records it so an old result is not shown again after a reload.
+            if (ASSIST.aiSeq === null) ASSIST.aiSeq = ai.seq;
+            if (ai.seq !== ASSIST.aiSeq) {
+                ASSIST.aiSeq = ai.seq;
+                if (ai.error) {
+                    toast((ASSIST_LABELS[ai.op] ? "AI: " : "") + ai.error, true);
+                    $("assistTestInfo").textContent = ai.op === "test" ? "Failed: " + ai.error : $("assistTestInfo").textContent;
+                } else if (ai.op === "test") {
+                    toast("Connection works");
+                    $("assistTestInfo").textContent = "Works · " + ai.model + " answered “" + ai.result + "” · " + fmtUsage(ai.usage);
+                } else {
+                    $("assistResultLabel").textContent = (ASSIST_LABELS[ai.op] || "Suggestion") + " · " + ai.model;
+                    $("assistResultText").value = ai.result;
+                    $("assistResultUsage").textContent = fmtUsage(ai.usage);
+                    $("assistResult").hidden = false;
+                    countResult();
+                }
+            }
+
+            const stt = a.stt;
+            ASSIST.recording = !!stt.recording;
+            sttButton.classList.toggle("on", !!stt.recording);
+            sttButton.classList.toggle("heard", !!stt.heard);
+            const busy = ai.busy || stt.recording || stt.busy;
+            $("assistStatus").hidden = !busy;
+            $("sttLiveLevel").hidden = !stt.recording;
+            if (stt.recording) {
+                $("assistStatusText").textContent = (stt.heard ? "Listening… " : "Waiting for you to speak… ") + (stt.ms / 1000).toFixed(1) + "s";
+                $("sttLiveBar").style.width = Math.round(stt.level * 100) + "%";
+            } else if (stt.busy) {
+                $("assistStatusText").textContent = s.translate ? "Transcribing and translating…" : "Transcribing…";
+            } else if (ai.busy) {
+                $("assistStatusText").textContent = "Asking " + ai.model + "…";
+            }
+            document.querySelectorAll("[data-assist]").forEach((b) => { b.disabled = !!ai.busy; });
+            $("sttBadge").textContent = stt.recording ? "listening" : (stt.busy ? "transcribing" : "idle");
+            $("sttLevelBar").style.width = Math.round((stt.recording ? stt.level : 0) * 200) + "%";
+            $("sttGateMark").style.left = Math.min(100, s.gate * 2) + "%";
+
+            if (ASSIST.sttSeq === null) ASSIST.sttSeq = stt.seq;
+            if (stt.seq !== ASSIST.sttSeq) {
+                ASSIST.sttSeq = stt.seq;
+                if (stt.text) {
+                    assistFillComposer(stt.text, true);
+                    if (s.auto_send) assistSendComposer();
+                    else if (stt.translated) toast("Translated from: " + stt.original);
+                }
+                if (stt.error) toast(stt.error, true);
+            }
+
+            const tts = a.tts;
+            $("ttsBadge").textContent = tts.speaking ? "speaking" : "idle";
+            $("ttsSay").classList.toggle("on", !!tts.speaking);
+            $("ttsSay").title = tts.speaking ? "Stop reading" : "Read the box aloud";
+            $("ttsError").textContent = tts.error || "Plays on the device picked above";
+            $("ttsError").classList.toggle("bad", !!tts.error);
+            $("ttsMuteInfo").textContent = tts.muted === null || tts.muted === undefined
+                ? "Unmutes over OSC while the voice talks, then puts it back. In toggle mode this waits until VRChat has reported your mic state (OSC on)."
+                : "Unmutes over OSC while the voice talks, then puts it back. VRChat mic is " + (tts.muted ? "muted" : "on") + ".";
+        }
     </script>
     <script>
         /* Accent hue: one value drives every accent colour in the theme. */

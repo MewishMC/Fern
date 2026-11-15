@@ -191,6 +191,9 @@ type Config struct {
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
+	AssistOptions  AssistOptions  `json:"AssistOptions"`
+	TTSOptions     TTSOptions     `json:"TTSOptions"`
+	STTOptions     STTOptions     `json:"STTOptions"`
 }
 
 var (
@@ -293,7 +296,10 @@ func DefaultConfig() Config {
 			Host: "127.0.0.1",
 			Port: 9000,
 		},
-		TimeoutMS: 2500,
+		TimeoutMS:     2500,
+		AssistOptions: defaultAssistOptions(),
+		TTSOptions:    defaultTTSOptions(),
+		STTOptions:    defaultSTTOptions(),
 	}
 }
 
@@ -422,6 +428,7 @@ func Load() {
 func SetConfig(in Config) {
 	in.sanitize()
 	cfgMu.Lock()
+	in.keepSecrets(cfg)
 	cfg = in.clone()
 	cfgMu.Unlock()
 	scheduleSave()
@@ -631,6 +638,8 @@ func (c *Config) sanitize() {
 	default:
 		c.AfkOptions.TimerStyle = "full"
 	}
+
+	c.sanitizeAssist()
 
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"

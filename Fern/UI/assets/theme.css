@@ -990,6 +990,161 @@ select option {
     margin-top: 9px;
 }
 
+/* ---------------- assist (AI tools, speech) ---------------- */
+
+.assist-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+}
+
+.assist-bar[hidden],
+.assist-status[hidden],
+.assist-result[hidden],
+.assist-provider[hidden],
+.stt-level[hidden] {
+    display: none;
+}
+
+.assist-bar .btn.on,
+.stt-btn.on {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+    color: var(--accent-light);
+}
+
+.stt-btn.on.heard {
+    background: var(--accent-fill);
+    color: #fff;
+}
+
+.assist-bar .btn:disabled {
+    opacity: .5;
+    cursor: wait;
+}
+
+.assist-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.assist-status > span {
+    flex: 1;
+    min-width: 0;
+}
+
+.assist-result {
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid var(--accent-border2);
+    border-radius: 10px;
+    background: var(--accent-soft);
+}
+
+.assist-result-head,
+.assist-result-foot {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.assist-result-head > span:first-child,
+.assist-result-foot .assist-usage {
+    flex: 1;
+    min-width: 0;
+}
+
+.assist-result textarea {
+    width: 100%;
+    min-height: 48px;
+    margin: 8px 0;
+    resize: vertical;
+}
+
+.badge.over {
+    color: #f0a3ad;
+    border-color: #7a3742;
+}
+
+.assist-key {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.assist-key input {
+    min-width: 0;
+    flex: 0 1 200px;
+}
+
+.assist-key input[type="password"] {
+    font: inherit;
+    font-size: .8rem;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    padding: .5rem .7rem;
+    outline: none;
+    transition: border-color .15s;
+}
+
+.assist-key input[type="password"]:focus {
+    border-color: var(--accent-border);
+}
+
+#page-assist .field-control input[type="text"] {
+    width: 240px;
+}
+
+.stt-gate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.stt-level {
+    position: relative;
+    width: 90px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--bg-hover-3);
+    overflow: hidden;
+}
+
+.stt-level.small {
+    width: 70px;
+}
+
+.stt-level i {
+    display: block;
+    height: 100%;
+    width: 0;
+    max-width: 100%;
+    background: var(--accent);
+    transition: width .1s linear;
+}
+
+.stt-level b {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--text-primary);
+    opacity: .7;
+}
+
+#ttsError.bad {
+    color: #f0a3ad;
+}
+
 /* ---------------- session stats ---------------- */
 
 .stat-grid {
