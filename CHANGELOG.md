@@ -20,6 +20,15 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
   optionally Oculus), with your own wording.
 - Apps without a custom name show their real product name (from the executable) instead of
   the window title.
+- Heart rate line from Pulsoid (paste your token), HypeRate (your own API key and session ID)
+  or any websocket or HTTP URL that returns JSON, with a JSON field path. It can show a heart
+  that changes with your zone, a bpm suffix, a ↑ ↓ → trend arrow with adjustable sensitivity,
+  smoothing, an offset, low/high words such as "sleepy" and "hot", the session min/avg/max,
+  and an offline text or hide itself when no data has arrived for a while.
+- Heart rate can drive avatar parameters: HR (int), HeartRateFloat (−1…1 or 0…1), a beat
+  toggle or pulse, and a connected flag, all with editable names.
+- The heart rate page shows the connection status, the live bpm and a five-minute sparkline.
+  Tokens and keys are masked and never appear in logs or messages.
 
 ## v2.2 - Custom bars
 
