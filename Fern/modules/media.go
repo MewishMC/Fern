@@ -353,6 +353,9 @@ func isSpotifyBranding(title string) bool {
 
 // mediaLine renders the now playing module for the chatbox.
 func mediaLine(cfg Config) string {
+	if lyric := replacingLyric(cfg); lyric != "" {
+		return joinNonEmpty(" ", strings.TrimSpace(cfg.MediaOptions.Icon), lyric)
+	}
 	if mediaHiddenByChange(cfg.MediaOptions, mediaChangedSince()) {
 		return ""
 	}

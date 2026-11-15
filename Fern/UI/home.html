@@ -748,6 +748,116 @@
                 </div>
             </section>
 
+            <!-- ================= LYRICS ================= -->
+            <section class="page" id="page-lyrics">
+                <div class="page-head">
+                    <div>
+                        <h2>Lyrics</h2>
+                        <p>The line being sung, in time with the music</p>
+                    </div>
+                    <span class="badge" id="lyricsBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show lyrics</b>
+                            <span>Follows the track on the Media page. Adds a line in the order set on Lines, or takes over the media line (below).</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="lyrics"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="lyrics-now" id="lyricsNow">Lyrics are off</div>
+                    <div class="np-sub" id="lyricsState">Turn them on to look up the playing track</div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Replace the track line</b>
+                            <span>While a lyric is up it shows on the media line instead of the song. Off gives lyrics a line of their own.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="lyricsReplace"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Timing</b>
+                            <span>Move lines later if they show too early, earlier if they lag</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsOffset" min="-5000" max="5000" step="100">
+                            <span class="val" id="lyricsOffsetVal">on time</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Hold a line for</b>
+                            <span>Longest a line stays up when the next one is far off</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsHold" min="1" max="20" step="1">
+                            <span class="val" id="lyricsHoldVal">6s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Break marker</b>
+                            <span>Shown during instrumental parts and long pauses. Empty shows nothing.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsGapMarker" maxlength="16" autocomplete="off" placeholder="♪ ♪ ♪"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Marker after pauses of</b>
+                            <span>Shorter pauses keep the last line up</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsGap" min="0" max="30" step="1">
+                            <span class="val" id="lyricsGapVal">8s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix on the lyrics line, like 🎤</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsLabel" maxlength="16" autocomplete="off" placeholder="none"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length limit</b>
+                            <span>Characters kept from a long line</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsMaxChars" min="20" max="144" step="4">
+                            <span class="val" id="lyricsMaxCharsVal">90</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Look up online</b>
+                            <span>Asks lrclib.net (free, no account) using only the title, artist, album and length. Each track is asked about once per run.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="lyricsOnline"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Your .lrc folder</b>
+                            <span>Files named like “Artist - Title.lrc” here are used first and work offline. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsFolder" autocomplete="off" placeholder="C:\Users\you\Music\Lyrics" spellcheck="false"></div>
+                    </div>
+                </div>
+            </section>
+
             <!-- ================= LOGS ================= -->
             <section class="page" id="page-logs">
                 <div class="page-head">
@@ -1368,6 +1478,7 @@
             { id: "afk", name: "AFK", icon: "fa-moon", category: "vrchat", desc: "AFK timer since last activity", keywords: "idle away" },
             { id: "logs", name: "VRChat log", icon: "fa-scroll", category: "vrchat", desc: "Latest VRChat join / leave", keywords: "players join leave instance" },
             { id: "media", name: "Media", icon: "fa-music", category: "media", desc: "Now playing track with playback time", keywords: "spotify song music now playing" },
+            { id: "lyrics", name: "Lyrics", icon: "fa-microphone", category: "media", desc: "Synced lyrics for the playing track", keywords: "lrc lrclib karaoke song words" },
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
             { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
             { id: "time", name: "Time", icon: "fa-clock", category: "system", desc: "Current clock", keywords: "clock hour" },
@@ -1522,6 +1633,7 @@
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
+            renderLyrics(st);
         }
 
         function renderPreview(st) {
@@ -1872,6 +1984,7 @@
                 if (typing !== $("oscHost")) $("oscHost").value = c.OSC.host;
                 if (typing !== $("oscPort")) $("oscPort").value = c.OSC.port;
                 if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
+                if (typing !== $("lyricsFolder")) $("lyricsFolder").value = c.LyricsOptions.folder || "";
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
                 document.querySelectorAll("[data-module-toggle]").forEach((el) => {
@@ -2055,6 +2168,8 @@
             ["mediaStopped", ["MediaOptions", "show_when_stopped"]],
             ["mediaOnChange", ["MediaOptions", "only_on_change"]],
             ["mediaTidy", ["MediaOptions", "tidy_titles"]],
+            ["lyricsReplace", ["LyricsOptions", "replace_track"]],
+            ["lyricsOnline", ["LyricsOptions", "online"]],
             ["mediaUpper", ["MediaOptions", "uppercase"]],
             ["mediaSuperTime", ["MediaOptions", "superscript_time"]],
             ["clock24", ["TimeOptions", "use_24h"]],
@@ -2089,6 +2204,10 @@
             ["mediaBarWidth", ["MediaOptions", "bar_width"], "mediaBarWidthVal", asIs],
             ["mediaMaxChars", ["MediaOptions", "max_chars"], "mediaMaxCharsVal", asIs],
             ["mediaChangeSecs", ["MediaOptions", "change_seconds"], "mediaChangeSecsVal", (v) => v + "s"],
+            ["lyricsOffset", ["LyricsOptions", "offset_ms"], "lyricsOffsetVal", (v) => v === 0 ? "on time" : (Math.abs(v) / 1000).toFixed(1) + "s " + (v > 0 ? "later" : "earlier")],
+            ["lyricsHold", ["LyricsOptions", "hold_seconds"], "lyricsHoldVal", (v) => v + "s"],
+            ["lyricsGap", ["LyricsOptions", "gap_seconds"], "lyricsGapVal", (v) => v ? v + "s" : "never"],
+            ["lyricsMaxChars", ["LyricsOptions", "max_chars"], "lyricsMaxCharsVal", asIs],
             ["windowMaxChars", ["WindowOptions", "max_chars"], "windowMaxCharsVal", asIs],
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
@@ -2108,6 +2227,8 @@
             ["mediaStoppedIcon", ["MediaOptions", "stopped_icon"], 4],
             ["mediaStoppedText", ["MediaOptions", "stopped_text"], 24],
             ["mediaSeparator", ["MediaOptions", "separator"], 8],
+            ["lyricsGapMarker", ["LyricsOptions", "gap_marker"], 16],
+            ["lyricsLabel", ["LyricsOptions", "label"], 16],
             ["mediaBarFilled", ["MediaOptions", "bar_filled"], 2],
             ["mediaBarEmpty", ["MediaOptions", "bar_empty"], 2],
             ["mediaBarHead", ["MediaOptions", "bar_head"], 2],
@@ -2138,6 +2259,8 @@
             ["mediaBarRight", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaPausedText", (c) => c.MediaOptions.show_when_paused],
             ["mediaChangeSecs", (c) => c.MediaOptions.only_on_change],
+            ["lyricsLabel", (c) => !(c.LyricsOptions.replace_track && c.display_options.media)],
+            ["lyricsGap", (c) => !!c.LyricsOptions.gap_marker],
             ["mediaStoppedIcon", (c) => c.MediaOptions.show_when_stopped],
             ["mediaSuperTime", (c) => c.MediaOptions.show_progress && ["time", "both"].includes(c.MediaOptions.progress_style)],
             ["windowVrText", (c) => c.WindowOptions.show_mode],
@@ -2753,6 +2876,34 @@
                 toast("Imported " + added.length + " style" + (added.length === 1 ? "" : "s"));
             }
         });
+
+        /* ---------------- lyrics page ---------------- */
+        const LYRICS_STATES = {
+            off: ["off", "Lyrics are off", "Turn them on to look up the playing track"],
+            idle: ["waiting", "Nothing playing", "Play something with a title and the lyrics are looked up"],
+            searching: ["searching", "Looking for lyrics…", ""],
+            found: ["found", "", ""],
+            notfound: ["not found", "No synced lyrics for this track", "Add an .lrc file to your folder to fill the gap"],
+            unsynced: ["no timing", "Only unsynced lyrics exist for this track", "Lines need timestamps to follow the music"],
+            instrumental: ["instrumental", "Instrumental", "The break marker shows while it plays"],
+            offline: ["offline", "Couldn't reach lrclib.net", "Trying again in a little while; your .lrc folder still works"],
+            limited: ["paused", "lrclib.net asked Fern to slow down", "Trying again in a few minutes"],
+        };
+        function renderLyrics(st) {
+            const l = st.lyrics || { state: "off" };
+            const info = LYRICS_STATES[l.state] || LYRICS_STATES.idle;
+            $("lyricsBadge").textContent = info[0];
+            let now = info[1], sub = info[2];
+            if (l.state === "found") {
+                now = l.line || "…";
+                sub = (l.source === "LRCLIB" ? "From LRCLIB" : "From " + l.source) + " · " + l.lines + " lines";
+            }
+            if (l.track && l.state !== "off" && l.state !== "idle") sub = l.track + (sub ? " · " + sub : "");
+            $("lyricsNow").textContent = now;
+            $("lyricsState").textContent = sub;
+        }
+        commitField($("lyricsFolder"), (v) => v.trim().replace(/^"|"$/g, ""),
+            (c, v) => { c.LyricsOptions.folder = v; }, "");
 
         /* ---------------- per module options ---------------- */
         $("afkTimerStyle").addEventListener("change", (ev) => {

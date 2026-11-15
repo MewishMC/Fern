@@ -6,6 +6,7 @@ package modules
 func StartWorkers() {
 	startAfkWorker()
 	startMediaWorker()
+	startLyricsWorker()
 	startLogWorker()
 	startSpecsWorker()
 	go watchVRChatProcess()

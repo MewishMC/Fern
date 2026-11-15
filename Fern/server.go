@@ -68,6 +68,7 @@ type uiState struct {
 	OSC       string                `json:"osc"`
 	Version   string                `json:"version"`
 	Update    updateState           `json:"update"`
+	Lyrics    modules.LyricsStatus  `json:"lyrics"`
 }
 
 type afkState struct {
@@ -367,6 +368,7 @@ func buildState() uiState {
 			modules.ModuleMedia:   d.Media,
 			modules.ModuleWindow:  d.ActiveWindow,
 			modules.ModuleLogs:    d.VRChatLogs,
+			modules.ModuleLyrics:  d.Lyrics,
 		},
 		Order:   d.Order,
 		Config:  cfg,
@@ -400,6 +402,7 @@ func buildState() uiState {
 		OSC:       oscTarget(),
 		Version:   appVersion,
 		Update:    currentUpdate(),
+		Lyrics:    modules.CurrentLyricsStatus(),
 	}
 }
 

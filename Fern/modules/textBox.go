@@ -97,6 +97,8 @@ func moduleText(id string, cfg Config) string {
 		return windowLine(cfg)
 	case ModuleLogs:
 		return logsLine(cfg)
+	case ModuleLyrics:
+		return lyricsLine(cfg)
 	}
 	return ""
 }

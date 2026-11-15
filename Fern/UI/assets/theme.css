@@ -1341,6 +1341,14 @@ select option {
     white-space: pre;
 }
 
+.lyrics-now {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    min-height: 1.6em;
+    overflow-wrap: anywhere;
+}
+
 textarea.bar-json {
     display: block;
     margin: 4px 0 8px;

@@ -21,12 +21,13 @@ const (
 	ModuleMedia   = "media"
 	ModuleWindow  = "window"
 	ModuleLogs    = "logs"
+	ModuleLyrics  = "lyrics"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
 	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
-	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
+	ModuleMemory, ModuleCPU, ModuleMedia, ModuleLyrics, ModuleWindow, ModuleLogs,
 }
 
 var knownModules = func() map[string]bool {
@@ -49,6 +50,7 @@ type DisplayOptions struct {
 	ActiveWindow bool     `json:"active_window"`
 	CPU          bool     `json:"cpu"`
 	VRChatLogs   bool     `json:"vr_chat_logs"`
+	Lyrics       bool     `json:"lyrics"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -197,6 +199,19 @@ type LogsOptions struct {
 	MaxChars  int    `json:"max_chars"`
 }
 
+// LyricsOptions controls the synced lyrics line.
+type LyricsOptions struct {
+	Label        string `json:"label"`
+	OffsetMS     int    `json:"offset_ms"`     // positive shows lines later
+	HoldSeconds  int    `json:"hold_seconds"`  // longest a line stays up
+	GapSeconds   int    `json:"gap_seconds"`   // pauses this long show GapMarker; 0 never
+	GapMarker    string `json:"gap_marker"`    // shown in breaks and instrumentals
+	ReplaceTrack bool   `json:"replace_track"` // show on the media line instead of the track
+	Folder       string `json:"folder"`        // .lrc files here win over LRCLIB
+	Online       bool   `json:"online"`        // look lyrics up on lrclib.net
+	MaxChars     int    `json:"max_chars"`
+}
+
 // OSCOptions is where chatbox messages are sent.
 type OSCOptions struct {
 	Host string `json:"host"`
@@ -216,6 +231,7 @@ type Config struct {
 	MemoryOptions  MemoryOptions  `json:"MemoryOptions"`
 	CPUOptions     CPUOptions     `json:"CPUOptions"`
 	LogsOptions    LogsOptions    `json:"LogsOptions"`
+	LyricsOptions  LyricsOptions  `json:"LyricsOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
@@ -319,6 +335,13 @@ func DefaultConfig() Config {
 			ShowJoin:  true,
 			ShowLeave: true,
 			MaxChars:  80,
+		},
+		LyricsOptions: LyricsOptions{
+			HoldSeconds: 6,
+			GapSeconds:  8,
+			GapMarker:   "♪ ♪ ♪",
+			Online:      true,
+			MaxChars:    90,
 		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
@@ -496,6 +519,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.ActiveWindow
 	case ModuleLogs:
 		return &d.VRChatLogs
+	case ModuleLyrics:
+		return &d.Lyrics
 	}
 	return nil
 }
@@ -664,6 +689,7 @@ func (c *Config) sanitize() {
 	c.WindowOptions.Connector = RuneLimit(strings.TrimSpace(c.WindowOptions.Connector), 16)
 	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
+	sanitizeLyrics(&c.LyricsOptions)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
 	if c.LoadingOptions.Dots == 0 {
 		c.LoadingOptions.Dots = 6
