@@ -261,6 +261,20 @@
                             </select>
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Line prefix</b>
+                            <span>Put before every line, e.g. &ldquo;&raquo; &rdquo;. Counts toward the 144 characters.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="linePrefix" maxlength="16" placeholder="none" autocomplete="off" style="width:200px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Line suffix</b>
+                            <span>Put after every line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lineSuffix" maxlength="16" placeholder="none" autocomplete="off" style="width:200px"></div>
+                    </div>
                 </div>
 
             </section>
@@ -2064,6 +2078,8 @@
 
         // [text input id, config path, max length] — debounced.
         const TEXTS = [
+            ["linePrefix", ["display_options", "line_prefix"], 16],
+            ["lineSuffix", ["display_options", "line_suffix"], 16],
             ["loadText", ["LoadingOptions", "text"], 40],
             ["textLabel", ["TextOptions", "label"], 16],
             ["clockLabel", ["TimeOptions", "label"], Infinity],

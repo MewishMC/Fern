@@ -222,7 +222,7 @@ func ComposeChatbox() Chatbox {
 		vr = InVR()
 	}
 	lines, hidden := buildLines(cfg, vr)
-	fit := FitLines(lines, d.DropOrder, d.Separator, "", "", sendLimit(d), d.MaxLines)
+	fit := FitLines(lines, d.DropOrder, d.Separator, d.LinePrefix, d.LineSuffix, sendLimit(d), d.MaxLines)
 	fit.Text = strings.TrimSpace(fit.Text)
 	return Chatbox{Fit: fit, Hidden: hidden}
 }

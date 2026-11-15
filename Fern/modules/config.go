@@ -58,6 +58,8 @@ type DisplayOptions struct {
 	// Visibility limits a line to VR or desktop: "vr" or "desktop" per id.
 	// Missing ids show always.
 	Visibility map[string]string `json:"visibility"`
+	LinePrefix string            `json:"line_prefix"` // put before every line
+	LineSuffix string            `json:"line_suffix"` // put after every line
 }
 
 // Values of DisplayOptions.Visibility.
@@ -542,6 +544,13 @@ func knownIDs(list, fallback []string) []string {
 	return out
 }
 
+// oneLine removes line breaks and shortens s to n runes. Spaces are kept,
+// since a prefix like "» " needs its space.
+func oneLine(s string, n int) string {
+	s = strings.NewReplacer("\r", "", "\n", "").Replace(s)
+	return RuneLimit(s, n)
+}
+
 func clampInt(v, lo, hi int) int {
 	if v < lo {
 		return lo
@@ -598,6 +607,8 @@ func (c *Config) sanitize() {
 		}
 	}
 	c.DisplayOptions.Visibility = visibility
+	c.DisplayOptions.LinePrefix = oneLine(c.DisplayOptions.LinePrefix, 16)
+	c.DisplayOptions.LineSuffix = oneLine(c.DisplayOptions.LineSuffix, 16)
 
 	if c.AfkOptions.AFKTime < 0 {
 		c.AfkOptions.AFKTime = 0
