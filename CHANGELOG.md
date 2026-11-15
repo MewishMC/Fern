@@ -10,6 +10,8 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+## v2.2 - Custom bars
+
 ### Added
 - The music progress bar can be restyled: pick a preset (blocks, line, shade, squares, dots,
   classic) or set your own played and unplayed characters, a position marker and end caps.
