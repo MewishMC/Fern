@@ -43,6 +43,7 @@
                     <span id="linesInfo">0 lines</span>
                     <span id="holdInfo"></span>
                 </div>
+                <div class="fit-info" id="fitInfo" hidden></div>
             </div>
 
             <nav id="nav">
@@ -223,6 +224,16 @@
 
                 <div class="section-title" style="margin-top:0">Order &amp; visibility</div>
                 <div class="list" id="orderList" style="margin-top:0"></div>
+
+                <div class="section-title">When it doesn't fit</div>
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Drop priority</h3>
+                        <button class="btn ghost" id="btnDropReset">Default</button>
+                    </div>
+                    <div class="hint" style="margin-top:0">VRChat shows 144 characters and 9 lines. When the chatbox is longer, Fern first shortens lines (media loses its bar, then its time, then album and feat. credits), then drops whole lines from the top of this list. Media is cut to fit before it is dropped. The last line left is cut with &ldquo;&hellip;&rdquo;. This is separate from the display order above.</div>
+                    <div class="list" id="dropList"></div>
+                </div>
 
                 <div class="section-title">Chatbox</div>
                 <div class="card">
@@ -1400,6 +1411,7 @@
             renderFooter(st);
             syncControls(st);
             renderOrder(st);
+            renderDropOrder(st);
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
@@ -1419,6 +1431,8 @@
             $("count").textContent = st.chars + " / " + st.maxChars;
             $("linesInfo").textContent = st.lines + (st.lines === 1 ? " line" : " lines") + " · max " + st.maxLines;
 
+            renderFitInfo(st);
+
             const hold = st.hold || {};
             $("holdInfo").textContent = hold.pinned
                 ? "pinned message"
@@ -1426,6 +1440,20 @@
 
             $("btnMaster").textContent = st.config.display_options.show ? "Display on" : "Display off";
             $("btnMaster").classList.toggle("ghost", !!st.config.display_options.show);
+        }
+
+        // Says which lines did not fit, so a missing line is not a mystery.
+        function renderFitInfo(st) {
+            const fit = st.fit || {};
+            const names = (ids) => (ids || []).map((id) => MODULE_NAME[id] || id).join(", ");
+            const parts = [];
+            if (fit.dropped && fit.dropped.length) parts.push("Dropped to fit: " + names(fit.dropped));
+            if (fit.shrunk && fit.shrunk.length) parts.push((fit.cut ? "Cut: " : "Shortened: ") + names(fit.shrunk));
+            const text = parts.join(" · ");
+            const el = $("fitInfo");
+            if (el.textContent !== text) el.textContent = text;
+            el.hidden = !text;
+            el.title = text ? text + ". Change what goes first on the Lines page." : "";
         }
 
         // Windows reports the app's own name as the media title until a track is
@@ -1776,9 +1804,61 @@
             }
         }
 
+        // A small note on a line's row when the chatbox is showing it shortened
+        // or not at all right now.
+        function fitFlag(st, id) {
+            const fit = st.fit || {};
+            if (!st.modules || !st.modules[id] || fit.hold) return "";
+            if ((fit.dropped || []).includes(id)) return ' <span class="row-flag warn">dropped to fit</span>';
+            if ((fit.shrunk || []).includes(id)) return ' <span class="row-flag">' + (fit.cut ? "cut to fit" : "shortened") + "</span>";
+            return "";
+        }
+
+        function fitFlagSig(st) {
+            const fit = st.fit || {};
+            return JSON.stringify([fit.dropped, fit.shrunk, fit.cut, fit.hold]);
+        }
+
+        function renderDropOrder(st) {
+            const order = (st.config.display_options.drop_order || []).filter((id) => MODULE_NAME[id]);
+            const sig = order.join(",") + "|" + JSON.stringify(st.modules) + "|" + fitFlagSig(st);
+            if (sig === S.dropSig) return;
+            const active = document.activeElement;
+            if (active && active.closest("#dropList")) return;
+            S.dropSig = sig;
+
+            const list = $("dropList");
+            list.innerHTML = "";
+            order.forEach((id, index) => {
+                const name = MODULE_NAME[id] || id;
+                const row = document.createElement("div");
+                row.className = "row" + (st.modules[id] ? "" : " off");
+                row.dataset.id = id;
+                row.innerHTML =
+                    '<span class="grip" draggable="true" title="Drag to reorder">⠿</span>' +
+                    '<span class="drop-rank">' + (index + 1) + "</span>" +
+                    '<div class="row-main"><div class="row-name">' + name + fitFlag(st, id) + "</div>" +
+                    '<span class="row-desc">' + (index === 0 ? "Dropped first" : index === order.length - 1 ? "Kept longest" : "") +
+                    (st.modules[id] ? "" : (index === 0 || index === order.length - 1 ? " · " : "") + "off") + "</span></div>" +
+                    '<div class="row-actions">' +
+                    '<button class="chev" data-drop-move="up" title="Drop earlier" aria-label="Drop ' + name + ' earlier"' + (index === 0 ? " disabled" : "") + ">▲</button>" +
+                    '<button class="chev" data-drop-move="down" title="Keep longer" aria-label="Keep ' + name + ' longer"' + (index === order.length - 1 ? " disabled" : "") + ">▼</button>" +
+                    "</div>";
+                list.appendChild(row);
+            });
+        }
+
+        function setDropOrder(order) {
+            if (!pushConfigNow((c) => { c.display_options.drop_order = order; })) return;
+            S.state.config.display_options.drop_order = order;
+            S.dropSig = "";
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            renderDropOrder(S.state);
+        }
+
         function renderOrder(st) {
             const order = st.order || [];
-            const sig = order.join(",") + "|" + JSON.stringify(st.modules);
+            const sig = order.join(",") + "|" + JSON.stringify(st.modules) + "|" + fitFlagSig(st);
             if (sig === S.orderSig) return;
             S.orderSig = sig;
 
@@ -1794,7 +1874,7 @@
                 row.dataset.index = String(index);
                 row.innerHTML =
                     '<span class="grip" draggable="true" title="Drag to reorder">⠿</span>' +
-                    '<div class="row-main"><div class="row-name">' + (MODULE_NAME[id] || id) +
+                    '<div class="row-main"><div class="row-name">' + (MODULE_NAME[id] || id) + fitFlag(st, id) +
                     '</div><span class="row-desc">' + (MODULE_DESC[id] || "") + "</span></div>" +
                     '<div class="row-actions">' +
                     '<button class="chev" data-open="' + id + '" title="Settings" aria-label="' + (MODULE_NAME[id] || id) + ' settings"><i class="fa fa-gear" aria-hidden="true"></i></button>' +
@@ -2364,6 +2444,22 @@
             S.orderSig = "";
             send({ type: "order", order });
             renderOrder(S.state);
+        });
+
+        dragTarget($("dropList"), (rows) => setDropOrder(rows.map((r) => r.dataset.id)));
+        $("dropList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-drop-move]");
+            if (!button || !S.state) return;
+            const order = (S.state.config.display_options.drop_order || []).slice();
+            const from = order.indexOf(button.closest(".row").dataset.id);
+            const to = button.dataset.dropMove === "up" ? from - 1 : from + 1;
+            if (from < 0 || to < 0 || to >= order.length) return;
+            order.splice(to, 0, order.splice(from, 1)[0]);
+            setDropOrder(order);
+        });
+        // An empty list is filled with the default order by Fern.
+        $("btnDropReset").addEventListener("click", () => {
+            if (pushConfigNow((c) => { c.display_options.drop_order = []; })) toast("Drop priority reset: time goes first, your text last");
         });
 
         dragTarget($("msgList"), (rows) => {

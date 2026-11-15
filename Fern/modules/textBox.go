@@ -146,53 +146,77 @@ func ModuleSamples(cfg Config) map[string]string {
 	return samples
 }
 
-// buildLines renders every enabled module in the configured order.
-func buildLines(cfg Config) []string {
-	lines := make([]string, 0, len(cfg.DisplayOptions.Order))
-	for _, id := range cfg.DisplayOptions.Order {
-		if !ModuleEnabled(id, cfg.DisplayOptions) {
+// buildLines renders every enabled module in the configured order, with the
+// shorter forms used to fit the chatbox.
+func buildLines(cfg Config) []FitLine {
+	d := cfg.DisplayOptions
+	lines := make([]FitLine, 0, len(d.Order))
+	for _, id := range d.Order {
+		if !ModuleEnabled(id, d) {
 			continue
 		}
-		text := strings.TrimSpace(moduleText(id, cfg))
-		if text == "" {
+		line := FitLine{ID: id}
+		if id == ModuleMedia {
+			line = mediaFitLine(cfg)
+		} else {
+			line.Variants = []string{moduleText(id, cfg)}
+		}
+		for i, v := range line.Variants {
+			line.Variants[i] = strings.TrimSpace(v)
+		}
+		if len(line.Variants) == 0 || line.Variants[0] == "" {
 			continue
 		}
-		if len(lines) >= cfg.DisplayOptions.MaxLines {
-			break
-		}
-		lines = append(lines, text)
+		lines = append(lines, line)
 	}
 	return lines
 }
 
-// PreviewText is what the chatbox will show, without VRChat's marker.
-func PreviewText() string {
+// Chatbox is what the chatbox shows right now and how it was fitted.
+type Chatbox struct {
+	Fit
+	Hold bool `json:"hold"` // a sent message is showing instead of the lines
+}
+
+// sendLimit is the longest text Fern sends. VRChat takes 144 characters and
+// the marker takes one of them.
+func sendLimit(d DisplayOptions) int {
+	limit := d.MaxChars - 1
+	if limit < 8 {
+		limit = 8
+	}
+	return limit
+}
+
+// ComposeChatbox renders the chatbox: a held message if one is active,
+// otherwise every line fitted into VRChat's limits.
+func ComposeChatbox() Chatbox {
 	if text, ok := holdOverlay(); ok {
-		return text
+		return Chatbox{Fit: Fit{Text: text}, Hold: true}
 	}
 	cfg := GetConfig()
-	if !cfg.DisplayOptions.Show {
-		return ""
+	d := cfg.DisplayOptions
+	if !d.Show {
+		return Chatbox{}
 	}
-	lines := buildLines(cfg)
-	if len(lines) == 0 {
-		return ""
-	}
-	text := strings.Join(lines, cfg.DisplayOptions.Separator)
-	return strings.TrimSpace(RuneLimit(text, cfg.DisplayOptions.MaxChars))
+	fit := FitLines(buildLines(cfg), d.DropOrder, d.Separator, "", "", sendLimit(d), d.MaxLines)
+	fit.Text = strings.TrimSpace(fit.Text)
+	return Chatbox{Fit: fit}
+}
+
+// PreviewText is what the chatbox will show, without VRChat's marker.
+func PreviewText() string {
+	return ComposeChatbox().Text
 }
 
 // BuildPayload returns the visible text and the exact OSC payload.
 func BuildPayload() (body, payload string) {
-	body = PreviewText()
-	if body == "" {
-		return "", ""
-	}
-	limit := GetConfig().DisplayOptions.MaxChars - 1
-	if limit < 8 {
-		limit = 8
-	}
-	body = strings.TrimSpace(RuneLimit(body, limit))
+	return PayloadFor(ComposeChatbox())
+}
+
+// PayloadFor returns the text of box and the exact OSC payload for it.
+func PayloadFor(box Chatbox) (body, payload string) {
+	body = strings.TrimSpace(RuneLimit(box.Text, sendLimit(GetConfig().DisplayOptions)))
 	if body == "" {
 		return "", ""
 	}

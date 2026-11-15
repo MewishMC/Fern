@@ -1104,6 +1104,46 @@ select option {
     text-overflow: ellipsis;
 }
 
+/* Fitting the chatbox: which lines are dropped or shortened right now. */
+.row-flag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 5px;
+    border: 1px solid var(--border-strong);
+    font-size: .6rem;
+    font-weight: 600;
+    letter-spacing: .3px;
+    color: var(--text-muted);
+    vertical-align: 1px;
+}
+
+.row-flag.warn {
+    color: var(--amber);
+    border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+}
+
+.row.off .row-name {
+    color: var(--text-dim);
+}
+
+.drop-rank {
+    flex: 0 0 18px;
+    text-align: center;
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--text-faint);
+}
+
+.fit-info {
+    margin-top: 4px;
+    font-size: 9.5px;
+    color: var(--amber);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .row-actions {
     display: flex;
     align-items: center;

@@ -44,6 +44,7 @@ var assetStamp = func() string {
 // uiState is the single payload pushed to the interface.
 type uiState struct {
 	Preview   string                `json:"preview"`
+	Fit       modules.Chatbox       `json:"fit"`
 	Chars     int                   `json:"chars"`
 	Lines     int                   `json:"lines"`
 	MaxChars  int                   `json:"maxChars"`
@@ -339,7 +340,8 @@ func broadcast(payload []byte) {
 
 func buildState() uiState {
 	cfg := modules.GetConfig()
-	preview := modules.PreviewText()
+	box := modules.ComposeChatbox()
+	preview := box.Text
 	lines := 0
 	if preview != "" {
 		lines = strings.Count(preview, "\n") + 1
@@ -352,6 +354,7 @@ func buildState() uiState {
 	d := cfg.DisplayOptions
 	return uiState{
 		Preview:  preview,
+		Fit:      box,
 		Samples:  modules.ModuleSamples(cfg),
 		Chars:    utf8.RuneCountInString(preview),
 		Lines:    lines,

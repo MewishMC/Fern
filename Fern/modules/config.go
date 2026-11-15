@@ -53,6 +53,8 @@ type DisplayOptions struct {
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
 	MaxLines     int      `json:"max_lines"`
+	// DropOrder is which line goes first when the chatbox is too long.
+	DropOrder []string `json:"drop_order"`
 }
 
 // WindowOptions controls how the active window title is shortened.
@@ -220,6 +222,7 @@ func DefaultConfig() Config {
 			Separator:    "\n",
 			MaxChars:     144,
 			MaxLines:     9,
+			DropOrder:    append([]string{}, DefaultDropOrder...),
 		},
 		TextMessages: []string{"♡ hi there", "♡ have a good day", "♡ be kind"},
 		WindowOptions: WindowOptions{
@@ -300,6 +303,7 @@ func DefaultConfig() Config {
 func (c Config) clone() Config {
 	out := c
 	out.DisplayOptions.Order = append([]string{}, c.DisplayOptions.Order...)
+	out.DisplayOptions.DropOrder = append([]string{}, c.DisplayOptions.DropOrder...)
 	out.TextMessages = append([]string{}, c.TextMessages...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
@@ -503,6 +507,26 @@ func EffectiveRateMS(cfg Config) int64 {
 	return rate
 }
 
+// knownIDs keeps the known module ids of list once each, then appends the
+// ones it is missing in the order of fallback.
+func knownIDs(list, fallback []string) []string {
+	seen := make(map[string]bool, len(knownModules))
+	out := make([]string, 0, len(knownModules))
+	for _, id := range append(append([]string{}, list...), fallback...) {
+		if knownModules[id] && !seen[id] {
+			seen[id] = true
+			out = append(out, id)
+		}
+	}
+	for _, id := range DefaultOrder {
+		if !seen[id] {
+			seen[id] = true
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
 func clampInt(v, lo, hi int) int {
 	if v < lo {
 		return lo
@@ -551,6 +575,7 @@ func (c *Config) sanitize() {
 		}
 	}
 	c.DisplayOptions.Order = order
+	c.DisplayOptions.DropOrder = knownIDs(c.DisplayOptions.DropOrder, DefaultDropOrder)
 
 	if c.AfkOptions.AFKTime < 0 {
 		c.AfkOptions.AFKTime = 0
