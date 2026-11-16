@@ -84,6 +84,8 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	Streaming modules.StreamingInfo `json:"streaming"`
 }
 
 type appState struct {
@@ -374,6 +376,8 @@ func handleCommand(cmd command) {
 		case "refresh":
 			modules.TwitchRefreshNow()
 		}
+	case "stream":
+		modules.StreamCommand(cmd.Module, cmd.Action)
 	case "voicemod":
 		modules.VoicemodCommand(cmd.Action, cmd.Text)
 	case "heartReset":
@@ -524,6 +528,11 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+
+			modules.ModuleTwitchChat: d.TwitchChat,
+			modules.ModuleTikTok:     d.TikTok,
+			modules.ModuleKick:       d.Kick,
+			modules.ModuleYouTube:    d.YouTube,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -582,6 +591,8 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		Streaming: modules.CurrentStreaming(),
 	}
 }
 
