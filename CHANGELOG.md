@@ -69,10 +69,6 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 - A weighted shuffle that brings back the messages you haven't seen for longest.
 - A list of icons put in front of custom messages, the next one (or a random one) each time
   the message changes.
-
-### Changed
-- Custom messages are saved as objects with a heart and a group. Existing message lists are
-  converted when loaded; older Fern versions cannot read the new format.
 - The media line can start with your own words per state ("Listening to", "Paused"), show
   stopped players with their own icon, use any artist separator (such as " ᵇʸ "), go
   uppercase and write the playback time in small raised digits.
@@ -87,11 +83,6 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 - A Weather line shows the conditions, temperature, feels-like, humidity and wind for a city
   or coordinates you choose, from Open-Meteo, in °C or °F and km/h, mph or m/s. It can sit
   on the time line.
-
-### Changed
-- Media titles from video sites are tidied: "(Official Video)", "[HD]", "| Official Music
-  Video", repeated "ft." credits and "Artist - " prefixes are dropped. Turn off **Tidy
-  titles** on the Media page to keep them.
 - Discord: Rich Presence shows your VRChat world, instance type, player count and time in
   the world on your profile, with an optional Join button for public instances and a button
   of your own. Uses your own Discord application ID, set up from the new Discord page.
@@ -106,14 +97,8 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 - Tokens, client secrets and keys for these are stored encrypted for your Windows account
   in `secrets.dat`, never shown again in the panel and never written to `config.json`.
   Each integration has a status badge and stays quiet when its app is not running.
-- A chatbox that is too long now fits instead of being cut off mid-line: media first loses its
-  bar, its time, then album and feat. credits, then whole lines are dropped by a priority you
-  set on the Lines page (time first, your text last by default), and only the last line left
-  is cut with "…". The preview and the Lines page say which lines were dropped or shortened.
 - Each line can show always, only in VR or only on desktop.
 - A prefix and suffix can be put around every chatbox line.
-- VRChat's chatbox sound can play for sent messages (on by default, once per message) and,
-  separately, for automatic updates.
 - The chatbox can go to up to two more OSC outputs, each with its own host, port and switch.
 - Send now has live typing (sends as you type, kept to VRChat's rate), shows VRChat's typing
   bubble while you write, remembers your last 20 messages to resend with a click, and
@@ -140,6 +125,19 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
   closes. This only happens when you press Register while SteamVR is running.
 
 ### Changed
+- Custom messages are saved as objects with a heart and a group. Existing message lists are
+  converted when loaded; older Fern versions cannot read the new format.
+- Media titles from video sites are tidied: "(Official Video)", "[HD]", "| Official Music
+  Video", repeated "ft." credits and "Artist - " prefixes are dropped. Turn off **Tidy
+  titles** on the Media page to keep them.
+- A chatbox that is too long now fits instead of being cut off mid-line: media first loses its
+  bar, its time, then album and feat. credits, then whole lines are dropped by a priority you
+  set on the Lines page (time first, your text last by default), and only the last line left
+  is cut with "…". The preview and the Lines page say which lines were dropped or shortened.
+- VRChat's chatbox sound can play for sent messages (on by default, once per message) and,
+  separately, for automatic updates.
+
+### Fixed
 - VRChat log events use the time from the log line, and "OnPlayerLeftRoom" lines no longer
   show up as a player called "Room" leaving.
 
