@@ -10,6 +10,8 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+## v2.4 - Automation
+
 ### Added
 - OSCQuery: Fern now listens for VRChat on a free port and tells VRChat where it is, so other
   OSC apps can keep port 9001. It is on by default and can be turned off on the Output page,
