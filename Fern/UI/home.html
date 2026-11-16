@@ -8,6 +8,7 @@
     <title>Fern</title>
     <link rel="stylesheet" href="/assets/fa/css/all.min.css?v={{ASSET_STAMP}}" />
     <link rel="stylesheet" href="/assets/theme.css?v={{ASSET_STAMP}}" />
+    <link rel="stylesheet" href="/assets/extras.css?v={{ASSET_STAMP}}" />
     <!-- Monochrome emoji, the same font family VRChat's chatbox falls back to. -->
     <link rel="stylesheet" href="/assets/fonts/noto-emoji.css?v={{ASSET_STAMP}}" />
     <!-- The interface font picked on the Appearance page, applied before first paint. -->
@@ -145,7 +146,8 @@
                         </div>
                         <textarea id="sendText" placeholder="Type a message to push to the chatbox…"></textarea>
                         <button type="button" class="suggest" id="sendSuggest" hidden title="Use this earlier message"></button>
-                        <div class="send-row">
+                        <div class="send-row has-emoji">
+                            <button class="btn ghost icon" type="button" data-emoji-for="sendText" title="Emoji, symbols and kaomoji" aria-label="Emoji, symbols and kaomoji"><i class="fa fa-face-smile" aria-hidden="true"></i></button>
                             <select id="sendHold">
                                 <option value="5">Hold 5 seconds</option>
                                 <option value="10" selected>Hold 10 seconds</option>
@@ -485,6 +487,7 @@
                         <p>Rotating messages, used by the Text module</p>
                     </div>
                     <div class="head-actions">
+                        <button class="btn ghost" type="button" data-emoji-for="msgList" title="Insert emoji, symbols or kaomoji into the message you last typed in"><i class="fa fa-face-smile" aria-hidden="true"></i> Emoji</button>
                         <button class="btn ghost" id="btnRestartText">Restart rotation</button>
                         <button class="btn" id="btnAddMsg">Add message</button>
                     </div>
@@ -1544,6 +1547,29 @@
                         </div>
                         <div class="log-list" id="historyList"></div>
                     </div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head">
+                        <h3>Save this session</h3>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Export</b>
+                            <span id="exportDesc">Everything since Fern started, as a text file or a spreadsheet.</span>
+                        </div>
+                        <div class="field-control export-row">
+                            <select id="exportWhat" aria-label="What to export">
+                                <option value="all">Everything</option>
+                                <option value="messages">Messages you sent</option>
+                                <option value="chatbox">Everything the chatbox showed</option>
+                                <option value="activity">Joins, leaves and worlds</option>
+                            </select>
+                            <button class="btn ghost" type="button" data-export="pick" data-format="txt"><i class="fa fa-file-export" aria-hidden="true"></i> .txt</button>
+                            <button class="btn ghost" type="button" data-export="pick" data-format="csv"><i class="fa fa-file-export" aria-hidden="true"></i> .csv</button>
+                        </div>
+                    </div>
+                    <div class="hint" id="exportHint" hidden></div>
                 </div>
             </section>
 
@@ -4157,6 +4183,22 @@
 
                 <div class="card" style="margin-top:12px">
                     <div class="card-head">
+                        <h3>First-run setup</h3>
+                        <span class="badge" id="setupBadge">done</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Setup</b>
+                            <span>Checks that VRChat's OSC is on, sends a test message and picks a starter set of lines</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost" type="button" id="setupOpen"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i> Run setup again</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head">
                         <h3>Backup and restore</h3>
                         <span class="badge" id="backupCount">0 backups</span>
                     </div>
@@ -4336,6 +4378,75 @@
                 <a class="update-link" id="updateLink" target="_blank" rel="noopener">View on GitHub</a>
                 <button class="btn ghost" value="later">Later</button>
                 <button class="btn" value="update" id="updateConfirm"><i class="fa fa-download" aria-hidden="true"></i> Update &amp; restart</button>
+            </div>
+        </form>
+    </dialog>
+
+    <dialog id="setupDialog" class="update-dialog setup-dialog" aria-labelledby="setupTitle">
+        <form method="dialog">
+            <span class="update-eyebrow"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i> Setup</span>
+            <div class="setup-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+
+            <div class="setup-step" data-step="welcome">
+                <h3 id="setupTitle">Welcome to Fern</h3>
+                <p>Fern writes lines like the song you're playing, the time or your own messages into VRChat's chatbox, over OSC.</p>
+                <p>This takes a minute: check that VRChat's OSC is on, send a test message, then pick the lines to start with. Everything can be changed later.</p>
+            </div>
+
+            <div class="setup-step" data-step="osc" hidden>
+                <h3>VRChat's OSC</h3>
+                <p>VRChat only talks to apps like Fern with OSC switched on: open the Action Menu, then Options › OSC › Enabled.</p>
+                <div class="setup-checks">
+                    <div class="setup-check" id="setupVRChat"><i class="fa fa-circle-question" aria-hidden="true"></i><b>VRChat</b><span></span></div>
+                    <div class="setup-check" id="setupSetting"><i class="fa fa-circle-question" aria-hidden="true"></i><b>OSC switch</b><span></span></div>
+                    <div class="setup-check" id="setupFolder"><i class="fa fa-circle-question" aria-hidden="true"></i><b>OSC folder</b><span></span></div>
+                    <div class="setup-check" id="setupTraffic"><i class="fa fa-circle-question" aria-hidden="true"></i><b>OSC traffic</b><span></span></div>
+                </div>
+                <p class="setup-count">These update by themselves while this is open.</p>
+            </div>
+
+            <div class="setup-step" data-step="test" hidden>
+                <h3>Test send</h3>
+                <p id="setupTestInfo"></p>
+                <div class="setup-ask">
+                    <button class="btn" type="button" id="setupTest"><i class="fa fa-paper-plane" aria-hidden="true"></i> Send a test message</button>
+                </div>
+                <div class="setup-ask" id="setupAsk" hidden>
+                    <span>Did it show up above your head?</span>
+                    <button class="btn ghost small" type="button" data-answer="yes"><i class="fa fa-check" aria-hidden="true"></i> Yes</button>
+                    <button class="btn ghost small" type="button" data-answer="no"><i class="fa fa-xmark" aria-hidden="true"></i> No</button>
+                </div>
+                <div class="setup-worked" id="setupWorked" hidden>Fern reaches your chatbox. On to the lines.</div>
+                <div class="setup-help" id="setupHelp" hidden>
+                    <ul>
+                        <li>Check that OSC is on in VRChat (Action Menu › Options › OSC › Enabled). Switching it off and on again resets it.</li>
+                        <li>Your chatbox has to be visible: VRChat hides it when the chatbox is turned off in its settings.</li>
+                        <li>Fern sends to the address on the Output page, normally 127.0.0.1 port 9000. Another OSC app can't hold that port for VRChat.</li>
+                        <li>A firewall or VPN can block local OSC; allow Fern and VRChat on private networks.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="setup-step" data-step="lines" hidden>
+                <h3>Starter lines</h3>
+                <p>Pick what the chatbox shows. A preset fills in a few; click a line to add or remove it. The order and each line's look are on the Lines and Modules pages.</p>
+                <div class="setup-presets" id="setupPresets"></div>
+                <div class="setup-lines" id="setupLines"></div>
+                <div class="setup-count" id="setupLinesCount"></div>
+            </div>
+
+            <div class="setup-step" data-step="done" hidden>
+                <h3>All set</h3>
+                <p>Fern is sending your lines. Arrange them on the Lines page, fine-tune each one on its own page, and type messages on the Live page.</p>
+                <p>You can run this setup again from the App page.</p>
+            </div>
+
+            <div class="update-actions setup-actions">
+                <button class="btn ghost" type="button" id="setupSkip">Skip setup</button>
+                <span class="spacer"></span>
+                <button class="btn ghost" type="button" id="setupBack">Back</button>
+                <button class="btn" type="button" id="setupApply" hidden><i class="fa fa-check" aria-hidden="true"></i> Use these lines</button>
+                <button class="btn" type="button" id="setupNext">Start</button>
             </div>
         </form>
     </dialog>
@@ -4542,6 +4653,7 @@
             renderProfiles(st);
             renderBackups(st);
             renderRules(st);
+            if (window.FernExtras) window.FernExtras.render(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -9729,6 +9841,10 @@
             window.fernAppearance = { snapshot: snapshot, applyAll: applyAll };
         })();
     </script>
+
+    <!-- The emoji picker, session export and first-run setup. -->
+    <script src="/assets/emoji.js?v={{ASSET_STAMP}}"></script>
+    <script src="/assets/extras.js?v={{ASSET_STAMP}}"></script>
 </body>
 
 </html>
