@@ -137,6 +137,10 @@ func keepMachineSettings(dst *Config, cur Config) {
 	dst.TikTokOptions.URL = cur.TikTokOptions.URL
 	dst.SpotifyOptions.ClientID = cur.SpotifyOptions.ClientID
 	dst.SpotifyOptions.RedirectPort = cur.SpotifyOptions.RedirectPort
+	dst.VoicemodOptions.MuteHotkey = cur.VoicemodOptions.MuteHotkey
+	dst.VoicemodOptions.BleepHotkey = cur.VoicemodOptions.BleepHotkey
+	dst.OBSOptions.Enabled = cur.OBSOptions.Enabled
+	dst.OBSOptions.Host, dst.OBSOptions.Port = cur.OBSOptions.Host, cur.OBSOptions.Port
 }
 
 // profileSettings is the snapshot a profile stores for c.

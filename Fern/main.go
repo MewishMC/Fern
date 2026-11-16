@@ -55,6 +55,7 @@ func main() {
 	setupTally()
 	setupClipboard()
 	setupControlAPI()
+	setupVoicemodKeys()
 	cfg := modules.GetConfig()
 	UI.Apply(behaviour(cfg.AppOptions))
 	go watchAppOptions(cfg.AppOptions)
@@ -80,6 +81,7 @@ func behaviour(o modules.AppOptions) UI.Behaviour {
 	b.Extra = append(profileHotkeys(), ruleHotkeys()...)
 	b.Extra = append(b.Extra, tallyHotkeys()...)
 	b.Extra = append(b.Extra, clipboardHotkeys()...)
+	b.Extra = append(b.Extra, voicemodHotkeys()...)
 	return b
 }
 

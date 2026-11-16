@@ -31,6 +31,7 @@ var panelSecrets = map[string]bool{
 	SecretVoicemodKey:         true,
 	SecretLastFMUser:          true,
 	SecretLastFMKey:           true,
+	SecretOBSPassword:         true,
 }
 
 var (
@@ -130,6 +131,10 @@ func SetPanelSecret(name, value string) error {
 	}
 	if name == SecretLastFMUser || name == SecretLastFMKey {
 		defer LastFMRefreshNow()
+	}
+	if name == SecretOBSPassword {
+		// After saving, so the new session signs in with the new password.
+		defer obsKick()
 	}
 	return SetSecret(name, value)
 }

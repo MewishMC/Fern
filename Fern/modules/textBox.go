@@ -166,6 +166,8 @@ func moduleText(id string, cfg Config) string {
 		return lastfmLine(cfg)
 	case ModuleCustom1, ModuleCustom2, ModuleCustom3:
 		return customLine(cfg, id)
+	case ModuleOBS:
+		return obsLine(cfg)
 	}
 	return ""
 }

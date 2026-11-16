@@ -85,18 +85,20 @@ type uiState struct {
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
 
-	VRInput     modules.VRInputStatus `json:"vrInput"`
-	Voice       voiceState            `json:"voice"`
-	Tally       tallyState            `json:"tally"`
-	Sensors     sensorsState          `json:"sensors"`
-	System      systemState           `json:"system"`
-	Streaming   modules.StreamingInfo `json:"streaming"`
-	Avatar      avatarState           `json:"avatar"`
-	WorldBlock  worldBlockState       `json:"worldBlock"`
-	Music       musicState            `json:"music"`
-	API         apiPanelState         `json:"api"`
-	CustomLines customLinesState      `json:"customLines"`
-	Clipboard   clipboardState        `json:"clipboard"`
+	VRInput      modules.VRInputStatus `json:"vrInput"`
+	Voice        voiceState            `json:"voice"`
+	Tally        tallyState            `json:"tally"`
+	Sensors      sensorsState          `json:"sensors"`
+	System       systemState           `json:"system"`
+	Streaming    modules.StreamingInfo `json:"streaming"`
+	Avatar       avatarState           `json:"avatar"`
+	WorldBlock   worldBlockState       `json:"worldBlock"`
+	Music        musicState            `json:"music"`
+	API          apiPanelState         `json:"api"`
+	CustomLines  customLinesState      `json:"customLines"`
+	Clipboard    clipboardState        `json:"clipboard"`
+	OBS          obsState              `json:"obs"`
+	VoicemodKeys map[string]string     `json:"voicemodKeys"`
 }
 
 type appState struct {
@@ -233,6 +235,10 @@ func StartServer(listener net.Listener) {
 	mux.HandleFunc("/ws", handleSocket)
 	mux.HandleFunc("/backup/export", handleBackupExport)
 	mux.HandleFunc("/profiles/appearance", handleProfileAppearance)
+	mux.HandleFunc("/overlay", handleOverlay)
+	mux.HandleFunc("/overlay/text", handleOverlayText)
+	mux.HandleFunc("/overlay/stream", handleOverlayStream)
+	setOverlayBase(listener)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
 	}
@@ -426,6 +432,8 @@ func handleCommand(cmd command) {
 		handleCustomLineCommand(cmd)
 	case "clipboard":
 		handleClipboardCommand(cmd)
+	case "obs":
+		handleOBSCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	case "vrInput":
@@ -592,6 +600,7 @@ func buildState() uiState {
 			modules.ModuleCustom1:    d.Custom1,
 			modules.ModuleCustom2:    d.Custom2,
 			modules.ModuleCustom3:    d.Custom3,
+			modules.ModuleOBS:        d.OBS,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -651,18 +660,20 @@ func buildState() uiState {
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
 
-		VRInput:     modules.CurrentVRInput(),
-		Voice:       currentVoice(cfg),
-		Tally:       currentTally(),
-		Sensors:     currentSensors(cfg),
-		System:      currentSystem(),
-		Streaming:   modules.CurrentStreaming(),
-		Avatar:      currentAvatar(),
-		WorldBlock:  currentWorldBlock(cfg),
-		Music:       currentMusic(cfg),
-		API:         currentAPI(),
-		CustomLines: currentCustomLines(),
-		Clipboard:   currentClipboard(),
+		VRInput:      modules.CurrentVRInput(),
+		Voice:        currentVoice(cfg),
+		Tally:        currentTally(),
+		Sensors:      currentSensors(cfg),
+		System:       currentSystem(),
+		Streaming:    modules.CurrentStreaming(),
+		Avatar:       currentAvatar(),
+		WorldBlock:   currentWorldBlock(cfg),
+		Music:        currentMusic(cfg),
+		API:          currentAPI(),
+		CustomLines:  currentCustomLines(),
+		Clipboard:    currentClipboard(),
+		OBS:          currentOBS(),
+		VoicemodKeys: voicemodKeyErrors(),
 	}
 }
 

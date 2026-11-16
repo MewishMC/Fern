@@ -10,7 +10,7 @@ import (
 var DefaultDropOrder = []string{
 	ModuleTime, ModuleWeather, ModuleNetwork, ModuleCPU, ModuleGPU, ModuleMemory, ModuleVRPerf, ModuleBattery,
 	ModuleDisk, ModuleUptime, ModuleSensors, ModulePing, ModulePCBattery,
-	ModuleWindow, ModuleLogs, ModuleWorld, ModuleCustom3, ModuleCustom2, ModuleCustom1, ModuleCounter, ModuleLoading, ModuleKick, ModuleYouTube, ModuleTikTok, ModuleTwitch,
+	ModuleWindow, ModuleLogs, ModuleWorld, ModuleCustom3, ModuleCustom2, ModuleCustom1, ModuleCounter, ModuleLoading, ModuleKick, ModuleYouTube, ModuleTikTok, ModuleTwitch, ModuleOBS,
 	ModuleTwitchChat, ModuleSoundpad, ModuleVoicemod,
 	ModuleDiscord, ModuleLastFM, ModuleLyrics, ModuleHeart, ModuleTimer, ModuleAFK, ModuleMedia, ModuleSchedule, ModuleText,
 }

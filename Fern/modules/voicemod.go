@@ -36,6 +36,10 @@ type VoicemodInfo struct {
 	Sounds    []VoicemodItem `json:"sounds"`
 	LastSound string         `json:"lastSound"`
 	LastAt    int64          `json:"lastAt"`
+	// MuteKnown is false until Voicemod has reported the microphone state.
+	MuteKnown bool `json:"muteKnown"`
+	Muted     bool `json:"muted"`
+	Bleeping  bool `json:"bleeping"`
 }
 
 // vmMessage is the useful part of anything Voicemod sends.
@@ -48,6 +52,7 @@ type vmMessage struct {
 	VoiceID   string // current voice, when the message names one
 	Sounds    []VoicemodItem
 	HasSounds bool
+	Muted     *bool // the microphone mute state, when the message gives it
 }
 
 // parseVoicemodMessage reads replies and events leniently: Voicemod builds
@@ -65,6 +70,7 @@ func parseVoicemodMessage(data []byte) (vmMessage, error) {
 		return vmMessage{}, err
 	}
 	m := vmMessage{Action: firstNonEmpty(raw.ActionType, raw.Action), ID: firstNonEmpty(raw.ActionID, raw.ID)}
+	m.Muted = parseVoicemodMute(m.Action, raw.ActionObject, raw.Payload)
 	type statusPart struct {
 		Status *struct {
 			Code int `json:"code"`
@@ -155,6 +161,8 @@ var (
 	vmSounds  []VoicemodItem
 	vmLast    string
 	vmLastAt  time.Time
+	vmMuteOK  bool // vmMuted is known
+	vmMuted   bool
 	vmCmdCh   = make(chan vmCommand, 8)
 	vmKickCh  = make(chan struct{}, 1)
 	vmURLs    = func() []string {
@@ -194,6 +202,9 @@ func CurrentVoicemod() VoicemodInfo {
 		Voices:    append([]VoicemodItem{}, vmVoices...),
 		Sounds:    append([]VoicemodItem{}, vmSounds...),
 		LastSound: vmLast,
+		MuteKnown: vmMuteOK,
+		Muted:     vmMuted,
+		Bleeping:  vmBleeping(),
 	}
 	if !vmLastAt.IsZero() {
 		info.LastAt = vmLastAt.UnixMilli()
@@ -231,14 +242,24 @@ func applyVoicemodMessage(m vmMessage) {
 	if m.VoiceID != "" {
 		vmVoiceID = m.VoiceID
 	}
+	changed := false
+	if m.Muted != nil {
+		changed = !vmMuteOK || vmMuted != *m.Muted
+		vmMuteOK, vmMuted = true, *m.Muted
+	}
 	vmMu.Unlock()
+	if changed {
+		NudgeRules()
+	}
 	NotifyChange()
 }
 
 func clearVoicemod() {
 	vmMu.Lock()
 	vmVoiceID, vmVoices, vmSounds = "", nil, nil
+	vmMuteOK, vmMuted = false, false
 	vmMu.Unlock()
+	endBleep()
 }
 
 func startVoicemodWorker() {
@@ -342,8 +363,12 @@ func voicemodSession(conn *websocket.Conn, key string, wanted func() bool) error
 				}
 				registered = true
 				setVoicemodLink(linkConnected, "")
-				for _, a := range []string{"getVoices", "getCurrentVoice", "getAllSoundboard"} {
+				for _, a := range []string{"getVoices", "getCurrentVoice", "getAllSoundboard", "getMuteMicStatus"} {
 					_, _ = w.send(a, nil)
+				}
+				if bleepLeftOn() {
+					// The last session ended mid-bleep; make sure it stops.
+					_, _ = w.send("setBeepSound", map[string]int{"badLanguage": 0})
 				}
 				continue
 			}
@@ -364,6 +389,9 @@ func voicemodSession(conn *websocket.Conn, key string, wanted func() bool) error
 		case <-check.C:
 			if !wanted() {
 				return nil
+			}
+			if bleepOverdue() {
+				voicemodMic(w, vmCommand{action: "bleepOff"})
 			}
 		case c := <-vmCmdCh:
 			voicemodDo(w, c)
@@ -397,8 +425,10 @@ func voicemodDo(w *vmWriter, c vmCommand) {
 		}
 	case "stop":
 		_, _ = w.send("stopAllMemeSounds", nil)
+	case "mute", "muteSet", "bleepOn", "bleepOff":
+		voicemodMic(w, c)
 	case "reload":
-		for _, a := range []string{"getVoices", "getCurrentVoice", "getAllSoundboard"} {
+		for _, a := range []string{"getVoices", "getCurrentVoice", "getAllSoundboard", "getMuteMicStatus"} {
 			_, _ = w.send(a, nil)
 		}
 	}
@@ -411,8 +441,12 @@ func voicemodLine(cfg Config) string {
 	last, at := vmLast, vmLastAt
 	voice := voiceNameLocked(vmVoiceID)
 	connected := vmLink.State == linkConnected
+	muted := vmMuteOK && vmMuted
 	vmMu.Unlock()
 	var parts []string
+	if o.AnnounceMute && connected && muted {
+		parts = append(parts, o.MuteText)
+	}
 	if o.AnnounceSounds && last != "" && time.Since(at) <= time.Duration(o.SoundSec)*time.Second {
 		parts = append(parts, strings.TrimSpace(o.SoundIcon+" '"+last+"'"))
 	}

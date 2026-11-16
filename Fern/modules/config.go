@@ -52,7 +52,7 @@ var DefaultOrder = []string{
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleLyrics, ModuleLastFM, ModuleWindow, ModuleLogs,
 	ModuleBattery, ModuleVRPerf,
 	ModuleHeart,
-	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
+	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod, ModuleOBS,
 	ModuleNetwork, ModuleGPU, ModuleWorld,
 	ModuleTimer, ModuleCounter, ModuleSchedule,
 	ModuleSensors, ModulePing, ModuleDisk, ModuleUptime, ModulePCBattery,
@@ -108,6 +108,7 @@ type DisplayOptions struct {
 	Custom1      bool     `json:"custom1"`
 	Custom2      bool     `json:"custom2"`
 	Custom3      bool     `json:"custom3"`
+	OBS          bool     `json:"obs"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -585,6 +586,12 @@ type VoicemodOptions struct {
 	AnnounceVoice  bool   `json:"announce_voice"`
 	SoundIcon      string `json:"sound_icon"`
 	VoiceIcon      string `json:"voice_icon"`
+	// Microphone controls; see voicemod_mic.go. The shortcuts are per PC.
+	AnnounceMute bool   `json:"announce_mute"`
+	MuteText     string `json:"mute_text"`
+	MuteHotkey   string `json:"mute_hotkey"`
+	BleepHotkey  string `json:"bleep_hotkey"` // held down to bleep
+	BleepMaxSec  int    `json:"bleep_max_sec"`
 }
 
 // OSCOptions is where chatbox messages are sent.
@@ -668,6 +675,7 @@ type Config struct {
 	TwitchOptions   TwitchOptions   `json:"TwitchOptions"`
 	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
 	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
+	OBSOptions      OBSOptions      `json:"OBSOptions"`
 
 	// Streaming platforms; see streaming.go.
 	TwitchChatOptions TwitchChatOptions `json:"TwitchChatOptions"`
@@ -951,6 +959,8 @@ func DefaultConfig() Config {
 			AnnounceVoice:  true,
 			SoundIcon:      "🎶",
 			VoiceIcon:      "🎙️",
+			MuteText:       "🔇 Muted",
+			BleepMaxSec:    10,
 		},
 		OSCOptions: OSCOptions{
 			Host:  "127.0.0.1",
@@ -968,6 +978,7 @@ func DefaultConfig() Config {
 			KeepHistory:     true,
 			Autocomplete:    true,
 		},
+		OBSOptions:    defaultOBSOptions(),
 		TimeoutMS:     2500,
 		AssistOptions: defaultAssistOptions(),
 		TTSOptions:    defaultTTSOptions(),
@@ -1255,6 +1266,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.Custom2
 	case ModuleCustom3:
 		return &d.Custom3
+	case ModuleOBS:
+		return &d.OBS
 	}
 	return nil
 }
@@ -1502,6 +1515,7 @@ func (c *Config) sanitize() {
 	c.sanitizeStreaming()
 	sanitizeSpotify(&c.SpotifyOptions)
 	sanitizeLastFM(&c.LastFMOptions)
+	c.OBSOptions.sanitize()
 
 	// VRChat drops chatbox messages sent faster than about one a second.
 	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)
