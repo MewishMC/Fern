@@ -138,6 +138,16 @@ func moduleText(id string, cfg Config) string {
 		return gpuLine(cfg)
 	case ModuleWorld:
 		return worldLine(cfg)
+	case ModuleSensors:
+		return sensorsLine(cfg)
+	case ModuleUptime:
+		return uptimeLine(cfg)
+	case ModulePing:
+		return pingLine(cfg)
+	case ModuleDisk:
+		return diskLine(cfg)
+	case ModulePCBattery:
+		return pcBatteryLine(cfg)
 	}
 	return ""
 }

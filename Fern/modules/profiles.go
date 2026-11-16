@@ -119,6 +119,7 @@ func keepMachineSettings(dst *Config, cur Config) {
 	dst.AfkOptions.ManualSince = cur.AfkOptions.ManualSince
 	dst.BatteryOptions.Devices = append([]BatteryDevice(nil), cur.BatteryOptions.Devices...)
 	dst.MediaOptions.BarPresets = append([]BarPreset(nil), cur.MediaOptions.BarPresets...)
+	keepSensorMachineSettings(dst, cur)
 
 	h, ch := &dst.HeartRate, cur.HeartRate
 	h.Source, h.PulsoidToken, h.HypeRateKey, h.HypeRateID = ch.Source, ch.PulsoidToken, ch.HypeRateKey, ch.HypeRateID
