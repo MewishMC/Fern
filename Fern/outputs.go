@@ -20,24 +20,7 @@ var (
 
 // oscDestinations lists host:port of the main output and of every enabled
 // extra one, skipping repeats so nobody gets the chatbox twice.
-func oscDestinations(opts modules.OSCOptions) []string {
-	seen := map[string]bool{}
-	var out []string
-	add := func(host string, port int) {
-		key := fmt.Sprintf("%s:%d", host, port)
-		if !seen[strings.ToLower(key)] {
-			seen[strings.ToLower(key)] = true
-			out = append(out, key)
-		}
-	}
-	add(opts.Host, opts.Port)
-	for _, t := range opts.Extra {
-		if t.Enabled {
-			add(t.Host, t.Port)
-		}
-	}
-	return out
-}
+func oscDestinations(opts modules.OSCOptions) []string { return modules.OSCDestinations(opts) }
 
 // oscClients returns a client per destination, rebuilt when they change.
 func oscClients(opts modules.OSCOptions) []*osc.Client {
