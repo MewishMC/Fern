@@ -85,20 +85,23 @@ type uiState struct {
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
 
-	VRInput      modules.VRInputStatus `json:"vrInput"`
-	Voice        voiceState            `json:"voice"`
-	Tally        tallyState            `json:"tally"`
-	Sensors      sensorsState          `json:"sensors"`
-	System       systemState           `json:"system"`
-	Streaming    modules.StreamingInfo `json:"streaming"`
-	Avatar       avatarState           `json:"avatar"`
-	WorldBlock   worldBlockState       `json:"worldBlock"`
-	Music        musicState            `json:"music"`
-	API          apiPanelState         `json:"api"`
-	CustomLines  customLinesState      `json:"customLines"`
-	Clipboard    clipboardState        `json:"clipboard"`
-	OBS          obsState              `json:"obs"`
-	VoicemodKeys map[string]string     `json:"voicemodKeys"`
+	VRInput      modules.VRInputStatus  `json:"vrInput"`
+	Voice        voiceState             `json:"voice"`
+	Tally        tallyState             `json:"tally"`
+	Sensors      sensorsState           `json:"sensors"`
+	System       systemState            `json:"system"`
+	Streaming    modules.StreamingInfo  `json:"streaming"`
+	Avatar       avatarState            `json:"avatar"`
+	WorldBlock   worldBlockState        `json:"worldBlock"`
+	Music        musicState             `json:"music"`
+	API          apiPanelState          `json:"api"`
+	CustomLines  customLinesState       `json:"customLines"`
+	Clipboard    clipboardState         `json:"clipboard"`
+	OBS          obsState               `json:"obs"`
+	VoicemodKeys map[string]string      `json:"voicemodKeys"`
+	Calendar     modules.CalendarStatus `json:"calendar"`
+	Prices       modules.PricesStatus   `json:"prices"`
+	Steam        modules.SteamStatus    `json:"steam"`
 }
 
 type appState struct {
@@ -434,6 +437,8 @@ func handleCommand(cmd command) {
 		handleClipboardCommand(cmd)
 	case "obs":
 		handleOBSCommand(cmd)
+	case "calendar", "prices", "steam":
+		handleWebLinesCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	case "vrInput":
@@ -601,6 +606,9 @@ func buildState() uiState {
 			modules.ModuleCustom2:    d.Custom2,
 			modules.ModuleCustom3:    d.Custom3,
 			modules.ModuleOBS:        d.OBS,
+			modules.ModuleCalendar:   d.Calendar,
+			modules.ModulePrices:     d.Prices,
+			modules.ModuleSteam:      d.Steam,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -674,6 +682,9 @@ func buildState() uiState {
 		Clipboard:    currentClipboard(),
 		OBS:          currentOBS(),
 		VoicemodKeys: voicemodKeyErrors(),
+		Calendar:     modules.CurrentCalendarStatus(),
+		Prices:       modules.CurrentPricesStatus(),
+		Steam:        modules.CurrentSteamStatus(),
 	}
 }
 

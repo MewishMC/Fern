@@ -30,5 +30,8 @@ func StartWorkers() {
 	startAvatarWorker()
 	startWorldBlockWorker()
 	startCustomLinesWorker()
+	startCalendarWorker()
+	startPriceWorker()
+	startSteamWorker()
 	go watchVRChatProcess()
 }

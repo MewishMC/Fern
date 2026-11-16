@@ -168,6 +168,12 @@ func moduleText(id string, cfg Config) string {
 		return customLine(cfg, id)
 	case ModuleOBS:
 		return obsLine(cfg)
+	case ModuleCalendar:
+		return calendarLine(cfg)
+	case ModulePrices:
+		return pricesLine(cfg)
+	case ModuleSteam:
+		return steamLine(cfg)
 	}
 	return ""
 }

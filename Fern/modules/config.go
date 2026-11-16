@@ -58,6 +58,7 @@ var DefaultOrder = []string{
 	ModuleSensors, ModulePing, ModuleDisk, ModuleUptime, ModulePCBattery,
 	ModuleTwitchChat, ModuleTikTok, ModuleKick, ModuleYouTube,
 	ModuleCustom1, ModuleCustom2, ModuleCustom3,
+	ModuleCalendar, ModulePrices, ModuleSteam,
 }
 
 var knownModules = func() map[string]bool {
@@ -109,6 +110,9 @@ type DisplayOptions struct {
 	Custom2      bool     `json:"custom2"`
 	Custom3      bool     `json:"custom3"`
 	OBS          bool     `json:"obs"`
+	Calendar     bool     `json:"calendar"`
+	Prices       bool     `json:"prices"`
+	Steam        bool     `json:"steam"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -686,6 +690,11 @@ type Config struct {
 	SpotifyOptions SpotifyOptions `json:"SpotifyOptions"`
 	LastFMOptions  LastFMOptions  `json:"LastFMOptions"`
 
+	// Calendar, price and Steam lines; see calendar.go, prices.go and steam.go.
+	CalendarOptions CalendarOptions `json:"CalendarOptions"`
+	PriceOptions    PriceOptions    `json:"PriceOptions"`
+	SteamOptions    SteamOptions    `json:"SteamOptions"`
+
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
@@ -1005,6 +1014,10 @@ func DefaultConfig() Config {
 		ControlAPI:     defaultControlAPI(),
 		CustomLines:    defaultCustomLines(),
 		Clipboard:      defaultClipboard(),
+
+		CalendarOptions: defaultCalendarOptions(),
+		PriceOptions:    defaultPriceOptions(),
+		SteamOptions:    defaultSteamOptions(),
 	}
 }
 
@@ -1038,6 +1051,9 @@ func (c Config) clone() Config {
 	out.Motion = c.Motion.clone()
 	out.WorldBlock = c.WorldBlock.clone()
 	out.CustomLines = c.CustomLines.clone()
+	out.CalendarOptions.Files = append([]string{}, c.CalendarOptions.Files...)
+	out.PriceOptions.Pairs = append([]string{}, c.PriceOptions.Pairs...)
+	out.SteamOptions.Ignore = append([]string{}, c.SteamOptions.Ignore...)
 	return out
 }
 
@@ -1268,6 +1284,12 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.Custom3
 	case ModuleOBS:
 		return &d.OBS
+	case ModuleCalendar:
+		return &d.Calendar
+	case ModulePrices:
+		return &d.Prices
+	case ModuleSteam:
+		return &d.Steam
 	}
 	return nil
 }
@@ -1559,6 +1581,9 @@ func (c *Config) sanitize() {
 	c.ControlAPI.sanitize()
 	c.CustomLines.sanitize()
 	c.Clipboard.sanitize()
+	sanitizeCalendar(&c.CalendarOptions)
+	sanitizePrices(&c.PriceOptions)
+	sanitizeSteam(&c.SteamOptions)
 }
 
 func scheduleSave() {
