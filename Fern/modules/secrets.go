@@ -29,6 +29,7 @@ var panelSecrets = map[string]bool{
 	SecretDiscordClientSecret: true,
 	SecretTwitchToken:         true,
 	SecretVoicemodKey:         true,
+	SecretOBSPassword:         true,
 }
 
 var (
@@ -125,6 +126,10 @@ func SetPanelSecret(name, value string) error {
 	}
 	if name == SecretVoicemodKey {
 		voicemodKick()
+	}
+	if name == SecretOBSPassword {
+		// After saving, so the new session signs in with the new password.
+		defer obsKick()
 	}
 	return SetSecret(name, value)
 }

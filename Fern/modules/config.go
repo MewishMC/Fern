@@ -42,7 +42,7 @@ var DefaultOrder = []string{
 	ModuleMemory, ModuleCPU, ModuleMedia, ModuleLyrics, ModuleWindow, ModuleLogs,
 	ModuleBattery, ModuleVRPerf,
 	ModuleHeart,
-	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
+	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod, ModuleOBS,
 	ModuleNetwork, ModuleGPU, ModuleWorld,
 }
 
@@ -78,6 +78,7 @@ type DisplayOptions struct {
 	Network      bool     `json:"network"`
 	GPU          bool     `json:"gpu"`
 	World        bool     `json:"world"`
+	OBS          bool     `json:"obs"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -624,6 +625,7 @@ type Config struct {
 	TwitchOptions   TwitchOptions   `json:"TwitchOptions"`
 	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
 	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
+	OBSOptions      OBSOptions      `json:"OBSOptions"`
 
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
@@ -885,6 +887,7 @@ func DefaultConfig() Config {
 			KeepHistory:     true,
 			Autocomplete:    true,
 		},
+		OBSOptions:    defaultOBSOptions(),
 		TimeoutMS:     2500,
 		AssistOptions: defaultAssistOptions(),
 		TTSOptions:    defaultTTSOptions(),
@@ -1111,6 +1114,8 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.GPU
 	case ModuleWorld:
 		return &d.World
+	case ModuleOBS:
+		return &d.OBS
 	}
 	return nil
 }
@@ -1352,6 +1357,7 @@ func (c *Config) sanitize() {
 	c.sanitizeAssist()
 
 	c.sanitizeSocial()
+	c.OBSOptions.sanitize()
 
 	// VRChat drops chatbox messages sent faster than about one a second.
 	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)

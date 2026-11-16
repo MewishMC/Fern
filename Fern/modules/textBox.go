@@ -138,6 +138,8 @@ func moduleText(id string, cfg Config) string {
 		return gpuLine(cfg)
 	case ModuleWorld:
 		return worldLine(cfg)
+	case ModuleOBS:
+		return obsLine(cfg)
 	}
 	return ""
 }
