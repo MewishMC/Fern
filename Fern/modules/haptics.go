@@ -163,6 +163,16 @@ func hapticParamMessage(msg *osc.Message) {
 	}
 }
 
+// TestHapticFromPanel plays a pattern for the panel's test button and
+// reports the result as the page's notice.
+func TestHapticFromPanel(which string) {
+	if err := TestHaptic(which); err != nil {
+		setVRInputNotice(err.Error(), true)
+		return
+	}
+	setVRInputNotice("Buzzing the controllers", false)
+}
+
 // TestHaptic plays one of the configured patterns from the panel, even when
 // it is switched off.
 func TestHaptic(which string) error {

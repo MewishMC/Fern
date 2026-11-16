@@ -547,6 +547,7 @@ type VRInputStatus struct {
 	HapticError string         `json:"hapticError"` // why the last buzz could not play
 	Notice      string         `json:"notice"`      // result of the last panel test
 	NoticeSeq   int            `json:"noticeSeq"`
+	NoticeBad   bool           `json:"noticeBad"`
 	Dirs        [2][2]int      `json:"dirs"`   // [hand][stick, pad] direction, as sent
 	Thumbs      [2]int         `json:"thumbs"` // [hand] thumb position
 }
@@ -571,9 +572,9 @@ func updateVRInput(fn func(s *VRInputStatus)) {
 	vrInMu.Unlock()
 }
 
-func setVRInputNotice(text string) {
+func setVRInputNotice(text string, bad bool) {
 	updateVRInput(func(s *VRInputStatus) {
-		s.Notice = text
+		s.Notice, s.NoticeBad = text, bad
 		s.NoticeSeq++
 	})
 }
