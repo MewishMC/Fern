@@ -10,6 +10,8 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+## v2.4.1 - Avatar picker
+
 ### Added
 - The Avatar page can show any avatar, not just the one you wear: search every avatar VRChat
   has an OSC config for, and change its name, profile and saved parameters.
