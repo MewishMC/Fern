@@ -56,6 +56,7 @@
                     <button class="nav-item" data-page="lines" data-label="Lines"><i class="fa fa-list" aria-hidden="true"></i><span class="nav-label">Lines</span></button>
                     <button class="nav-item" data-page="profiles" data-label="Profiles"><i class="fa fa-layer-group" aria-hidden="true"></i><span class="nav-label">Profiles</span></button>
                     <button class="nav-item" data-page="rules" data-label="Rules"><i class="fa fa-bolt" aria-hidden="true"></i><span class="nav-label">Rules</span></button>
+                    <button class="nav-item" data-page="avatar" data-label="Avatar"><i class="fa fa-user-astronaut" aria-hidden="true"></i><span class="nav-label">Avatar</span></button>
                     <button class="nav-item" data-page="assist" data-label="Assist"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i><span class="nav-label">Assist</span></button>
                 </div>
                 <div class="nav-group">
@@ -475,6 +476,250 @@
                 <div class="list" id="ruleList" style="margin-top:0"></div>
                 <div class="hint">Rules are checked from the top, so when two change the same thing the lower one wins. A rule whose trigger holds for a while (a world, a time, AFK) fires once when it starts, and with <b>Undo when it ends</b> puts things back when it stops. <i class="fa fa-play" aria-hidden="true"></i> runs a rule's actions right away.</div>
                 <div class="hint">Matching text is case-insensitive and finds the text anywhere; write <code>/regex/</code> for a regular expression. Rules stay the same when you switch profiles.</div>
+            </section>
+
+            <!-- ================= AVATAR ================= -->
+            <section class="page" id="page-avatar">
+                <style>
+                    .av-table { width: 100%; border-collapse: collapse; font-size: .75rem; }
+                    .av-table th { text-align: left; font-weight: 500; color: var(--text-dim); padding: 6px 8px; border-bottom: 1px solid var(--border-subtle); white-space: nowrap; }
+                    .av-table td { padding: 4px 8px; border-bottom: 1px solid var(--border-subtle); color: var(--text-secondary); vertical-align: middle; }
+                    .av-table td input[type="text"] { width: 100%; min-width: 130px; padding: .35rem .55rem; }
+                    .av-table .av-group td { padding-top: 14px; }
+                    .av-table .av-group b { font-size: .8rem; color: var(--text-secondary); }
+                    .av-table .av-group span { color: var(--text-dim); }
+                    .av-group-ctl { display: flex; align-items: center; gap: 10px; justify-content: flex-end; flex-wrap: wrap; }
+                    .av-group-ctl select { width: auto; padding-top: .3rem; padding-bottom: .3rem; }
+                    .av-table tr.inactive td { opacity: .45; }
+                    .av-dir, .av-type { white-space: nowrap; color: var(--text-dim); }
+                    .av-val { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text-dim); }
+                    .av-fixed { font-family: ui-monospace, Consolas, monospace; overflow-wrap: anywhere; }
+                    .av-scroll { overflow-x: auto; }
+                    .av-picks { max-height: 260px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; margin: 4px 0 8px; }
+                    .av-pick { display: flex; align-items: center; gap: 8px; font-size: .75rem; padding: 3px 6px; border-radius: 6px; color: var(--text-secondary); cursor: pointer; }
+                    .av-pick:hover { background: var(--bg-input); }
+                    .av-pick .av-val { margin-left: auto; }
+                    .av-row-ctl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+                    .av-row-ctl select { width: 170px; }
+                    .av-row-ctl input[type="text"] { width: 140px; }
+                </style>
+                <div class="page-head">
+                    <div>
+                        <h2>Avatar</h2>
+                        <p>What Fern does with the avatar you wear: a profile per avatar, media and keys from its parameters, VRChat events, the time and your PC's load as parameters, and saved values</p>
+                    </div>
+                    <div class="head-actions">
+                        <span class="badge" id="avBadge">no avatar yet</span>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Profiles per avatar</h3>
+                        <span class="badge" id="avProfileBadge">off</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Switch profile with the avatar</b>
+                            <span>Changing into an avatar switches to the profile picked for it below</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="avAutoProfile" aria-label="Switch profile with the avatar"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Other avatars</b>
+                            <span>The profile for avatars without a pick</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="avFallback" style="width:200px" aria-label="Profile for other avatars"></select>
+                        </div>
+                    </div>
+                    <div class="section-title">Recent avatars <span class="count" id="avRecentCount"></span></div>
+                    <div class="list" id="avList" style="margin-top:0"></div>
+                    <div class="hint" id="avProfileHint">VRChat tells Fern the avatar's ID over OSC; the name comes from VRChat's log. Type a name of your own to keep it.</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Saved parameters</h3>
+                        <span class="badge" id="avSyncBadge">nothing saved</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Put saved values back</b>
+                            <span>When you change into an avatar that has it on, Fern sends its saved values</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="avRestoreAll" aria-label="Put saved values back"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Wait after the change</b>
+                            <span>Gives VRChat time to load the avatar's own values first</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="avDelay" min="200" max="10000" step="100" aria-label="Wait after the change">
+                            <span class="val" id="avDelayVal">1.5s</span>
+                        </div>
+                    </div>
+                    <div id="avSyncBox">
+                        <div class="section-title">This avatar <span class="count" id="avSyncName"></span></div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Keep up to date</b>
+                                <span>Saves the ticked parameters whenever they change while you wear it</span>
+                            </div>
+                            <div class="field-control">
+                                <label class="switch"><input type="checkbox" id="avAutoSave" aria-label="Keep saved values up to date"><span></span></label>
+                            </div>
+                        </div>
+                        <div class="field" id="avRestoreOneField">
+                            <div class="field-label">
+                                <b>Put back for this avatar</b>
+                                <span>Sends the saved values when you change into it</span>
+                            </div>
+                            <div class="field-control">
+                                <label class="switch"><input type="checkbox" id="avRestoreOne" aria-label="Put back for this avatar"><span></span></label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Parameters to save</b>
+                                <span id="avPickDesc">Tick the ones to keep, like outfit toggles and colours</span>
+                            </div>
+                            <div class="field-control">
+                                <input type="text" id="avPickFilter" placeholder="Filter" autocomplete="off" spellcheck="false" aria-label="Filter parameters">
+                            </div>
+                        </div>
+                        <div class="av-picks" id="avPicks"></div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Now</b>
+                                <span id="avSavedAt">Nothing saved yet</span>
+                            </div>
+                            <div class="field-control">
+                                <button class="btn ghost" type="button" id="avSaveNow"><i class="fa fa-floppy-disk" aria-hidden="true"></i> Save</button>
+                                <button class="btn ghost" type="button" id="avRestoreNow"><i class="fa fa-rotate-left" aria-hidden="true"></i> Put back</button>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Copy to another avatar</b>
+                                <span>Gives another avatar these picks and saved values, e.g. a re-upload with a new ID</span>
+                            </div>
+                            <div class="field-control">
+                                <select id="avCopyTo" style="width:200px" aria-label="Avatar to copy to"></select>
+                                <button class="btn ghost" type="button" id="avCopy">Copy</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hint" id="avSyncHint">Put on an avatar in VRChat to pick its parameters. Saved values are kept in avatars.json next to config.json.</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Parameters Fern reads and sends</h3>
+                        <span class="badge" id="avParamBadge">none sent yet</span>
+                    </div>
+                    <div class="av-scroll">
+                        <table class="av-table">
+                            <thead><tr><th>Parameter</th><th>Type</th><th>Fern</th><th>What it is</th><th>Now</th></tr></thead>
+                            <tbody id="avTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="hint">Names go after <code>/avatar/parameters/</code>: <code>FernMediaNext</code> is <code>/avatar/parameters/FernMediaNext</code>. Give your avatar parameters with these names, or type the names your avatar already uses; empty a name to stop using it. A parameter Fern reads acts when it turns on: a bool becoming true, an int above 0 or a float above 0.5, so a button in your expression menu works.</div>
+                    <div class="hint">Floats are 0 to 1. The hour float is the hour hand's turn and moves with the minutes; CPU, GPU and RAM are the load. Pulses are true for a moment, then false. Everything goes to the same address as the chatbox (Output page).</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Keys and apps from a parameter</h3>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When this parameter turns on</b>
+                            <span>A bool, an int above 0 or a float above 0.5</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="avRuleParam" list="avParamList" placeholder="e.g. FernMic" maxlength="64" autocomplete="off" spellcheck="false" aria-label="Parameter">
+                            <datalist id="avParamList"></datalist>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Fern does</b>
+                            <span>Holding and opening are undone when the parameter turns off</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="avRuleKind" style="width:170px" aria-label="What Fern does">
+                                <option value="keys">Press keys</option>
+                                <option value="open">Open an app</option>
+                                <option value="close">Close an app</option>
+                                <option value="media">Control media</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" data-av-kind="keys">
+                        <div class="field-label">
+                            <b>Keys</b>
+                            <span>Ctrl, Alt, Shift and Win plus one key, e.g. <code>Ctrl+Shift+M</code>, <code>F13</code> or <code>MediaPlayPause</code></span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="avRuleKeys" placeholder="Ctrl+Shift+M" maxlength="60" autocomplete="off" spellcheck="false" aria-label="Keys">
+                            <select id="avRuleKeyMode" style="width:150px" aria-label="How to press">
+                                <option value="tap">Tap once</option>
+                                <option value="down">Hold while on</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" data-av-kind="open">
+                        <div class="field-label">
+                            <b>App</b>
+                            <span>A full path, or a program Windows knows like <code>notepad.exe</code></span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="avRulePath" placeholder="C:\Program Files\…\app.exe" maxlength="260" autocomplete="off" spellcheck="false" style="width:260px" aria-label="App to open">
+                        </div>
+                    </div>
+                    <div class="field" data-av-kind="close">
+                        <div class="field-label">
+                            <b>App</b>
+                            <span>Its exe name. Asking lets it save first; End task stops it at once.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="avRuleExe" list="avAppList" placeholder="obs64.exe" maxlength="260" autocomplete="off" spellcheck="false" aria-label="App to close">
+                            <datalist id="avAppList"></datalist>
+                            <select id="avRuleCloseMode" style="width:140px" aria-label="How to close">
+                                <option value="close">Ask it to close</option>
+                                <option value="kill">End task</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field" data-av-kind="media">
+                        <div class="field-label">
+                            <b>Media</b>
+                            <span>Works on what is playing, like the media keys</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="avRuleMedia" style="width:170px" aria-label="Media action">
+                                <option value="playpause">Play or pause</option>
+                                <option value="next">Next track</option>
+                                <option value="prev">Previous track</option>
+                                <option value="volup">Volume up</option>
+                                <option value="voldown">Volume down</option>
+                                <option value="mute">Mute or unmute</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="rule-editor-foot">
+                        <button class="btn ghost" type="button" data-open="rules">Open Rules</button>
+                        <button class="btn" type="button" id="avRuleAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add rule</button>
+                    </div>
+                    <div class="hint">This adds a rule on the Rules page, where you can change it or add conditions. Rules can also press keys, open or close apps and control media from any other trigger, like a world, a time or a friend joining.</div>
+                </div>
             </section>
 
             <!-- ================= TEXT ================= -->
@@ -4542,6 +4787,7 @@
             renderProfiles(st);
             renderBackups(st);
             renderRules(st);
+            if (typeof renderAvatar === "function") renderAvatar(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -9056,6 +9302,435 @@
             $("ttsMuteInfo").textContent = tts.muted === null || tts.muted === undefined
                 ? "Unmutes over OSC while the voice talks, then puts it back. In toggle mode this waits until VRChat has reported your mic state (OSC on)."
                 : "Unmutes over OSC while the voice talks, then puts it back. VRChat mic is " + (tts.muted ? "muted" : "on") + ".";
+        }
+    </script>
+    <script>
+        "use strict";
+        /* ---------------- avatar: profiles per avatar, saved values, parameters ----------------
+           Its own block: it reads the shared state and talks to Fern through
+           send() and pushConfig() like the rest of the page. */
+        const AV = { listSig: "", pickSig: "", tableSig: "", filter: "" };
+
+        // The parameters Fern uses, grouped as the table shows them. Each row
+        // is [field, "reads" | "sends", type, what it is]; the name lives at
+        // section.field of the config.
+        const AV_GROUPS = [
+            {
+                id: "media", label: "Media keys", desc: "Your avatar presses media keys", section: ["Avatar", "media"], on: "enabled",
+                rows: [
+                    ["play_pause", "reads", "bool", "Play or pause"],
+                    ["next", "reads", "bool", "Next track"],
+                    ["previous", "reads", "bool", "Previous track"],
+                    ["volume_up", "reads", "bool", "Volume up a step"],
+                    ["volume_down", "reads", "bool", "Volume down a step"],
+                    ["mute", "reads", "bool", "Mute or unmute the PC"],
+                    ["playing", "sends", "bool", "True while media plays"],
+                ],
+            },
+            {
+                id: "events", label: "VRChat events", desc: "From VRChat's log", section: ["Avatar", "events"], on: "enabled", pulse: true,
+                rows: [
+                    ["player_joined", "sends", "bool pulse", "Someone joins your instance"],
+                    ["player_left", "sends", "bool pulse", "Someone leaves"],
+                    ["world_loaded", "sends", "bool pulse", "A world finished loading"],
+                    ["screenshot", "sends", "bool pulse", "You took a picture with the camera"],
+                    ["afk", "sends", "bool", "True while you count as AFK"],
+                    ["player_count", "sends", "int", "Players in the instance, up to 255"],
+                ],
+            },
+            {
+                id: "stats", label: "Time and PC", desc: "Every second, when a value changes", section: ["Avatar", "stats"], on: "enabled", hour12: true,
+                rows: [
+                    ["hour", "sends", "int", "Hour, 0–23 (1–12 on a 12-hour clock)"],
+                    ["minute", "sends", "int", "Minute, 0–59"],
+                    ["second", "sends", "int", "Second, 0–59"],
+                    ["hour_float", "sends", "float", "Hour hand, 0–1"],
+                    ["minute_float", "sends", "float", "Minute hand, 0–1"],
+                    ["second_float", "sends", "float", "Second hand, 0–1"],
+                    ["cpu", "sends", "float", "CPU load"],
+                    ["gpu", "sends", "float", "GPU load (the GPU page's adapter)"],
+                    ["ram", "sends", "float", "Memory in use"],
+                ],
+            },
+            {
+                id: "heart", label: "Heart rate", desc: "Set up on the Heart rate page", section: ["HeartRateOptions"], on: "send_osc", page: "heartrate",
+                rows: [
+                    ["param_int", "sends", "int", "Heart rate in bpm"],
+                    ["param_float", "sends", "float", "Heart rate as a float"],
+                    ["param_beat", "sends", "bool", "Flips or pulses every beat"],
+                    ["param_connected", "sends", "bool", "True while readings arrive"],
+                ],
+            },
+        ];
+        const AV_PULSES = [[250, "¼s"], [500, "½s"], [1000, "1s"], [2000, "2s"], [5000, "5s"]];
+
+        const avSection = (c, g) => g.section.reduce((o, k) => (o ? o[k] : undefined), c) || {};
+        const avEsc = (s) => String(s).replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+        function avFmt(v) {
+            if (v === undefined || v === null) return "—";
+            if (typeof v === "boolean") return v ? "on" : "off";
+            if (typeof v === "number") return Number.isInteger(v) ? String(v) : v.toFixed(2);
+            return String(v);
+        }
+        function avEntry(st, id) {
+            return ((st.avatar && st.avatar.avatars) || []).find((e) => e.id === id) || null;
+        }
+        function avLabel(e) {
+            return (e && (e.name || e.id)) || "";
+        }
+        function avSend(action, extra) {
+            return send(Object.assign({ type: "avatar", action: action }, extra || {}));
+        }
+
+        // Fixed rows: what VRChat itself provides and what other features use.
+        function avExtraRows(st) {
+            const rows = [["MuteSelf", "reads", "bool", "VRChat's mic mute, for AFK and text to speech", "rules"]];
+            const seen = {};
+            ((st.config.Rules && st.config.Rules.list) || []).forEach((r) => {
+                const label = r.name || "a rule";
+                [r.trigger].concat(r.conditions || []).forEach((s) => {
+                    const n = s && s.type === "avatar_param" && s.params && s.params.name;
+                    if (n && !seen["r" + n]) { seen["r" + n] = 1; rows.push([n, "reads", "", "Tested by " + label, "rules"]); }
+                });
+                (r.actions || []).forEach((s) => {
+                    const n = s && s.type === "avatar_param" && s.params && s.params.name;
+                    if (n && !seen["s" + n]) { seen["s" + n] = 1; rows.push([n, "sends", s.params.kind || "", "Set by " + label, "rules"]); }
+                });
+            });
+            const cur = avEntry(st, (st.avatar && st.avatar.current.id) || "");
+            ((cur && cur.params) || []).forEach((n) => {
+                rows.push([n, "reads, sends", (cur.values[n] || {}).type || "", "Saved for this avatar", ""]);
+            });
+            return rows;
+        }
+
+        function avValue(st, dir, name) {
+            if (!name) return undefined;
+            const a = st.avatar || {};
+            if (dir === "sends") return a.sent && a.sent[name] ? a.sent[name].value : undefined;
+            const p = (a.params || []).find((x) => x.name === name);
+            return p ? p.value : undefined;
+        }
+
+        function avBuildTable(st) {
+            const body = $("avTableBody");
+            const extra = avExtraRows(st);
+            const sig = JSON.stringify(extra);
+            if (sig === AV.tableSig && body.childElementCount) return;
+            if (body.contains(document.activeElement)) return;
+            AV.tableSig = sig;
+            let html = "";
+            AV_GROUPS.forEach((g, gi) => {
+                let ctl = "";
+                if (g.pulse) {
+                    ctl += '<select data-av-pulse aria-label="Pulse length">' +
+                        AV_PULSES.map(([ms, l]) => '<option value="' + ms + '">pulse ' + l + "</option>").join("") + "</select>";
+                }
+                if (g.hour12) ctl += '<label class="av-pick" style="padding:0"><input type="checkbox" data-av-hour12> 12-hour</label>';
+                if (g.page) ctl += '<button class="btn ghost small" type="button" data-open="' + g.page + '">Open</button>';
+                ctl += '<label class="switch" title="Use these"><input type="checkbox" data-av-switch="' + gi + '" aria-label="Use ' + avEsc(g.label) + '"><span></span></label>';
+                html += '<tr class="av-group"><td colspan="3"><b>' + avEsc(g.label) + "</b> <span>" + avEsc(g.desc) + '</span></td><td colspan="2"><div class="av-group-ctl">' + ctl + "</div></td></tr>";
+                g.rows.forEach(([key, dir, type, what]) => {
+                    html += '<tr data-av-group="' + gi + '"><td><input type="text" maxlength="64" placeholder="not used" autocomplete="off" spellcheck="false" data-av-group-i="' + gi + '" data-av-key="' + key + '" aria-label="' + avEsc(what) + ' parameter"></td>' +
+                        '<td class="av-type">' + type + '</td><td class="av-dir">' + dir + "</td><td>" + avEsc(what) + '</td><td class="av-val" data-av-dir="' + dir + '"></td></tr>';
+                });
+            });
+            if (extra.length) {
+                html += '<tr class="av-group"><td colspan="5"><b>Also in use</b> <span>Change these on the Rules page or above</span></td></tr>';
+                extra.forEach(([name, dir, type, what]) => {
+                    html += '<tr><td class="av-fixed" data-av-name="' + avEsc(name) + '">' + avEsc(name) + '</td><td class="av-type">' + avEsc(type) +
+                        '</td><td class="av-dir">' + dir + "</td><td>" + avEsc(what) + '</td><td class="av-val" data-av-dir="' + (dir === "sends" ? "sends" : "reads") + '"></td></tr>';
+                });
+            }
+            body.innerHTML = html;
+        }
+
+        function avSyncTable(st) {
+            const c = st.config;
+            const typing = document.activeElement;
+            const locked = typeof lockForms === "function" && lockForms();
+            $("avTableBody").querySelectorAll("tr").forEach((tr) => {
+                const input = tr.querySelector("input[data-av-key]");
+                const cell = tr.querySelector(".av-val");
+                let name = "";
+                if (input) {
+                    const g = AV_GROUPS[Number(input.dataset.avGroupI)];
+                    const sec = avSection(c, g);
+                    name = sec[input.dataset.avKey] || "";
+                    if (input !== typing && !locked) input.value = name;
+                    const on = !!sec[g.on];
+                    tr.classList.toggle("inactive", !on);
+                    input.disabled = !on;
+                } else {
+                    const fixed = tr.querySelector("[data-av-name]");
+                    name = fixed ? fixed.dataset.avName : "";
+                }
+                if (cell) cell.textContent = name ? avFmt(avValue(st, cell.dataset.avDir, name)) : "";
+            });
+            $("avTableBody").querySelectorAll("[data-av-switch]").forEach((el) => {
+                const g = AV_GROUPS[Number(el.dataset.avSwitch)];
+                if (el !== typing) el.checked = !!avSection(c, g)[g.on];
+            });
+            const pulse = $("avTableBody").querySelector("[data-av-pulse]");
+            if (pulse && pulse !== typing) pulse.value = String(c.Avatar.events.pulse_ms);
+            if (pulse) pulse.disabled = !c.Avatar.events.enabled;
+            const h12 = $("avTableBody").querySelector("[data-av-hour12]");
+            if (h12 && h12 !== typing) h12.checked = !!c.Avatar.stats.hour12;
+            if (h12) h12.disabled = !c.Avatar.stats.enabled;
+        }
+
+        $("avTableBody").addEventListener("input", (ev) => {
+            const el = ev.target;
+            if (!el.dataset.avKey) return;
+            const g = AV_GROUPS[Number(el.dataset.avGroupI)];
+            const v = Array.from(el.value).slice(0, 64).join("");
+            pushConfig((c) => { avSection(c, g)[el.dataset.avKey] = v; });
+        });
+        $("avTableBody").addEventListener("change", (ev) => {
+            const el = ev.target;
+            if (el.dataset.avSwitch !== undefined) {
+                const g = AV_GROUPS[Number(el.dataset.avSwitch)];
+                pushConfigNow((c) => { avSection(c, g)[g.on] = el.checked; });
+            } else if (el.dataset.avPulse !== undefined) {
+                pushConfigNow((c) => { c.Avatar.events.pulse_ms = Number(el.value); });
+            } else if (el.dataset.avHour12 !== undefined) {
+                pushConfigNow((c) => { c.Avatar.stats.hour12 = el.checked; });
+            }
+        });
+
+        function avProfileOptions(st, select, emptyLabel, value) {
+            const names = ((st.profiles && st.profiles.list) || []).map((p) => p.name);
+            if (value && !names.includes(value)) names.push(value);
+            const sig = JSON.stringify([emptyLabel, names]);
+            if (select.dataset.sig !== sig) {
+                select.dataset.sig = sig;
+                select.innerHTML = '<option value="">' + avEsc(emptyLabel) + "</option>" +
+                    names.map((n) => '<option value="' + avEsc(n) + '">' + avEsc(n) + "</option>").join("");
+            }
+            if (document.activeElement !== select) select.value = value || "";
+        }
+
+        function avRenderList(st) {
+            const a = st.avatar || {};
+            const list = a.avatars || [];
+            const cur = a.current.id;
+            $("avRecentCount").textContent = list.length ? String(list.length) : "";
+            const box = $("avList");
+            const sig = JSON.stringify([list, cur, (st.profiles && st.profiles.list || []).map((p) => p.name)]);
+            if (sig === AV.listSig || box.contains(document.activeElement)) return;
+            AV.listSig = sig;
+            box.replaceChildren();
+            if (!list.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No avatars yet. Change avatar in VRChat with OSC on, and it shows up here.";
+                box.appendChild(empty);
+                return;
+            }
+            list.forEach((e) => {
+                const row = document.createElement("div");
+                row.className = "row" + (e.id === cur ? " current" : "");
+                row.dataset.id = e.id;
+                row.innerHTML =
+                    '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                    '<div class="av-row-ctl">' +
+                    '<input type="text" class="av-rename" maxlength="60" autocomplete="off" spellcheck="false" placeholder="Name" aria-label="Avatar name">' +
+                    '<select class="av-profile" aria-label="Profile for this avatar"></select>' +
+                    '<button class="btn icon" type="button" data-av="forget" title="Forget" aria-label="Forget this avatar"><i class="fa fa-trash" aria-hidden="true"></i></button>' +
+                    "</div>";
+                const name = row.querySelector(".row-name");
+                name.textContent = avLabel(e);
+                if (e.id === cur) {
+                    const f = document.createElement("span");
+                    f.className = "row-flag";
+                    f.textContent = "WEARING";
+                    name.appendChild(f);
+                }
+                const bits = [e.id];
+                const saved = Object.keys(e.values || {}).length;
+                if (saved) bits.push(saved + " saved");
+                if (e.seen) bits.push("worn " + fmtWhen(e.seen));
+                const desc = row.querySelector(".row-desc");
+                desc.textContent = bits.join(" · ");
+                desc.title = desc.textContent;
+                row.querySelector(".av-rename").value = e.nameSet ? e.name : "";
+                row.querySelector(".av-rename").placeholder = e.name && !e.nameSet ? e.name : "Name";
+                avProfileOptions(st, row.querySelector(".av-profile"), "No profile", e.profile);
+                box.appendChild(row);
+            });
+        }
+        $("avList").addEventListener("change", (ev) => {
+            const row = ev.target.closest(".row");
+            if (!row) return;
+            if (ev.target.classList.contains("av-profile")) avSend("profile", { module: row.dataset.id, text: ev.target.value });
+            if (ev.target.classList.contains("av-rename")) avSend("rename", { module: row.dataset.id, text: ev.target.value });
+        });
+        $("avList").addEventListener("click", (ev) => {
+            const b = ev.target.closest("[data-av]");
+            if (!b) return;
+            const row = b.closest(".row");
+            if (b.dataset.av === "forget" && confirm("Forget this avatar, its profile and its saved values?")) {
+                avSend("forget", { module: row.dataset.id });
+            }
+        });
+
+        function avRenderSync(st) {
+            const a = st.avatar || {};
+            const id = a.current.id;
+            const e = avEntry(st, id) || { params: [], values: {} };
+            const has = !!id;
+            const box = $("avSyncBox");
+            box.querySelectorAll(".field").forEach((f) => {
+                f.classList.toggle("inactive", !has);
+                f.querySelectorAll("input, select, button").forEach((el) => { el.disabled = !has; });
+            });
+            $("avSyncName").textContent = has ? avLabel(e) || a.current.name || id : "";
+            $("avSyncHint").hidden = has;
+            const saved = Object.keys(e.values || {}).length;
+            $("avSyncBadge").textContent = has ? (saved ? saved + " saved" : "nothing saved") : "no avatar yet";
+            $("avSyncBadge").classList.toggle("on", saved > 0);
+            if (document.activeElement !== $("avAutoSave")) $("avAutoSave").checked = !!e.autoSave;
+            if (document.activeElement !== $("avRestoreOne")) $("avRestoreOne").checked = !!e.restore;
+            const restoreOn = !!st.config.Avatar.sync.restore;
+            $("avRestoreOneField").classList.toggle("inactive", !has || !restoreOn);
+            $("avSavedAt").textContent = e.savedAt ? "Saved " + fmtWhen(e.savedAt) + (a.auto && a.auto.restoredAt ? " · put back " + a.auto.restored + " at " + fmtAgo(a.auto.restoredAt) : "") : "Nothing saved yet";
+            $("avSaveNow").disabled = !has || !(e.params || []).length;
+            $("avRestoreNow").disabled = !has || !saved;
+            $("avCopy").disabled = !has || !saved;
+
+            // Copy targets: every other avatar.
+            const others = (a.avatars || []).filter((x) => x.id !== id);
+            const copy = $("avCopyTo");
+            const csig = JSON.stringify(others.map((x) => [x.id, avLabel(x)]));
+            if (copy.dataset.sig !== csig) {
+                copy.dataset.sig = csig;
+                copy.innerHTML = others.length ? others.map((x) => '<option value="' + avEsc(x.id) + '">' + avEsc(avLabel(x)) + "</option>").join("")
+                    : '<option value="">No other avatars yet</option>';
+            }
+
+            // The picker: the avatar's parameters plus picks VRChat hasn't sent.
+            const params = (a.params || []).slice();
+            (e.params || []).forEach((n) => { if (!params.find((p) => p.name === n)) params.push({ name: n, type: (e.values[n] || {}).type || "", value: undefined }); });
+            const q = AV.filter.trim().toLowerCase();
+            const shown = params.filter((p) => !q || p.name.toLowerCase().includes(q));
+            const picks = $("avPicks");
+            const psig = JSON.stringify([id, shown.map((p) => p.name), e.params]);
+            if (psig !== AV.pickSig && !picks.contains(document.activeElement)) {
+                AV.pickSig = psig;
+                picks.innerHTML = shown.length ? shown.map((p) =>
+                    '<label class="av-pick"><input type="checkbox" data-av-param="' + avEsc(p.name) + '"' + ((e.params || []).includes(p.name) ? " checked" : "") + (has ? "" : " disabled") + "> " +
+                    '<span class="av-fixed">' + avEsc(p.name) + '</span> <span class="av-type">' + avEsc(p.type) + '</span><span class="av-val" data-av-live="' + avEsc(p.name) + '"></span></label>').join("")
+                    : '<div class="log-empty">' + (has ? "VRChat hasn't sent this avatar's parameters yet." : "No avatar yet.") + "</div>";
+            }
+            picks.querySelectorAll("[data-av-live]").forEach((el) => {
+                const p = params.find((x) => x.name === el.dataset.avLive);
+                const v = p && p.value !== undefined ? p.value : undefined;
+                const s = e.values && e.values[el.dataset.avLive];
+                el.textContent = avFmt(v) + (s ? " · saved " + avFmt(s.type === "bool" ? !!s.value : s.value) : "");
+            });
+            $("avPickDesc").textContent = (e.params || []).length + " of up to " + ((a.limits || {}).params || 64) + " ticked; like outfit toggles and colours";
+        }
+        $("avPickFilter").addEventListener("input", (ev) => {
+            AV.filter = ev.target.value;
+            if (S.state) avRenderSync(S.state);
+        });
+        $("avPicks").addEventListener("change", (ev) => {
+            const name = ev.target.dataset.avParam;
+            const st = S.state;
+            if (!name || !st) return;
+            const id = st.avatar.current.id;
+            const e = avEntry(st, id) || { params: [] };
+            let list = (e.params || []).filter((n) => n !== name);
+            if (ev.target.checked) list.push(name);
+            avSend("params", { module: id, config: list });
+        });
+        ["avAutoSave", "avRestoreOne"].forEach((elId) => {
+            $(elId).addEventListener("change", () => {
+                const st = S.state;
+                if (!st) return;
+                avSend("flags", { module: st.avatar.current.id, config: { autoSave: $("avAutoSave").checked, restore: $("avRestoreOne").checked } });
+            });
+        });
+        $("avSaveNow").addEventListener("click", () => { if (S.state) avSend("save", { module: S.state.avatar.current.id }); });
+        $("avRestoreNow").addEventListener("click", () => { if (S.state) avSend("restore", { module: S.state.avatar.current.id }); });
+        $("avCopy").addEventListener("click", () => {
+            if (!S.state || !$("avCopyTo").value) return;
+            avSend("copy", { module: S.state.avatar.current.id, text: $("avCopyTo").value });
+        });
+
+        $("avAutoProfile").addEventListener("change", (ev) => pushConfigNow((c) => { c.Avatar.auto_profile = ev.target.checked; }));
+        $("avFallback").addEventListener("change", (ev) => pushConfigNow((c) => { c.Avatar.fallback_profile = ev.target.value; }));
+        $("avRestoreAll").addEventListener("change", (ev) => pushConfigNow((c) => { c.Avatar.sync.restore = ev.target.checked; }));
+        const avDelayLabel = (v) => (v < 1000 ? v + "ms" : (v / 1000).toFixed(1).replace(/\.0$/, "") + "s");
+        $("avDelay").addEventListener("input", (ev) => {
+            const v = Number(ev.target.value);
+            $("avDelayVal").textContent = avDelayLabel(v);
+            pushConfig((c) => { c.Avatar.sync.delay_ms = v; });
+        });
+
+        // Quick rules: parameter on -> keys, app or media.
+        function avRuleKind() {
+            const kind = $("avRuleKind").value;
+            document.querySelectorAll("[data-av-kind]").forEach((f) => { f.hidden = f.dataset.avKind !== kind; });
+        }
+        $("avRuleKind").addEventListener("change", avRuleKind);
+        avRuleKind();
+        $("avRuleAdd").addEventListener("click", () => {
+            const kind = $("avRuleKind").value;
+            let action;
+            if (kind === "keys") action = { type: "keys.press", params: { keys: $("avRuleKeys").value, mode: $("avRuleKeyMode").value } };
+            else if (kind === "open") action = { type: "app.open", params: { path: $("avRulePath").value, once: true } };
+            else if (kind === "close") action = { type: "app.close", params: { app: $("avRuleExe").value, mode: $("avRuleCloseMode").value } };
+            else action = { type: "media.control", params: { action: $("avRuleMedia").value } };
+            avSend("paramRule", { config: { param: $("avRuleParam").value, action: action } });
+        });
+
+        function avDatalist(el, values) {
+            const sig = JSON.stringify(values);
+            if (el.dataset.sig === sig) return;
+            el.dataset.sig = sig;
+            el.innerHTML = values.map((v) => '<option value="' + avEsc(v) + '"></option>').join("");
+        }
+
+        function renderAvatar(st) {
+            if (!st.avatar || !st.config.Avatar) return;
+            const a = st.avatar;
+            const c = st.config.Avatar;
+            noticeToast("avatar", a.notice);
+            const cur = avEntry(st, a.current.id);
+            const label = a.current.id ? (avLabel(cur) || a.current.name || a.current.id) : "";
+            $("avBadge").textContent = label || "no avatar yet";
+            $("avBadge").classList.toggle("on", !!label);
+            $("avBadge").title = a.current.id || "";
+
+            const typing = document.activeElement;
+            if (typing !== $("avAutoProfile")) $("avAutoProfile").checked = !!c.auto_profile;
+            avProfileOptions(st, $("avFallback"), "Leave the profile alone", c.fallback_profile);
+            $("avFallback").closest(".field").classList.toggle("inactive", !c.auto_profile);
+            $("avFallback").disabled = !c.auto_profile;
+            $("avProfileBadge").textContent = c.auto_profile ? "on" : "off";
+            $("avProfileBadge").classList.toggle("on", !!c.auto_profile);
+            const auto = a.auto || {};
+            $("avProfileHint").textContent = auto.profileErr
+                ? "Couldn't switch to " + auto.profile + ": " + auto.profileErr
+                : (auto.profileAt ? "Switched to " + auto.profile + " at " + fmtAgo(auto.profileAt) + ". " : "") +
+                "VRChat tells Fern the avatar's ID over OSC; the name comes from VRChat's log. Type a name of your own to keep it.";
+            $("avProfileHint").classList.toggle("bad", !!auto.profileErr);
+
+            if (typing !== $("avRestoreAll")) $("avRestoreAll").checked = !!c.sync.restore;
+            if (typing !== $("avDelay")) $("avDelay").value = c.sync.delay_ms;
+            $("avDelayVal").textContent = avDelayLabel(c.sync.delay_ms);
+            $("avDelay").closest(".field").classList.toggle("inactive", !c.sync.restore);
+            $("avDelay").disabled = !c.sync.restore;
+
+            avRenderList(st);
+            avRenderSync(st);
+            avBuildTable(st);
+            avSyncTable(st);
+            const sent = Object.keys(a.sent || {}).length;
+            $("avParamBadge").textContent = sent ? sent + " sent" : "none sent yet";
+            avDatalist($("avParamList"), (a.params || []).map((p) => p.name));
+            avDatalist($("avAppList"), (st.windowApps || []).map((x) => x.app));
         }
     </script>
     <script>
