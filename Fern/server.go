@@ -84,6 +84,8 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	WorldBlock worldBlockState `json:"worldBlock"`
 }
 
 type appState struct {
@@ -386,6 +388,10 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "page":
+		handlePageCommand(cmd)
+	case "worldblock":
+		handleWorldBlockCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -582,6 +588,8 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		WorldBlock: currentWorldBlock(cfg),
 	}
 }
 
