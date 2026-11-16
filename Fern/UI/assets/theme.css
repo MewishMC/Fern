@@ -3293,3 +3293,53 @@ input[type="password"]:focus {
     gap: 8px;
     margin-top: 12px;
 }
+
+/* Voice page: word replacements and the local whisper server's output. */
+.filter-list {
+    margin: 0 0 8px;
+}
+
+.filter-list.dim {
+    opacity: .45;
+}
+
+.filter-fields {
+    flex: 1;
+    min-width: 0;
+}
+
+.filter-pair {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-pair input {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.filter-arrow {
+    color: var(--text-faint);
+    font-size: .75rem;
+}
+
+.filter-row .row-desc.bad,
+#voiceRulesOff,
+#filterErrors {
+    color: var(--red);
+}
+
+.stt-server-log {
+    margin: 0 0 8px;
+    padding: .5rem .7rem;
+    max-height: 120px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: .7rem;
+    color: var(--text-secondary);
+    background: var(--bg-input);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+}

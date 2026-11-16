@@ -57,6 +57,7 @@
                     <button class="nav-item" data-page="profiles" data-label="Profiles"><i class="fa fa-layer-group" aria-hidden="true"></i><span class="nav-label">Profiles</span></button>
                     <button class="nav-item" data-page="rules" data-label="Rules"><i class="fa fa-bolt" aria-hidden="true"></i><span class="nav-label">Rules</span></button>
                     <button class="nav-item" data-page="assist" data-label="Assist"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i><span class="nav-label">Assist</span></button>
+                    <button class="nav-item" data-page="voice" data-label="Voice"><i class="fa fa-microphone-lines" aria-hidden="true"></i><span class="nav-label">Voice</span></button>
                 </div>
                 <div class="nav-group">
                     <span class="nav-title">Settings</span>
@@ -3311,6 +3312,20 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Voice engine</b>
+                            <span>Every engine plays through the device below and can open your VRChat mic</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="ttsEngine" style="width:260px">
+                                <option value="sapi">Windows voices</option>
+                                <option value="openai">OpenAI-compatible (OpenAI, local servers)</option>
+                                <option value="elevenlabs">ElevenLabs</option>
+                                <option value="azure">Azure Speech</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Read sent messages aloud</b>
                             <span>Speaks what you send from Send now with a Windows voice</span>
                         </div>
@@ -3318,7 +3333,7 @@
                             <label class="switch"><input type="checkbox" id="ttsSpeakSent"><span></span></label>
                         </div>
                     </div>
-                    <div class="field">
+                    <div class="field tts-engine" data-engines="sapi">
                         <div class="field-label">
                             <b>Voice</b>
                             <span>Add more in Windows Settings › Time &amp; language › Speech</span>
@@ -3326,6 +3341,104 @@
                         <div class="field-control">
                             <select id="ttsVoice" style="width:260px"></select>
                             <button class="btn icon" type="button" id="ttsRefresh" title="Refresh voices and devices" aria-label="Refresh voices and devices"><i class="fa fa-rotate" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="field tts-engine" data-engines="openai">
+                        <div class="field-label">
+                            <b>Base URL</b>
+                            <span>Empty uses the OpenAI-compatible base URL above. Local servers such as Kokoro-FastAPI: http://127.0.0.1:8880/v1</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ttsOpenAIBase" autocomplete="off" spellcheck="false" placeholder="same as above"></div>
+                    </div>
+                    <div class="field tts-engine" data-engines="openai">
+                        <div class="field-label">
+                            <b>Model</b>
+                            <span>gpt-4o-mini-tts, tts-1 or tts-1-hd; a local server's own name otherwise</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ttsOpenAIModel" list="ttsOpenAIModels" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field tts-engine" data-engines="openai">
+                        <div class="field-label">
+                            <b>Voice</b>
+                            <span class="tts-voices-info">Pick one or type a voice the server knows</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="ttsOpenAIVoice" list="ttsEngineVoiceList" autocomplete="off" spellcheck="false">
+                            <button class="btn icon" type="button" data-tts-voices title="List the server's voices" aria-label="List the server's voices"><i class="fa fa-rotate" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="field tts-engine" data-engines="openai">
+                        <div class="field-label">
+                            <b>Speaking style</b>
+                            <span>Optional instructions for models that take them, e.g. calm and warm</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ttsOpenAIInstr" autocomplete="off" placeholder="optional"></div>
+                    </div>
+                    <div class="field tts-engine" data-engines="openai">
+                        <div class="field-label">
+                            <b>Key</b>
+                            <span>Empty uses the OpenAI-compatible key above. Local servers usually need none.</span>
+                        </div>
+                        <div class="field-control assist-key">
+                            <input type="password" id="ttsOpenAIKey" data-secret="tts_openai_key" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="ttsOpenAIKey">Save</button>
+                            <button class="btn ghost small" type="button" data-secret-clear="ttsOpenAIKey">Remove</button>
+                        </div>
+                    </div>
+                    <div class="field tts-engine" data-engines="elevenlabs">
+                        <div class="field-label">
+                            <b>Key</b>
+                            <span>From your ElevenLabs profile › API keys</span>
+                        </div>
+                        <div class="field-control assist-key">
+                            <input type="password" id="ttsElevenKey" data-secret="elevenlabs_key" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="ttsElevenKey">Save</button>
+                            <button class="btn ghost small" type="button" data-secret-clear="ttsElevenKey">Remove</button>
+                        </div>
+                    </div>
+                    <div class="field tts-engine" data-engines="elevenlabs">
+                        <div class="field-label">
+                            <b>Voice</b>
+                            <span class="tts-voices-info">Your voices and the default ones</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="ttsElevenVoice" style="width:260px"></select>
+                            <button class="btn icon" type="button" data-tts-voices title="Refresh voices" aria-label="Refresh voices"><i class="fa fa-rotate" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="field tts-engine" data-engines="elevenlabs">
+                        <div class="field-label">
+                            <b>Model</b>
+                            <span>eleven_flash_v2_5 is the quickest; eleven_multilingual_v2 sounds best</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ttsElevenModel" list="ttsElevenModels" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field tts-engine" data-engines="azure">
+                        <div class="field-label">
+                            <b>Key</b>
+                            <span>Key 1 or 2 of your Speech resource in the Azure portal</span>
+                        </div>
+                        <div class="field-control assist-key">
+                            <input type="password" id="ttsAzureKey" data-secret="azure_speech_key" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="ttsAzureKey">Save</button>
+                            <button class="btn ghost small" type="button" data-secret-clear="ttsAzureKey">Remove</button>
+                        </div>
+                    </div>
+                    <div class="field tts-engine" data-engines="azure">
+                        <div class="field-label">
+                            <b>Region</b>
+                            <span>Where the resource lives, e.g. eastus or westeurope</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ttsAzureRegion" autocomplete="off" spellcheck="false" placeholder="eastus" style="width:140px"></div>
+                    </div>
+                    <div class="field tts-engine" data-engines="azure">
+                        <div class="field-label">
+                            <b>Voice</b>
+                            <span class="tts-voices-info">Type to search, e.g. en-US or Jenny</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="ttsAzureVoice" list="ttsEngineVoiceList" autocomplete="off" spellcheck="false">
+                            <button class="btn icon" type="button" data-tts-voices title="Refresh voices" aria-label="Refresh voices"><i class="fa fa-rotate" aria-hidden="true"></i></button>
                         </div>
                     </div>
                     <div class="field">
@@ -3498,6 +3611,69 @@
                             <button class="btn ghost small" type="button" data-key-clear="stt">Remove</button>
                         </div>
                     </div>
+                    <div class="section-title">Local Whisper</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Use a server on this PC</b>
+                            <span>Fills in the base URL and model for a whisper server you run. Fern doesn't include one or any model.</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost small" type="button" data-stt-preset="whispercpp" title="whisper.cpp's whisper-server on port 8080">whisper.cpp</button>
+                            <button class="btn ghost small" type="button" data-stt-preset="fasterwhisper" title="faster-whisper-server on port 8000">faster-whisper</button>
+                            <button class="btn ghost small" type="button" data-stt-preset="speaches" title="Speaches on port 8000">Speaches</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Test connection</b>
+                            <span id="sttTestInfo">Sends half a second of silence to the transcription server</span>
+                        </div>
+                        <div class="field-control"><button class="btn small" type="button" id="sttTest">Test</button></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Start the server when I dictate</b>
+                            <span>Fern runs the program below the first time you use the mic and closes it when Fern closes</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="sttServerLaunch"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Server program</b>
+                            <span>Full path to the .exe, e.g. C:\whisper\whisper-server.exe</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sttServerExe" autocomplete="off" spellcheck="false" placeholder="C:\whisper\whisper-server.exe"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Arguments</b>
+                            <span>Passed as typed; the program starts in its own folder</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sttServerArgs" autocomplete="off" spellcheck="false" placeholder="-m models\ggml-base.en.bin --port 8080"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Wait for it to start</b>
+                            <span>Dictation waits up to this long while the server loads its model</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="sttServerWait" min="5" max="600" step="5">
+                            <span class="val" id="sttServerWaitVal">60s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Server</b>
+                            <span id="sttServerInfo">Not running</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost small" type="button" id="sttServerStart">Start</button>
+                            <button class="btn ghost small" type="button" id="sttServerStop">Stop</button>
+                        </div>
+                    </div>
+                    <pre class="stt-server-log" id="sttServerLog" hidden></pre>
                     <div class="hint">Audio is recorded only while the mic button is active and is sent to the transcription server you set. Nothing is kept on disk.</div>
                 </div>
 
@@ -3515,6 +3691,19 @@
                     <option value="claude-sonnet-5-5"></option>
                     <option value="claude-opus-5-5"></option>
                 </datalist>
+                <datalist id="ttsOpenAIModels">
+                    <option value="gpt-4o-mini-tts"></option>
+                    <option value="tts-1"></option>
+                    <option value="tts-1-hd"></option>
+                    <option value="kokoro"></option>
+                </datalist>
+                <datalist id="ttsElevenModels">
+                    <option value="eleven_flash_v2_5"></option>
+                    <option value="eleven_turbo_v2_5"></option>
+                    <option value="eleven_multilingual_v2"></option>
+                    <option value="eleven_v3"></option>
+                </datalist>
+                <datalist id="ttsEngineVoiceList"></datalist>
                 <datalist id="sttModels">
                     <option value="gpt-4o-mini-transcribe"></option>
                     <option value="gpt-4o-transcribe"></option>
@@ -3563,6 +3752,88 @@
                     <option value="Hebrew"></option>
                     <option value="Tagalog"></option>
                 </datalist>
+            </section>
+
+            <!-- ================= VOICE ================= -->
+            <section class="page" id="page-voice">
+                <div class="page-head">
+                    <div>
+                        <h2>Voice</h2>
+                        <p>Voice commands, and word replacements for what you type, dictate and hear</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Voice commands</h3>
+                        <span class="badge" id="voiceCmdBadge">none</span>
+                    </div>
+                    <div class="hint" style="margin-top:0">Say a phrase into dictation (the <i class="fa fa-microphone" aria-hidden="true"></i> button under Send now) and a rule runs: switch a profile, set an avatar parameter, send a message. Each command is a rule with the trigger <b>I say a voice command</b>, so it can have conditions and several actions.</div>
+                    <div class="hint bad" id="voiceRulesOff" hidden>Rules are paused, so voice commands do nothing. Turn them on from the Rules page.</div>
+                    <div class="list" id="voiceCmdList"></div>
+                    <div class="window-add">
+                        <span class="row-desc" id="voiceHeard" style="flex:1;align-self:center">No command heard yet</span>
+                        <button class="btn" type="button" id="voiceCmdNew"><i class="fa fa-plus" aria-hidden="true"></i> New voice command</button>
+                    </div>
+                    <div class="hint">Matching ignores case and punctuation. <b>Only while holding the mic button</b> makes a command push to talk only, and <b>Don't send it to the chatbox</b> keeps those words out of Send now. With <b>Starts with</b>, a chat message's <code>{name}</code> is whatever you said after the phrase.</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Word filter</h3>
+                        <span class="badge" id="filterBadge">off</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Typed messages</b>
+                            <span>What you send or live type from Send now</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="filterTyped"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Dictation</b>
+                            <span>What speech to text hears, before it reaches Send now</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="filterDictated"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Read aloud</b>
+                            <span>What text to speech says. Censored words are skipped instead of masked.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="filterSpeech"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="section-title">Replace <span class="count" id="filterReplaceCount"></span></div>
+                    <div class="list filter-list" id="filterReplaceList"></div>
+                    <button class="btn ghost small" type="button" id="filterReplaceAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add replacement</button>
+                    <div class="hint">Runs top to bottom. Plain text matches whole words in any case and keeps the capitals (<code>brb</code> → <code>be right back</code>, <code>BRB</code> → <code>BE RIGHT BACK</code>). Write <code>/regex/</code> for a regular expression, with <code>$1</code> for its groups.</div>
+                    <div class="section-title">Censor</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Words to hide</b>
+                            <span>One per line, whole words in any case, or <code>/regex/</code>. Saved when you click away.</span>
+                        </div>
+                        <div class="field-control">
+                            <textarea id="filterCensor" rows="4" spellcheck="false" placeholder="one word per line"></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Mask</b>
+                            <span>Covers each letter of a hidden word</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="filterMask" maxlength="2" autocomplete="off" style="width:60px"></div>
+                    </div>
+                    <div class="hint bad" id="filterErrors" hidden></div>
+                    <div class="hint">Replacements run before the censor list, so a replacement can't bring a hidden word back. With both Typed and Dictation on, dictated text you then send is filtered twice, which only matters for replacements that contain their own pattern.</div>
+                </div>
             </section>
 
             <!-- ================= BATTERY ================= -->
@@ -4534,6 +4805,7 @@
             renderCounters(st);
             renderWeather(st);
             if (typeof renderAssist === "function") renderAssist(st);
+            if (typeof renderVoice === "function") renderVoice(st);
             renderHeart(st);
             renderNetwork(st);
             renderGPU(st);
@@ -6431,6 +6703,34 @@
             ["hrParamFloat", hrOsc],
             ["hrParamBeat", hrOsc],
             ["hrParamConnected", hrOsc],
+        );
+
+        // Voice: cloud voices, the local whisper server and the word filter.
+        CHECKS.push(
+            ["filterTyped", ["TextFilter", "typed"]],
+            ["filterDictated", ["TextFilter", "dictated"]],
+            ["filterSpeech", ["TextFilter", "speech"]],
+            ["sttServerLaunch", ["STTOptions", "server_launch"]],
+        );
+        RANGES.push(
+            ["sttServerWait", ["STTOptions", "server_wait_sec"], "sttServerWaitVal", (v) => v + "s"],
+        );
+        TEXTS.push(
+            ["ttsOpenAIModel", ["TTSOptions", "openai_model"], 100],
+            ["ttsOpenAIVoice", ["TTSOptions", "openai_voice"], 100],
+            ["ttsOpenAIInstr", ["TTSOptions", "openai_instructions"], 300],
+            ["ttsElevenModel", ["TTSOptions", "eleven_model"], 64],
+            ["ttsAzureRegion", ["TTSOptions", "azure_region"], 40],
+            ["ttsAzureVoice", ["TTSOptions", "azure_voice"], 100],
+            ["sttServerExe", ["STTOptions", "server_exe"], 400],
+            ["sttServerArgs", ["STTOptions", "server_args"], 1000],
+            ["filterMask", ["TextFilter", "mask"], 1],
+        );
+        const sttLaunch = (c) => c.STTOptions.server_launch;
+        DEPENDS.push(
+            ["sttServerExe", sttLaunch],
+            ["sttServerArgs", sttLaunch],
+            ["sttServerWait", sttLaunch],
         );
         function applyDepends(c) {
             if (!c) return;
@@ -9056,6 +9356,362 @@
             $("ttsMuteInfo").textContent = tts.muted === null || tts.muted === undefined
                 ? "Unmutes over OSC while the voice talks, then puts it back. In toggle mode this waits until VRChat has reported your mic state (OSC on)."
                 : "Unmutes over OSC while the voice talks, then puts it back. VRChat mic is " + (tts.muted ? "muted" : "on") + ".";
+        }
+    </script>
+    <script>
+        "use strict";
+        /* ---------------- voice: cloud voices, local whisper, voice commands, word filter ----------------
+           Its own block like Assist. Plain fields are bound through the shared
+           CHECKS/TEXTS/RANGES tables; this block draws the lists and the
+           engine-specific parts. Lists are always written back whole, built
+           from what is on screen, so a replayed edit cannot add a row twice. */
+        const VOICE = { testSeq: null, sttSeq: null, replSig: "", cmdSig: "", censorSig: "", voicesAsked: "" };
+
+        const STT_PRESETS = {
+            whispercpp: {
+                name: "whisper.cpp", base: "http://127.0.0.1:8080/v1", model: "whisper-1",
+                args: "-m models\\ggml-base.en.bin --host 127.0.0.1 --port 8080 --inference-path /v1/audio/transcriptions",
+            },
+            fasterwhisper: { name: "faster-whisper-server", base: "http://127.0.0.1:8000/v1", model: "Systran/faster-whisper-small" },
+            speaches: { name: "Speaches", base: "http://127.0.0.1:8000/v1", model: "Systran/faster-distil-whisper-small.en" },
+        };
+
+        /* ---- text to speech engines ---- */
+        function askVoices() { return send({ type: "tts", action: "voices" }); }
+
+        $("ttsEngine").addEventListener("change", (ev) => {
+            const engine = ev.target.value;
+            pushConfigNow((c) => { c.TTSOptions.engine = engine; });
+            VOICE.voicesAsked = engine;
+            if (engine !== "sapi") askVoices();
+        });
+        $("ttsElevenVoice").addEventListener("change", (ev) => {
+            const id = ev.target.value;
+            pushConfigNow((c) => { c.TTSOptions.eleven_voice = id; });
+        });
+        commitField($("ttsOpenAIBase"), (v) => (v.trim() === "" || /^https?:\/\/\S+$/i.test(v.trim()) ? v.trim() : null),
+            (c, v) => { c.TTSOptions.openai_base_url = v; }, "The base URL must start with http:// or https://, or be empty");
+        // Listed after commitField's own listener, so the new URL is in place first.
+        $("ttsOpenAIBase").addEventListener("change", () => askVoices());
+        $("ttsAzureRegion").addEventListener("change", () => askVoices());
+        ["ttsOpenAIKey", "ttsElevenKey", "ttsAzureKey"].forEach((id) => {
+            document.querySelectorAll('[data-secret-save="' + id + '"], [data-secret-clear="' + id + '"]').forEach((b) => {
+                b.addEventListener("click", () => askVoices());
+            });
+        });
+        document.addEventListener("click", (ev) => {
+            if (!ev.target.closest("[data-tts-voices]")) return;
+            if (askVoices()) toast("Asking for voices…");
+        });
+
+        function renderVoiceTTS(st) {
+            const a = st.assist;
+            const t = st.config.TTSOptions;
+            const engine = t.engine || "sapi";
+            const locked = lockForms();
+            const typing = document.activeElement;
+            document.querySelectorAll(".tts-engine").forEach((el) => {
+                el.hidden = !el.dataset.engines.split(" ").includes(engine);
+            });
+            if (!locked && typing !== $("ttsEngine")) $("ttsEngine").value = engine;
+            if (!locked && typing !== $("ttsOpenAIBase")) $("ttsOpenAIBase").value = t.openai_base_url || "";
+
+            const voices = a.tts.engineVoices || [];
+            const list = $("ttsEngineVoiceList");
+            const sig = JSON.stringify(voices);
+            if (list.dataset.sig !== sig) {
+                list.dataset.sig = sig;
+                list.replaceChildren(...voices.map((v) => {
+                    const o = document.createElement("option");
+                    o.value = v.id;
+                    if (v.name !== v.id) o.label = v.name;
+                    return o;
+                }));
+            }
+            if (!locked) {
+                fillSelect("ttsElevenVoice", voices.map((v) => ({ value: v.id, label: v.name })), t.eleven_voice,
+                    voices.length ? "Pick a voice" : "Save the key, then refresh");
+            }
+            const err = a.tts.engineVoicesError || "";
+            document.querySelectorAll(".tts-voices-info").forEach((el) => {
+                if (el.dataset.base === undefined) el.dataset.base = el.textContent;
+                el.textContent = err || el.dataset.base;
+                el.classList.toggle("bad", !!err);
+            });
+            // Ask once per engine when there is nothing to pick from yet.
+            if (engine !== "sapi" && !voices.length && !err && VOICE.voicesAsked !== engine) {
+                VOICE.voicesAsked = engine;
+                askVoices();
+            }
+            if (a.tts.synthesizing && !a.tts.speaking) $("ttsBadge").textContent = "preparing";
+        }
+
+        /* ---- local whisper ---- */
+        document.addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-stt-preset]");
+            if (!button) return;
+            const p = STT_PRESETS[button.dataset.sttPreset];
+            if (!p) return;
+            pushConfigNow((c) => {
+                c.STTOptions.base_url = p.base;
+                c.STTOptions.model = p.model;
+                if (p.args && !c.STTOptions.server_args) c.STTOptions.server_args = p.args;
+            });
+            $("sttBase").value = p.base;
+            $("sttModel").value = p.model;
+            toast(p.name + " filled in. Start the server, then Test.");
+        });
+        $("sttTest").addEventListener("click", () => {
+            if (send({ type: "stt", action: "test" })) $("sttTestInfo").textContent = "Testing…";
+        });
+        $("sttServerStart").addEventListener("click", () => send({ type: "stt", action: "serverStart" }));
+        $("sttServerStop").addEventListener("click", () => send({ type: "stt", action: "serverStop" }));
+
+        function renderVoiceSTT(st) {
+            const stt = st.assist.stt;
+            const s = st.config.STTOptions;
+            const test = stt.test || {};
+            if (VOICE.testSeq === null) VOICE.testSeq = test.seq;
+            if (test.seq !== VOICE.testSeq) {
+                VOICE.testSeq = test.seq;
+                toast(test.ok ? "Transcription server works" : "Test failed: " + test.message, !test.ok);
+            }
+            const info = $("sttTestInfo");
+            if (test.busy) info.textContent = "Testing…";
+            else if (test.seq) info.textContent = (test.ok ? "Works · " : "Failed: ") + test.message;
+            info.classList.toggle("bad", !test.busy && !!test.seq && !test.ok);
+
+            const srv = stt.server || {};
+            let text;
+            if (srv.external) text = "Something already answers at the base URL, so Fern uses it";
+            else if (srv.running) text = "Running (pid " + srv.pid + ")" + (srv.ready ? ", ready" : ", loading…");
+            else text = srv.error || (s.server_launch ? "Starts when you next dictate" : "Not running");
+            $("sttServerInfo").textContent = text;
+            $("sttServerInfo").classList.toggle("bad", !srv.running && !!srv.error);
+            const log = $("sttServerLog");
+            log.hidden = !srv.output;
+            if (log.textContent !== (srv.output || "")) log.textContent = srv.output || "";
+            $("sttServerStart").disabled = !!srv.running || !s.server_launch || !(s.server_exe || "").trim();
+            $("sttServerStop").disabled = !srv.started;
+
+            if (VOICE.sttSeq === null) VOICE.sttSeq = stt.seq;
+            if (stt.seq !== VOICE.sttSeq) {
+                VOICE.sttSeq = stt.seq;
+                if (stt.command) toast("Voice command: " + stt.command);
+            }
+        }
+
+        /* ---- voice commands ---- */
+        function voiceCommandRules(st) {
+            return ((st.config.Rules && st.config.Rules.list) || []).filter((r) => r.trigger && r.trigger.type === "voice.command");
+        }
+        function openVoiceRule(rule, isNew) {
+            showPage("rules");
+            openRuleEditor(rule, isNew);
+        }
+        $("voiceCmdNew").addEventListener("click", () => {
+            if (!ruleDef("trigger", "voice.command")) { toast("Voice commands aren't available", true); return; }
+            const d = newRuleDraft();
+            d.trigger = { type: "voice.command", params: {} };
+            openVoiceRule(d, true);
+        });
+        $("voiceCmdList").addEventListener("change", (ev) => {
+            if (!ev.target.classList.contains("rule-on")) return;
+            send({ type: "rule", action: "enable", module: ev.target.closest(".rule-row").dataset.id, enabled: ev.target.checked });
+        });
+        $("voiceCmdList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-voice-rule]");
+            if (!button) return;
+            const id = button.closest(".rule-row").dataset.id;
+            const rule = S.state ? voiceCommandRules(S.state).find((r) => r.id === id) : null;
+            if (button.dataset.voiceRule === "edit") {
+                if (rule) openVoiceRule(rule, false);
+                return;
+            }
+            send({ type: "rule", action: "test", module: id });
+        });
+
+        function renderVoiceCommands(st) {
+            const reg = st.rules || {};
+            const status = reg.status || {};
+            const list = voiceCommandRules(st);
+            const on = list.filter((r) => r.enabled).length;
+            $("voiceCmdBadge").textContent = list.length ? on + " of " + list.length + " on" : "none";
+            $("voiceCmdBadge").classList.toggle("on", !!reg.enabled && on > 0);
+            $("voiceRulesOff").hidden = !!reg.enabled || !list.length;
+            const heard = (st.voice && st.voice.heard) || {};
+            $("voiceHeard").textContent = heard.count
+                ? "Last heard “" + heard.text + "” at " + fmtWhen(heard.at) + " → " + (heard.hits || []).map((h) => h.name).join(", ")
+                : "No command heard yet";
+
+            const box = $("voiceCmdList");
+            const sig = JSON.stringify([list, status, reg.enabled, (reg.triggers || []).length]);
+            if (sig === VOICE.cmdSig) return;
+            VOICE.cmdSig = sig;
+            box.replaceChildren();
+            if (!list.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No voice commands yet.";
+                box.appendChild(empty);
+                return;
+            }
+            list.forEach((r) => {
+                const s = status[r.id] || {};
+                const row = document.createElement("div");
+                row.className = "row rule-row" + (r.enabled && reg.enabled ? "" : " off");
+                row.dataset.id = r.id;
+                row.innerHTML =
+                    '<label class="switch" title="Command on"><input type="checkbox" class="rule-on" aria-label="Command on"><span></span></label>' +
+                    '<div class="row-main"><span class="row-name"></span><span class="row-desc rule-sum"></span><span class="row-desc rule-stat"></span></div>' +
+                    '<div class="row-actions">' +
+                    '<button class="btn icon" type="button" data-voice-rule="test" title="Run its actions now" aria-label="Run its actions now"><i class="fa fa-play" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-voice-rule="edit" title="Edit on the Rules page" aria-label="Edit"><i class="fa fa-pen" aria-hidden="true"></i></button>' +
+                    "</div>";
+                row.querySelector(".rule-on").checked = !!r.enabled;
+                const p = (r.trigger && r.trigger.params) || {};
+                row.querySelector(".row-name").textContent = r.name || "“" + (p.phrase || "") + "”";
+                const summary = ruleSummary(r);
+                row.querySelector(".rule-sum").textContent = summary;
+                row.querySelector(".rule-sum").title = summary;
+                const stat = row.querySelector(".rule-stat");
+                stat.textContent = s.error || (s.lastFired ? "Last ran " + fmtWhen(s.lastFired) : "Not heard since Fern started");
+                stat.classList.toggle("bad", !!s.error);
+                box.appendChild(row);
+            });
+        }
+
+        /* ---- word filter ---- */
+        function readReplaceRows() {
+            return Array.from($("filterReplaceList").querySelectorAll(".filter-row")).map((row) => ({
+                on: row.querySelector(".filter-on").checked,
+                from: row.querySelector(".filter-from").value,
+                to: row.querySelector(".filter-to").value,
+            }));
+        }
+        function pushReplaceRows(rows, now) {
+            const list = rows.slice();
+            pushConfig((c) => { c.TextFilter.replace = list; }, now);
+        }
+        $("filterReplaceAdd").addEventListener("click", () => {
+            const c = config();
+            if (!c) return;
+            const max = (S.state.voice && S.state.voice.limits && S.state.voice.limits.replace) || 100;
+            const rows = readReplaceRows();
+            if (rows.length >= max) { toast("Fern keeps up to " + max + " replacements", true); return; }
+            rows.push({ on: true, from: "", to: "" });
+            VOICE.replSig = "";
+            pushReplaceRows(rows, true);
+            // Draw the new row straight away so it can be typed into.
+            drawReplaceRows(rows, {});
+            const inputs = $("filterReplaceList").querySelectorAll(".filter-from");
+            if (inputs.length) inputs[inputs.length - 1].focus();
+        });
+        $("filterReplaceList").addEventListener("input", (ev) => {
+            if (ev.target.matches(".filter-from, .filter-to")) pushReplaceRows(readReplaceRows(), false);
+        });
+        $("filterReplaceList").addEventListener("change", (ev) => {
+            if (ev.target.matches(".filter-on")) pushReplaceRows(readReplaceRows(), true);
+        });
+        $("filterReplaceList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-filter]");
+            if (!button) return;
+            const rows = readReplaceRows();
+            const i = Number(button.closest(".filter-row").dataset.index);
+            const action = button.dataset.filter;
+            if (action === "delete") rows.splice(i, 1);
+            else if (action === "up" && i > 0) rows.splice(i - 1, 0, rows.splice(i, 1)[0]);
+            else if (action === "down" && i < rows.length - 1) rows.splice(i + 1, 0, rows.splice(i, 1)[0]);
+            else return;
+            VOICE.replSig = "";
+            pushReplaceRows(rows, true);
+            drawReplaceRows(rows, {});
+        });
+
+        function drawReplaceRows(rows, errors) {
+            const box = $("filterReplaceList");
+            box.replaceChildren();
+            if (!rows.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No replacements yet.";
+                box.appendChild(empty);
+            }
+            rows.forEach((r, i) => {
+                const row = document.createElement("div");
+                row.className = "row filter-row";
+                row.dataset.index = i;
+                row.innerHTML =
+                    '<label class="switch" title="Replacement on"><input type="checkbox" class="filter-on" aria-label="Replacement on"><span></span></label>' +
+                    '<div class="filter-fields">' +
+                    '<div class="filter-pair">' +
+                    '<input type="text" class="filter-from" maxlength="100" placeholder="brb or /regex/" autocomplete="off" spellcheck="false" aria-label="Replace">' +
+                    '<i class="fa fa-arrow-right filter-arrow" aria-hidden="true"></i>' +
+                    '<input type="text" class="filter-to" maxlength="144" placeholder="be right back" autocomplete="off" aria-label="With">' +
+                    "</div>" +
+                    '<span class="row-desc bad filter-err" hidden></span>' +
+                    "</div>" +
+                    '<div class="row-actions">' +
+                    '<button class="btn icon" type="button" data-filter="up" title="Move up" aria-label="Move up"' + (i === 0 ? " disabled" : "") + '><i class="fa fa-chevron-up" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-filter="down" title="Move down" aria-label="Move down"' + (i === rows.length - 1 ? " disabled" : "") + '><i class="fa fa-chevron-down" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-filter="delete" title="Delete" aria-label="Delete"><i class="fa fa-trash" aria-hidden="true"></i></button>' +
+                    "</div>";
+                row.querySelector(".filter-on").checked = !!r.on;
+                row.querySelector(".filter-from").value = r.from || "";
+                row.querySelector(".filter-to").value = r.to || "";
+                const err = errors["replace." + i];
+                const errEl = row.querySelector(".filter-err");
+                errEl.hidden = !err;
+                errEl.textContent = err ? "Not a valid regex: " + err : "";
+                box.appendChild(row);
+            });
+        }
+
+        $("filterCensor").addEventListener("change", (ev) => {
+            const words = ev.target.value.split(/\r?\n/).map((w) => w.trim()).filter((w) => w);
+            pushConfigNow((c) => { c.TextFilter.censor = words; });
+        });
+
+        function renderVoiceFilter(st) {
+            const f = st.config.TextFilter;
+            if (!f) return;
+            const errors = (st.voice && st.voice.filterErrors) || {};
+            const anyOn = f.typed || f.dictated || f.speech;
+            const replace = f.replace || [];
+            const censor = f.censor || [];
+            const active = replace.filter((r) => r.on && r.from).length;
+            $("filterBadge").textContent = !anyOn ? "off" : (active || censor.length)
+                ? active + (active === 1 ? " replacement" : " replacements") + " · " + censor.length + " hidden"
+                : "nothing set";
+            $("filterBadge").classList.toggle("on", !!anyOn && (active > 0 || censor.length > 0));
+            $("filterReplaceCount").textContent = replace.length ? replace.length : "";
+            $("filterReplaceList").classList.toggle("dim", !anyOn);
+            ["filterCensor", "filterMask"].forEach((id) => $(id).closest(".field").classList.toggle("inactive", !anyOn));
+
+            const box = $("filterReplaceList");
+            const editing = box.contains(document.activeElement);
+            const sig = JSON.stringify([replace, errors]);
+            if (!editing && !lockForms() && sig !== VOICE.replSig) {
+                VOICE.replSig = sig;
+                drawReplaceRows(replace, errors);
+            }
+            const cbox = $("filterCensor");
+            const csig = JSON.stringify(censor);
+            if (document.activeElement !== cbox && csig !== VOICE.censorSig) {
+                VOICE.censorSig = csig;
+                cbox.value = censor.join("\n");
+            }
+            const censorErrs = censor.map((w, i) => errors["censor." + i] ? "“" + w + "” is not a valid regex: " + errors["censor." + i] : "").filter((x) => x);
+            $("filterErrors").hidden = !censorErrs.length;
+            $("filterErrors").textContent = censorErrs.join(" · ");
+        }
+
+        function renderVoice(st) {
+            if (!st.config || !st.assist) return;
+            renderVoiceTTS(st);
+            renderVoiceSTT(st);
+            renderVoiceCommands(st);
+            renderVoiceFilter(st);
         }
     </script>
     <script>
