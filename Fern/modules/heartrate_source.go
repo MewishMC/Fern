@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/hypebeast/go-osc/osc"
 )
 
 // Endpoints, variables so tests can point them at a local fake server.
@@ -583,12 +582,6 @@ func asNumber(v any) (float64, bool) {
 	return 0, false
 }
 
-// avatarSend delivers one avatar parameter with the same OSC library and
-// target the chatbox uses. A variable so tests can capture the messages.
-var avatarSend = func(o OSCOptions, msg *osc.Message) error {
-	return osc.NewClient(o.Host, o.Port).Send(msg)
-}
-
 // heartFloat maps 0-255 bpm onto -1..1 (signed, the HeartRateFloat convention
 // of the common VRChat heart rate prefabs) or 0..1 (unsigned, HRPercent style).
 func heartFloat(bpm int, signed bool) float32 {
@@ -605,11 +598,13 @@ func heartFloat(bpm int, signed bool) float32 {
 	return float32(v)
 }
 
+// sendParam sends one heart rate parameter; an empty name is a parameter
+// the user left out.
 func sendParam(o OSCOptions, name string, value any) {
 	if name == "" {
 		return
 	}
-	_ = avatarSend(o, osc.NewMessage("/avatar/parameters/"+name, value))
+	_ = sendAvatarParamTo(o, name, value)
 }
 
 // heartAvatarLoop drives the avatar parameters on its own goroutine: the

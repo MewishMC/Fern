@@ -79,6 +79,7 @@ type uiState struct {
 	Network networkState       `json:"network"`
 	GPUs    []modules.GPUInfo  `json:"gpus"`
 	App     appState           `json:"app"`
+	OSCIn   oscInState         `json:"oscIn"`
 }
 
 type appState struct {
@@ -556,6 +557,7 @@ func buildState() uiState {
 		Network: currentNetwork(),
 		GPUs:    orEmpty(modules.GPUs()),
 		App:     appState{HotkeyErr: UI.HotkeyError(), SteamVR: currentSteamVR()},
+		OSCIn:   currentOSCIn(),
 	}
 }
 

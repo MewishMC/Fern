@@ -195,9 +195,8 @@ func applyVoiceSettings(v *sapiVoice, cur *voiceSettings, o TTSOptions) error {
 }
 
 // noteMuteSelf records VRChat's MuteSelf avatar parameter from its OSC output.
-func noteMuteSelf(pkt osc.Packet) {
-	msg, ok := pkt.(*osc.Message)
-	if !ok || msg.Address != "/avatar/parameters/MuteSelf" || len(msg.Arguments) == 0 {
+func noteMuteSelf(msg *osc.Message) {
+	if msg == nil || msg.Address != "/avatar/parameters/MuteSelf" || len(msg.Arguments) == 0 {
 		return
 	}
 	if muted, ok := msg.Arguments[0].(bool); ok {

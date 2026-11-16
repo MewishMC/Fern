@@ -2,7 +2,6 @@ package modules
 
 import (
 	"fmt"
-	"net"
 	"strings"
 	"sync"
 	"time"
@@ -281,18 +280,6 @@ func handleAddress(address string) {
 	}
 }
 
-func handlePackage(pkt osc.Packet) {
-	noteMuteSelf(pkt)
-	switch pk := pkt.(type) {
-	case *osc.Message:
-		handleAddress(pk.Address)
-	case *osc.Bundle:
-		for _, m := range pk.Messages {
-			handleAddress(m.Address)
-		}
-	}
-}
-
 func containsAny(target string, substrings ...string) bool {
 	for _, sub := range substrings {
 		if strings.Contains(target, sub) {
@@ -303,7 +290,10 @@ func containsAny(target string, substrings ...string) bool {
 }
 
 func startAfkWorker() {
-	go listenOSC()
+	// AFK and the TTS mute tracking read VRChat's OSC from the shared bus.
+	SubscribeOSCPrefix("/", func(m *osc.Message) { handleAddress(m.Address) })
+	SubscribeOSC(AvatarParamPrefix+"MuteSelf", noteMuteSelf)
+	startOSCIn()
 	go watchWindowActivity()
 	go func() {
 		ticker := time.NewTicker(3 * time.Second)
@@ -314,38 +304,6 @@ func startAfkWorker() {
 			activityMu.Unlock()
 		}
 	}()
-}
-
-// listenOSC listens for VRChat's outgoing OSC so activity can be detected.
-// A busy port is not fatal (another OSC app may own it), but the panel shows
-// it, and the port is retried in case it frees up.
-func listenOSC() {
-	addr := &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 9001}
-	buf := make([]byte, 2048)
-	for {
-		conn, err := net.ListenUDP("udp", addr)
-		if err != nil {
-			setOSCListener(false, err)
-			time.Sleep(5 * time.Second)
-			continue
-		}
-		setOSCListener(true, nil)
-		for {
-			n, _, err := conn.ReadFromUDP(buf)
-			if err != nil {
-				break
-			}
-			noteOSCPacket()
-			pkt, err := osc.ParsePacket(string(buf[:n]))
-			if err != nil {
-				continue
-			}
-			handlePackage(pkt)
-		}
-		conn.Close()
-		setOSCListener(false, nil)
-		time.Sleep(time.Second)
-	}
 }
 
 // watchWindowActivity treats switching windows as activity, but only samples
