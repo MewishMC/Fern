@@ -10,6 +10,8 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+## v2.3 - All the lines
+
 ### Added
 - The window line can rename apps, show an app's window title or both, or hide it, per app.
   Recently focused apps can be picked from a list, "Only show listed apps" hides everything
