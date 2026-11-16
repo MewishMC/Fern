@@ -1979,6 +1979,534 @@
                     </div>
                 </div>
             </section>
+            <!-- ================= DISCORD ================= -->
+            <section class="page" id="page-discord">
+                <div class="page-head">
+                    <div>
+                        <h2>Discord</h2>
+                        <p>Rich Presence and your voice channel, through the Discord app on this PC</p>
+                    </div>
+                    <span class="badge link-badge" id="discordBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the voice line</b>
+                            <span>Your voice channel, who is talking and your mute state</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="discord"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show Rich Presence</b>
+                            <span>Puts your VRChat world on your Discord profile</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="discordPresence"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="discordStatus"></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Your Discord application</h3>
+                        <button class="btn small ghost" type="button" data-external="https://discord.com/developers/applications"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Developer Portal</button>
+                    </div>
+                    <ol class="howto">
+                        <li>Open the Developer Portal, press <b>New Application</b> and name it, e.g. <i>VRChat</i>. The name is what your profile shows as “Playing”.</li>
+                        <li>Copy the <b>Application ID</b> from General Information into the box below. That is all Rich Presence needs.</li>
+                        <li>For the voice line, open <b>OAuth2</b>: copy the <b>Client Secret</b> below and add <code>http://localhost</code> under Redirects.</li>
+                    </ol>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Application ID</b>
+                            <span>The long number from General Information</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordClientId" placeholder="123456789012345678" maxlength="24" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Client secret</b>
+                            <span>Only for the voice line. Stored encrypted for your Windows account, never shown again.</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="discordSecret" data-secret="discord_secret" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="discordSecret">Save</button>
+                            <button class="btn small ghost" type="button" data-secret-clear="discordSecret">Clear</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Redirect URI</b>
+                            <span>Must match one of the app's OAuth2 redirects exactly</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordRedirect" placeholder="http://localhost" maxlength="200" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Voice line</h3>
+                        <span class="badge link-badge" id="discordVoiceBadge">off</span>
+                    </div>
+                    <div class="link-status" id="discordVoiceStatus"></div>
+                    <div class="btn-row">
+                        <button class="btn small" type="button" id="discordConnect"><i class="fa fa-right-to-bracket" aria-hidden="true"></i> Connect voice</button>
+                        <button class="btn small ghost" type="button" id="discordSignOut">Sign out</button>
+                    </div>
+                    <div class="hint" style="margin-bottom:10px">Discord shows an approval window the first time. It only grants voice access (<code>rpc.voice.read</code>) to an application you own, or one that lists you under <b>App Testers</b>. That is why Fern uses your own application rather than a shared one.</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Layout</b>
+                            <span><code>{channel}</code> <code>{count}</code> <code>{speaking}</code> <code>{speaking_count}</code> <code>{mute_emoji}</code>, and <code>\n</code> for a new line</span>
+                        </div>
+                        <div class="field-control stack">
+                            <select id="discordPreset" aria-label="Layout preset">
+                                <option value="">Presets…</option>
+                            </select>
+                            <input type="text" id="discordTemplate" maxlength="200" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Names to list</b>
+                            <span>Others are shown as +N</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="discordMaxSpeakers" min="1" max="10" step="1">
+                            <span class="val" id="discordMaxSpeakersVal">2</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Keep a name after they stop</b>
+                            <span>Stops the line flickering on every syllable</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="discordDebounce" min="200" max="2000" step="100">
+                            <span class="val" id="discordDebounceVal">500ms</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Leave me out</b>
+                            <span>Hide your own name from the speakers</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="discordHideSelf"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Only count speakers</b>
+                            <span>“2 speaking” instead of their names</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="discordCountOnly"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When nobody talks</b>
+                            <span>Shown in place of the names</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordQuiet" maxlength="40" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When not in a call</b>
+                            <span>Leave empty to hide the line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordNotInVC" placeholder="hidden" maxlength="60" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show mute and deafen</b>
+                            <span>A small mark while your mic or sound is off</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="discordShowMute"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Muted / deafened text</b>
+                            <span>What the mark says</span>
+                        </div>
+                        <div class="field-control pair">
+                            <input type="text" id="discordMuteText" maxlength="16" autocomplete="off" aria-label="Muted text">
+                            <input type="text" id="discordDeafText" maxlength="16" autocomplete="off" aria-label="Deafened text">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Rich Presence</h3>
+                        <span class="badge" id="discordWorldBadge">no world</span>
+                    </div>
+                    <div class="link-status" id="discordPresenceNow"></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Only while VRChat runs</b>
+                            <span>Clears the presence when you close the game</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="discordOnlyVRChat"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>First line</b>
+                            <span><code>{world}</code> <code>{type}</code> <code>{region}</code> <code>{count}</code> <code>{mode}</code></span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordDetails" maxlength="128" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Second line</b>
+                            <span>Same placeholders. Until a world is known it shows VR or Desktop.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordState" maxlength="128" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show time in the world</b>
+                            <span>The elapsed timer on your profile</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="discordElapsed"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Image</b>
+                            <span>An art asset key from your app's Rich Presence page, or an https image link</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordImage" placeholder="none" maxlength="300" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Image hover text</b>
+                            <span>Shown when someone points at the image</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordImageText" maxlength="128" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Join button</b>
+                            <span>Only offered in public instances, opens the world on vrchat.com</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="discordJoin"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Join button text</b>
+                            <span>Up to 32 characters</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="discordJoinLabel" maxlength="32" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Your own button</b>
+                            <span>Text and an https link, e.g. your stream. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control pair">
+                            <input type="text" id="discordButtonLabel" placeholder="Text" maxlength="32" autocomplete="off" aria-label="Button text">
+                            <input type="text" id="discordButtonURL" placeholder="https://…" maxlength="512" autocomplete="off" spellcheck="false" aria-label="Button link">
+                        </div>
+                    </div>
+                    <div class="hint">Discord itself hides presence buttons from you; other people see them.</div>
+                </div>
+            </section>
+
+            <!-- ================= TWITCH ================= -->
+            <section class="page" id="page-twitch">
+                <div class="page-head">
+                    <div>
+                        <h2>Twitch</h2>
+                        <p>Live status, viewers, game and followers from the Twitch API</p>
+                    </div>
+                    <span class="badge link-badge" id="twitchBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the Twitch line</b>
+                            <span>Asks Twitch for new numbers on the interval below</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="twitch"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="twitchStatus"></div>
+                    <div class="btn-row"><button class="btn small ghost" type="button" id="twitchRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Check now</button></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Set up</h3>
+                        <button class="btn small ghost" type="button" data-external="https://dev.twitch.tv/console/apps"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Twitch Developer Console</button>
+                    </div>
+                    <ol class="howto">
+                        <li>In the Developer Console press <b>Register Your Application</b>. Any name works; set the OAuth Redirect URL to <code>http://localhost</code>, the category to <i>Application Integration</i> and the client type to <b>Public</b>.</li>
+                        <li>Copy its <b>Client ID</b> below.</li>
+                        <li>Press <b>Sign in with Twitch</b>, then confirm the code on the page that opens. Fern keeps the sign-in fresh by itself.</li>
+                    </ol>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Client ID</b>
+                            <span>From your application in the Developer Console</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="twitchClientId" maxlength="64" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Channel</b>
+                            <span>Leave empty for the account you sign in with</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="twitchChannel" placeholder="your channel" maxlength="40" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn small" type="button" id="twitchSignIn"><i class="fa fa-brands fa-twitch" aria-hidden="true"></i> Sign in with Twitch</button>
+                        <button class="btn small ghost" type="button" id="twitchSignOut">Sign out</button>
+                    </div>
+                    <div class="device-box" id="twitchDevice" hidden></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Or paste a token</b>
+                            <span>A user access token you made yourself. Stored encrypted, never shown again.</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="twitchToken" data-secret="twitch_token" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="twitchToken">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head"><h3>What to show</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Live marker</b>
+                            <span>Text that says you are live</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="twitchShowLive"><span></span></label>
+                            <input type="text" id="twitchLiveText" maxlength="24" autocomplete="off" aria-label="Live text">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Viewers</b>
+                            <span>Count and the word after it</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="twitchShowViewers"><span></span></label>
+                            <input type="text" id="twitchViewerLabel" maxlength="24" autocomplete="off" aria-label="Viewer label">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Game</b>
+                            <span>The category, with a word before it</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="twitchShowGame"><span></span></label>
+                            <input type="text" id="twitchGamePrefix" maxlength="24" autocomplete="off" aria-label="Game prefix">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Followers</b>
+                            <span>Total followers and the word after it</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="twitchShowFollowers"><span></span></label>
+                            <input type="text" id="twitchFollowerLabel" maxlength="24" autocomplete="off" aria-label="Follower label">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Stream title</b>
+                            <span>Titles are long; the chatbox is short</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="twitchShowTitle"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Short numbers</b>
+                            <span>1.2k instead of 1234</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="twitchCompact"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between parts</b>
+                            <span>Spaces count</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="twitchSeparator" maxlength="8" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Your own layout</b>
+                            <span><code>{live}</code> <code>{viewers}</code> <code>{viewerCount}</code> <code>{game}</code> <code>{title}</code> <code>{followers}</code> <code>{followerCount}</code> <code>{channel}</code>. Replaces the switches above.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="twitchTemplate" placeholder="use the switches" maxlength="200" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>While offline</b>
+                            <span>Leave empty to hide the line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="twitchOffline" placeholder="hidden" maxlength="60" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Check every</b>
+                            <span>How often Fern asks Twitch</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="twitchInterval" min="15" max="600" step="15">
+                            <span class="val" id="twitchIntervalVal">60s</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SOUNDPAD ================= -->
+            <section class="page" id="page-soundpad">
+                <div class="page-head">
+                    <div>
+                        <h2>Soundpad</h2>
+                        <p>Shows the sound you just played through Soundpad</p>
+                    </div>
+                    <span class="badge link-badge" id="soundpadBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the Soundpad line</b>
+                            <span>Talks to Soundpad's remote control on this PC; nothing to sign in to</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="soundpad"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="soundpadStatus"></div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Icon</b>
+                            <span>In front of the sound name</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="soundpadIcon" maxlength="4" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show for</b>
+                            <span>How long a sound stays in the chatbox</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="soundpadDuration" min="2" max="60" step="1">
+                            <span class="val" id="soundpadDurationVal">8s</span>
+                        </div>
+                    </div>
+                    <div class="hint">Soundpad has no “now playing” request, so Fern notices which sound's play count went up. Sounds played while Fern is closed are not shown.</div>
+                </div>
+            </section>
+
+            <!-- ================= VOICEMOD ================= -->
+            <section class="page" id="page-voicemod">
+                <div class="page-head">
+                    <div>
+                        <h2>Voicemod</h2>
+                        <p>Switch voices, play sounds and tell the room about them</p>
+                    </div>
+                    <span class="badge link-badge" id="voicemodBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the Voicemod line</b>
+                            <span>The sound you play from here, and your active voice</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="voicemod"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Connect for the soundboard</b>
+                            <span>Keeps the switcher below working with the line off</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="voicemodEnabled"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Client key</b>
+                            <span>Voicemod's Control API only accepts apps with a key, which Voicemod gives developers on request. Stored encrypted, never shown again.</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="voicemodKey" data-secret="voicemod_key" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="voicemodKey">Save</button>
+                            <button class="btn small ghost" type="button" data-secret-clear="voicemodKey">Clear</button>
+                        </div>
+                    </div>
+                    <div class="link-status" id="voicemodStatus"></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Voice</h3>
+                        <button class="btn small ghost" type="button" id="voicemodReload"><i class="fa fa-rotate" aria-hidden="true"></i> Reload</button>
+                    </div>
+                    <div class="voice-list" id="voicemodVoices"></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Soundboard</h3>
+                        <button class="btn small ghost" type="button" id="voicemodStop"><i class="fa fa-stop" aria-hidden="true"></i> Stop all</button>
+                    </div>
+                    <input type="text" id="voicemodSearch" placeholder="Search sounds" autocomplete="off" aria-label="Search sounds">
+                    <div class="sound-grid" id="voicemodSounds"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head"><h3>Chatbox</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Announce sounds</b>
+                            <span>Only sounds started from Fern; Voicemod does not report its own hotkeys</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="voicemodAnnounceSounds"><span></span></label>
+                            <input type="text" id="voicemodSoundIcon" maxlength="4" autocomplete="off" aria-label="Sound icon">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show a sound for</b>
+                            <span>How long it stays in the chatbox</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="voicemodSoundSec" min="2" max="30" step="1">
+                            <span class="val" id="voicemodSoundSecVal">8s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Announce the voice</b>
+                            <span>Stays while a voice is active</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="voicemodAnnounceVoice"><span></span></label>
+                            <input type="text" id="voicemodVoiceIcon" maxlength="4" autocomplete="off" aria-label="Voice icon">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- ================= ASSIST ================= -->
             <section class="page" id="page-assist">
                 <div class="page-head">
@@ -2955,6 +3483,7 @@
             ["vrchat", "VRChat"],
             ["media", "Music & text"],
             ["system", "System"],
+            ["social", "Apps"],
             ["steamvr", "SteamVR"],
         ];
         const MODULES = [
@@ -2972,6 +3501,10 @@
             { id: "window", name: "Active window", icon: "fa-window-maximize", category: "system", desc: "Active window title", keywords: "focus app program" },
             { id: "battery", name: "Tracker battery", icon: "fa-battery-three-quarters", category: "steamvr", desc: "Headset, controller and tracker charge", keywords: "steamvr vr battery tracker controller headset fbt charge" },
             { id: "vrperf", name: "VR performance", icon: "fa-gauge-high", category: "steamvr", desc: "Frame rate, reprojection and GPU time", keywords: "steamvr vr fps frames reprojection gpu performance" },
+            { id: "discord", name: "Discord", icon: "fa-brands fa-discord", category: "social", desc: "Voice channel, speakers and Rich Presence", keywords: "voice call vc rich presence rpc" },
+            { id: "twitch", name: "Twitch", icon: "fa-brands fa-twitch", category: "social", desc: "Live status, viewers and game", keywords: "stream live viewers followers" },
+            { id: "soundpad", name: "Soundpad", icon: "fa-volume-high", category: "social", desc: "The sound you just played", keywords: "soundboard sound effect" },
+            { id: "voicemod", name: "Voicemod", icon: "fa-masks-theater", category: "social", desc: "Voice changer and soundboard", keywords: "voice changer soundboard meme" },
         ];
         const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
         const MODULE_NAME = Object.fromEntries(MODULES.map((m) => [m.id, m.name]));
@@ -3121,6 +3654,7 @@
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
+            renderSocial(st);
             renderLyrics(st);
             renderCounters(st);
             renderWeather(st);
@@ -3963,6 +4497,22 @@
             ["cpuName", ["CPUOptions", "show_name"]],
             ["cpuCores", ["CPUOptions", "show_cores"]],
             ["cpuUsage", ["CPUOptions", "show_usage"]],
+            ["discordPresence", ["DiscordOptions", "presence"]],
+            ["discordOnlyVRChat", ["DiscordOptions", "only_in_vrchat"]],
+            ["discordElapsed", ["DiscordOptions", "show_elapsed"]],
+            ["discordJoin", ["DiscordOptions", "join_button"]],
+            ["discordHideSelf", ["DiscordOptions", "hide_self"]],
+            ["discordCountOnly", ["DiscordOptions", "count_only"]],
+            ["discordShowMute", ["DiscordOptions", "show_mute"]],
+            ["twitchShowLive", ["TwitchOptions", "show_live"]],
+            ["twitchShowViewers", ["TwitchOptions", "show_viewers"]],
+            ["twitchShowGame", ["TwitchOptions", "show_game"]],
+            ["twitchShowFollowers", ["TwitchOptions", "show_followers"]],
+            ["twitchShowTitle", ["TwitchOptions", "show_title"]],
+            ["twitchCompact", ["TwitchOptions", "compact"]],
+            ["voicemodEnabled", ["VoicemodOptions", "enabled"]],
+            ["voicemodAnnounceSounds", ["VoicemodOptions", "announce_sounds"]],
+            ["voicemodAnnounceVoice", ["VoicemodOptions", "announce_voice"]],
             // Assist
             ["assistShowBar", ["AssistOptions", "show_bar"]],
             ["ttsSpeakSent", ["TTSOptions", "speak_sent"]],
@@ -4028,6 +4578,11 @@
             ["vrperfBadDropped", ["VRPerfOptions", "bad_dropped_per_min"], "vrperfBadDroppedVal", asCountOrOff],
             ["vrperfBadFps", ["VRPerfOptions", "bad_fps_percent"], "vrperfBadFpsVal", asPercentOrOff],
             ["vrperfClear", ["VRPerfOptions", "clear_seconds"], "vrperfClearVal", (v) => v + "s"],
+            ["discordMaxSpeakers", ["DiscordOptions", "max_speakers"], "discordMaxSpeakersVal", asIs],
+            ["discordDebounce", ["DiscordOptions", "debounce_ms"], "discordDebounceVal", asMs],
+            ["twitchInterval", ["TwitchOptions", "interval_sec"], "twitchIntervalVal", (v) => v + "s"],
+            ["soundpadDuration", ["SoundpadOptions", "duration_sec"], "soundpadDurationVal", (v) => v + "s"],
+            ["voicemodSoundSec", ["VoicemodOptions", "sound_sec"], "voicemodSoundSecVal", (v) => v + "s"],
         ];
 
         // [text input id, config path, max length] — debounced.
@@ -4060,6 +4615,32 @@
             ["logsLabel", ["LogsOptions", "label"], 16],
             ["memLabel", ["MemoryOptions", "label"], 16],
             ["cpuLabel", ["CPUOptions", "label"], 16],
+            ["discordClientId", ["DiscordOptions", "client_id"], 24],
+            ["discordRedirect", ["DiscordOptions", "redirect_uri"], 200],
+            ["discordTemplate", ["DiscordOptions", "template"], 200],
+            ["discordQuiet", ["DiscordOptions", "quiet_text"], 40],
+            ["discordNotInVC", ["DiscordOptions", "not_in_vc_text"], 60],
+            ["discordMuteText", ["DiscordOptions", "mute_text"], 16],
+            ["discordDeafText", ["DiscordOptions", "deaf_text"], 16],
+            ["discordDetails", ["DiscordOptions", "details"], 128],
+            ["discordState", ["DiscordOptions", "state"], 128],
+            ["discordImage", ["DiscordOptions", "large_image"], 300],
+            ["discordImageText", ["DiscordOptions", "large_text"], 128],
+            ["discordJoinLabel", ["DiscordOptions", "join_label"], 32],
+            ["discordButtonLabel", ["DiscordOptions", "button_label"], 32],
+            ["discordButtonURL", ["DiscordOptions", "button_url"], 512],
+            ["twitchClientId", ["TwitchOptions", "client_id"], 64],
+            ["twitchChannel", ["TwitchOptions", "channel"], 40],
+            ["twitchLiveText", ["TwitchOptions", "live_text"], 24],
+            ["twitchViewerLabel", ["TwitchOptions", "viewer_label"], 24],
+            ["twitchGamePrefix", ["TwitchOptions", "game_prefix"], 24],
+            ["twitchFollowerLabel", ["TwitchOptions", "follower_label"], 24],
+            ["twitchSeparator", ["TwitchOptions", "separator"], 8],
+            ["twitchTemplate", ["TwitchOptions", "template"], 200],
+            ["twitchOffline", ["TwitchOptions", "offline_text"], 60],
+            ["soundpadIcon", ["SoundpadOptions", "icon"], 4],
+            ["voicemodSoundIcon", ["VoicemodOptions", "sound_icon"], 4],
+            ["voicemodVoiceIcon", ["VoicemodOptions", "voice_icon"], 4],
             ["afkIcon", ["AfkOptions", "icon"], 8],
             ["afkPlain", ["AfkOptions", "afk_message_plain"], 80],
             // Assist
@@ -4117,6 +4698,19 @@
             ["afkTimerFont", (c) => c.AfkOptions.show_timer],
             ["memDecimals", (c) => c.MemoryOptions.show_used || c.MemoryOptions.show_total],
             ["cpuDecimals", (c) => c.CPUOptions.show_usage],
+            ["discordMuteText", (c) => c.DiscordOptions.show_mute],
+            ["discordJoinLabel", (c) => c.DiscordOptions.join_button],
+            ["discordMaxSpeakers", (c) => !c.DiscordOptions.count_only],
+            ["discordOnlyVRChat", (c) => c.DiscordOptions.presence],
+            ["discordDetails", (c) => c.DiscordOptions.presence],
+            ["discordState", (c) => c.DiscordOptions.presence],
+            ["discordElapsed", (c) => c.DiscordOptions.presence],
+            ["discordImage", (c) => c.DiscordOptions.presence],
+            ["discordImageText", (c) => c.DiscordOptions.presence && !!c.DiscordOptions.large_image],
+            ["discordJoin", (c) => c.DiscordOptions.presence],
+            ["discordButtonLabel", (c) => c.DiscordOptions.presence],
+            ["twitchSeparator", (c) => !c.TwitchOptions.template],
+            ["voicemodSoundSec", (c) => c.VoicemodOptions.announce_sounds],
             // Assist
             ["ttsVoiceMode", (c) => c.TTSOptions.unmute],
             ["sttTranslateTo", (c) => c.STTOptions.translate],
@@ -4360,6 +4954,275 @@
             toggleModule(input.dataset.modCard, input.checked);
             if (S.state) renderModules(S.state);
         });
+
+        /* ---------------- app integrations ---------------- */
+        // Discord, Twitch, Soundpad and Voicemod. Secrets are write-only: the
+        // panel sends a new value and only ever learns whether one is set.
+        const DISCORD_PRESETS = [
+            ["Detailed", "🔊 {channel} ({count}) | 🎙️ {speaking} {mute_emoji}"],
+            ["Compact", "🔊 {channel} ({count}) {mute_emoji}"],
+            ["Minimal", "🎙️ {speaking}"],
+            ["Speaker count", "🎙️ {speaking_count} speaking • {count} in VC"],
+            ["Count only", "🔊 {channel} — {count} users"],
+            ["Multi-line", "🔊 {channel} ({count})\\n🎙️ {speaking} {mute_emoji}"],
+            ["Status bar", "{mute_emoji} {channel} 👥{count}"],
+        ];
+        DISCORD_PRESETS.forEach(([name, template]) => {
+            const option = document.createElement("option");
+            option.value = template;
+            option.textContent = name;
+            $("discordPreset").appendChild(option);
+        });
+        $("discordPreset").addEventListener("change", (ev) => {
+            const template = ev.target.value;
+            ev.target.value = "";
+            if (!template) return;
+            $("discordTemplate").value = template;
+            pushConfigNow((c) => { c.DiscordOptions.template = template; });
+        });
+
+        function openExternal(url) {
+            if (typeof window.fernOpenURL === "function") window.fernOpenURL(url);
+            else window.open(url, "_blank", "noopener");
+        }
+        document.addEventListener("click", (ev) => {
+            const link = ev.target.closest("[data-external]");
+            if (link) openExternal(link.dataset.external);
+        });
+
+        function saveSecret(input) {
+            const value = input.value.trim();
+            if (!value) {
+                toast("Paste it first", true);
+                return;
+            }
+            if (send({ type: "secret", module: input.dataset.secret, text: value })) {
+                input.value = "";
+                toast("Saved");
+            }
+        }
+        document.querySelectorAll("[data-secret-save]").forEach((button) => {
+            const input = $(button.dataset.secretSave);
+            button.addEventListener("click", () => saveSecret(input));
+            input.addEventListener("keydown", (ev) => {
+                if (ev.key === "Enter") {
+                    ev.preventDefault();
+                    saveSecret(input);
+                }
+            });
+        });
+        document.querySelectorAll("[data-secret-clear]").forEach((button) => {
+            button.addEventListener("click", () => {
+                const input = $(button.dataset.secretClear);
+                if (send({ type: "secret", module: input.dataset.secret, text: "" })) {
+                    input.value = "";
+                    toast("Cleared");
+                }
+            });
+        });
+
+        $("discordConnect").addEventListener("click", () => {
+            if (send({ type: "discord", action: "authorize" })) toast("Check Discord for the approval window");
+        });
+        $("discordSignOut").addEventListener("click", () => {
+            if (send({ type: "discord", action: "signout" })) toast("Signed out of the voice line");
+        });
+        $("twitchSignIn").addEventListener("click", () => {
+            S.twitchOpened = "";
+            send({ type: "twitch", action: "signin" });
+        });
+        $("twitchSignOut").addEventListener("click", () => {
+            if (send({ type: "twitch", action: "signout" })) toast("Signed out of Twitch");
+        });
+        $("twitchRefresh").addEventListener("click", () => {
+            if (send({ type: "twitch", action: "refresh" })) toast("Checking Twitch");
+        });
+        $("twitchDevice").addEventListener("click", (ev) => {
+            const button = ev.target.closest("button[data-act]");
+            if (!button) return;
+            if (button.dataset.act === "open") openExternal(button.dataset.uri);
+            else send({ type: "twitch", action: "cancel" });
+        });
+        $("voicemodReload").addEventListener("click", () => send({ type: "voicemod", action: "reload" }));
+        $("voicemodStop").addEventListener("click", () => send({ type: "voicemod", action: "stop" }));
+        $("voicemodVoices").addEventListener("click", (ev) => {
+            const button = ev.target.closest("button[data-voice]");
+            if (button) send({ type: "voicemod", action: "voice", text: button.dataset.voice });
+        });
+        $("voicemodSounds").addEventListener("click", (ev) => {
+            const button = ev.target.closest("button[data-sound]");
+            if (!button) return;
+            if (send({ type: "voicemod", action: "play", text: button.dataset.sound })) {
+                button.classList.add("played");
+                setTimeout(() => button.classList.remove("played"), 600);
+            }
+        });
+        $("voicemodSearch").addEventListener("input", () => {
+            S.soundSig = "";
+            if (S.state) renderVoicemod(S.state);
+        });
+
+        // A badge and its detail line for one integration's connection.
+        function setLink(badgeId, statusId, link, fallback) {
+            const state = (link && link.state) || "off";
+            const badge = $(badgeId);
+            if (badge.textContent !== state) badge.textContent = state;
+            badge.dataset.state = state;
+            badge.classList.toggle("on", state === "connected");
+            if (!statusId) return;
+            const el = $(statusId);
+            const text = (link && link.detail) || fallback || "";
+            if (el.textContent !== text) el.textContent = text;
+            el.dataset.state = state;
+            el.hidden = !text;
+        }
+
+        function timeOf(ms) {
+            return ms ? new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+        }
+
+        function renderSocial(st) {
+            const so = st.social;
+            if (!so) return;
+            const secrets = so.secrets || {};
+            document.querySelectorAll("[data-secret]").forEach((el) => {
+                const placeholder = secrets[el.dataset.secret] ? "•••••••• saved" : "not set";
+                if (el.placeholder !== placeholder) el.placeholder = placeholder;
+            });
+            const c = st.config;
+
+            const d = so.discord;
+            const discordOn = !!(st.modules.discord || c.DiscordOptions.presence);
+            setLink("discordBadge", "discordStatus", d.link,
+                discordOn ? (d.user ? "Connected as " + d.user : "") : "Turn on the voice line or Rich Presence to connect");
+            let voiceText = "";
+            if (d.voice.state === "connected") {
+                voiceText = d.channel
+                    ? "In " + d.channel + " · " + d.count + (d.count === 1 ? " person" : " people") +
+                    (d.speaking.length ? " · " + d.speaking.join(", ") + " talking" : "") +
+                    (d.deaf ? " · deafened" : d.mute ? " · muted" : "")
+                    : "Signed in, not in a voice channel";
+            }
+            setLink("discordVoiceBadge", "discordVoiceStatus", d.voice, voiceText || (st.modules.discord ? "" : "Turn on the voice line to use it"));
+            $("discordConnect").disabled = !st.modules.discord || !secrets.discord_secret || d.link.state !== "connected";
+            $("discordSignOut").hidden = !secrets.discord_access && !secrets.discord_refresh;
+            const world = d.world || {};
+            $("discordWorldBadge").textContent = world.name ? world.type || "world" : "no world";
+            $("discordWorldBadge").title = world.name || "";
+            const presence = !c.DiscordOptions.presence ? "Rich Presence is off"
+                : d.presence ? "Showing: " + d.presence : "Nothing shown right now";
+            if ($("discordPresenceNow").textContent !== presence) $("discordPresenceNow").textContent = presence;
+
+            const t = so.twitch;
+            let twitchText = "";
+            if (t.link.state === "connected") {
+                twitchText = (t.channel ? t.channel + " · " : "") +
+                    (t.live ? "Live · " + t.viewers + " viewers" + (t.game ? " · " + t.game : "") : "Offline") +
+                    (t.checkedAt ? " · checked " + timeOf(t.checkedAt) : "");
+            }
+            setLink("twitchBadge", "twitchStatus", t.link, twitchText);
+            const signedIn = !!secrets.twitch_token;
+            $("twitchSignIn").innerHTML = '<i class="fa fa-brands fa-twitch" aria-hidden="true"></i> ' + (signedIn ? "Sign in again" : "Sign in with Twitch");
+            $("twitchSignIn").disabled = !c.TwitchOptions.client_id;
+            $("twitchSignOut").hidden = !signedIn;
+            renderTwitchDevice(t.device);
+
+            const sp = so.soundpad;
+            let padText = "";
+            if (sp.link.state === "connected") {
+                padText = "Soundpad is " + (sp.status || "running").toLowerCase() +
+                    (sp.last ? " · last played ‘" + sp.last + "’ at " + timeOf(sp.lastAt) : "");
+            }
+            setLink("soundpadBadge", "soundpadStatus", sp.link, padText);
+
+            renderVoicemod(st);
+        }
+
+        function renderTwitchDevice(dev) {
+            const box = $("twitchDevice");
+            const sig = dev ? (dev.code || "") + "|" + (dev.error || "") : "";
+            if (sig === S.twitchDeviceSig) return;
+            S.twitchDeviceSig = sig;
+            box.hidden = !dev;
+            box.innerHTML = "";
+            if (!dev) return;
+            if (dev.error) {
+                box.dataset.state = "error";
+                box.textContent = dev.error;
+                return;
+            }
+            box.dataset.state = "waiting";
+            const label = document.createElement("div");
+            label.className = "device-label";
+            label.textContent = "Confirm this code on Twitch:";
+            const code = document.createElement("div");
+            code.className = "device-code";
+            code.textContent = dev.code;
+            const row = document.createElement("div");
+            row.className = "btn-row";
+            row.innerHTML = '<button class="btn small" type="button" data-act="open"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Open twitch.tv/activate</button>' +
+                '<button class="btn small ghost" type="button" data-act="cancel">Cancel</button>';
+            row.querySelector("[data-act=open]").dataset.uri = dev.uri;
+            box.append(label, code, row);
+            if (dev.uri && S.twitchOpened !== dev.code) {
+                S.twitchOpened = dev.code;
+                openExternal(dev.uri);
+            }
+        }
+
+        function renderVoicemod(st) {
+            const vm = st.social.voicemod;
+            const c = st.config;
+            const want = !!(st.modules.voicemod || c.VoicemodOptions.enabled);
+            let text = "";
+            if (vm.link.state === "connected") text = "Connected · " + (vm.voice ? "voice: " + vm.voice : "no voice effect");
+            setLink("voicemodBadge", "voicemodStatus", vm.link, want ? text : "Turn on the line or the soundboard to connect");
+
+            const voiceSig = vm.voiceId + "|" + vm.voices.map((v) => v.id + (v.enabled ? "" : "!")).join(",");
+            if (voiceSig !== S.voiceSig) {
+                S.voiceSig = voiceSig;
+                const list = $("voicemodVoices");
+                list.innerHTML = "";
+                if (!vm.voices.length) {
+                    list.innerHTML = '<div class="empty-note">No voices yet. Voicemod sends them once it is connected.</div>';
+                }
+                vm.voices.forEach((v) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "voice-chip" + (v.id === vm.voiceId || (v.id === "nofx" && !vm.voice) ? " on" : "");
+                    b.dataset.voice = v.id;
+                    b.textContent = v.name;
+                    b.disabled = !v.enabled;
+                    if (!v.enabled) b.title = "Locked in Voicemod";
+                    list.appendChild(b);
+                });
+            }
+
+            const q = $("voicemodSearch").value.trim().toLowerCase();
+            const sounds = vm.sounds.filter((s) => !q || (s.name + " " + (s.board || "")).toLowerCase().includes(q));
+            const soundSig = q + "|" + sounds.map((s) => s.id).join(",");
+            if (soundSig !== S.soundSig) {
+                S.soundSig = soundSig;
+                const grid = $("voicemodSounds");
+                grid.innerHTML = "";
+                if (!sounds.length) {
+                    grid.innerHTML = '<div class="empty-note">' + (vm.sounds.length ? "No sounds match." : "No sounds yet.") + "</div>";
+                }
+                sounds.slice(0, 300).forEach((s) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "sound";
+                    b.dataset.sound = s.id;
+                    b.disabled = !s.enabled;
+                    b.title = s.board ? s.name + " · " + s.board : s.name;
+                    b.innerHTML = '<i class="fa fa-play" aria-hidden="true"></i>';
+                    const name = document.createElement("span");
+                    name.textContent = s.name;
+                    b.appendChild(name);
+                    grid.appendChild(b);
+                });
+            }
+        }
 
         /* ---------------- live actions ---------------- */
         $("btnMaster").addEventListener("click", () => {

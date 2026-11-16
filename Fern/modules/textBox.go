@@ -107,6 +107,14 @@ func moduleText(id string, cfg Config) string {
 		return lyricsLine(cfg)
 	case ModuleWeather:
 		return weatherLine(cfg)
+	case ModuleDiscord:
+		return discordLine(cfg)
+	case ModuleTwitch:
+		return twitchLine(cfg)
+	case ModuleSoundpad:
+		return soundpadLine(cfg)
+	case ModuleVoicemod:
+		return voicemodLine(cfg)
 	}
 	return ""
 }

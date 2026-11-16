@@ -73,6 +73,8 @@ type uiState struct {
 	Assist    assistState           `json:"assist"`
 	Lyrics    modules.LyricsStatus  `json:"lyrics"`
 	Weather   modules.WeatherStatus `json:"weather"`
+
+	Social modules.SocialInfo `json:"social"`
 }
 
 // assistState is the Assist page: AI tools, text to speech and speech to
@@ -308,6 +310,29 @@ func handleCommand(cmd command) {
 		_ = modules.SaveNow()
 	case "update":
 		go startUpdate()
+	case "secret":
+		// The value is never echoed or logged; the panel only learns it is set.
+		_ = modules.SetPanelSecret(cmd.Module, cmd.Text)
+	case "discord":
+		switch cmd.Action {
+		case "authorize":
+			modules.DiscordAuthorize()
+		case "signout":
+			modules.DiscordSignOut()
+		}
+	case "twitch":
+		switch cmd.Action {
+		case "signin":
+			modules.TwitchStartSignIn()
+		case "cancel":
+			modules.TwitchCancelSignIn()
+		case "signout":
+			modules.TwitchSignOut()
+		case "refresh":
+			modules.TwitchRefreshNow()
+		}
+	case "voicemod":
+		modules.VoicemodCommand(cmd.Action, cmd.Text)
 	case "heartReset":
 		modules.ResetHeartStats()
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
@@ -438,6 +463,11 @@ func buildState() uiState {
 			modules.ModuleHeart:   d.HeartRate,
 			modules.ModuleLyrics:  d.Lyrics,
 			modules.ModuleWeather: d.Weather,
+
+			modules.ModuleDiscord:  d.Discord,
+			modules.ModuleTwitch:   d.Twitch,
+			modules.ModuleSoundpad: d.Soundpad,
+			modules.ModuleVoicemod: d.Voicemod,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -485,6 +515,7 @@ func buildState() uiState {
 		},
 		Lyrics:  modules.CurrentLyricsStatus(),
 		Weather: modules.CurrentWeatherStatus(),
+		Social:  modules.CurrentSocial(cfg),
 	}
 }
 

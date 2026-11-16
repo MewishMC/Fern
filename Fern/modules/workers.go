@@ -12,5 +12,9 @@ func StartWorkers() {
 	startSpecsWorker()
 	startSteamVRWorker()
 	startHeartWorker()
+	startDiscordWorker()
+	startTwitchWorker()
+	startSoundpadWorker()
+	startVoicemodWorker()
 	go watchVRChatProcess()
 }
