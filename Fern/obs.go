@@ -38,6 +38,10 @@ func currentOBS() obsState {
 	base := overlayBase
 	overlayMu.Unlock()
 	st := obsState{OBSStatus: modules.CurrentOBS()}
+	// Whole seconds, so a running clock changes the state once a second
+	// rather than on every push.
+	st.StreamMS -= st.StreamMS % 1000
+	st.RecordMS -= st.RecordMS % 1000
 	if base != "" {
 		st.Overlay = base + "/overlay"
 	}
