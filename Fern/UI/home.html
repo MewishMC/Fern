@@ -62,6 +62,7 @@
                     <span class="nav-title">Settings</span>
                     <button class="nav-item" data-page="output" data-label="Output"><i class="fa fa-tower-broadcast" aria-hidden="true"></i><span class="nav-label">Output</span></button>
                     <button class="nav-item" data-page="app" data-label="App"><i class="fa fa-sliders" aria-hidden="true"></i><span class="nav-label">App</span></button>
+                    <button class="nav-item" data-page="api" data-label="API"><i class="fa fa-plug" aria-hidden="true"></i><span class="nav-label">API</span></button>
                     <button class="nav-item" data-page="appearance" data-label="Appearance"><i class="fa fa-palette" aria-hidden="true"></i><span class="nav-label">Appearance</span></button>
                 </div>
             </nav>
@@ -4137,6 +4138,73 @@
                     </div>
                 </div>
 
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Clipboard to chatbox</h3>
+                        <span class="badge" id="clipBadge">off</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Send the clipboard</b>
+                            <span id="clipHotkeyDesc">A shortcut that works in any app and sends the text you copied straight to the chatbox, with no confirmation. Click the box and press the keys; Backspace clears it.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="clipHotkey" placeholder="Click, then press keys" autocomplete="off" spellcheck="false" style="width:170px" aria-label="Clipboard shortcut">
+                            <button class="btn ghost" type="button" id="clipClear" title="Turn the shortcut off">Clear</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Longest message</b>
+                            <span>Line breaks become spaces. VRChat shows up to 143 characters.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="clipMaxChars" min="8" max="143" step="1" aria-label="Longest clipboard message">
+                            <span class="val" id="clipMaxCharsVal"></span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When it's longer</b>
+                            <span>Send the start with &ldquo;&hellip;&rdquo;, or send nothing</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="clipTooLong" style="width:170px" aria-label="When the clipboard is too long">
+                                <option value="cut">Cut it short</option>
+                                <option value="skip">Don't send it</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show it for</b>
+                            <span>Like a message sent from the Live page</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="clipSeconds" min="0" max="600" step="5" aria-label="Seconds the message shows">
+                            <span class="val" id="clipSecondsVal"></span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Read it out</b>
+                            <span>With text to speech, when it is on for sent messages (Assist page)</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="clipSpeak"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Try it</b>
+                            <span id="clipLast">Sends what is on the clipboard now</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost" type="button" id="clipSendNow"><i class="fa fa-paste" aria-hidden="true"></i> Send clipboard</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-head">
                         <h3>Start with SteamVR</h3>
@@ -4183,6 +4251,235 @@
                     <div class="list" id="backupList"></div>
                 </div>
             </section>
+
+            <!-- ================= CONTROL API ================= -->
+            <section class="page" id="page-api">
+                <div class="page-head">
+                    <div>
+                        <h2>API</h2>
+                        <p>Control Fern from a Stream Deck, Touch Portal, Streamer.bot or a script on this PC</p>
+                    </div>
+                    <span class="badge" id="apiBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Local control API</b>
+                            <span>HTTP and WebSocket on 127.0.0.1. Only programs on this PC that know the token can use it; web pages never can.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="apiEnabled" aria-label="Local control API"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Port</b>
+                            <span>1931 unless another app needs it. Tools use http://127.0.0.1:<i>port</i>/api</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="apiPort" min="1024" max="65535" style="width:110px" aria-label="API port"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Token</b>
+                            <span>Send it as <code>Authorization: Bearer &lt;token&gt;</code>, an <code>X-Fern-Token</code> header or <code>?token=</code>. A new token stops every tool that has the old one.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="password" id="apiToken" readonly autocomplete="off" spellcheck="false" style="width:200px" aria-label="API token" placeholder="made when the API is on">
+                            <button class="btn ghost" type="button" id="apiTokenShow" title="Show or hide the token"><i class="fa fa-eye" aria-hidden="true"></i></button>
+                            <button class="btn ghost" type="button" id="apiTokenCopy" title="Copy the token"><i class="fa fa-copy" aria-hidden="true"></i></button>
+                            <button class="btn ghost" type="button" id="apiTokenNew"><i class="fa fa-key" aria-hidden="true"></i> New token</button>
+                        </div>
+                    </div>
+                    <div class="hint" id="apiStatus">Off. Turn it on to get a token and a port.</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Examples</h3>
+                        <select id="apiExampleTool" style="width:170px" aria-label="Tool">
+                            <option value="curl">curl</option>
+                            <option value="streamdeck">Stream Deck</option>
+                            <option value="touchportal">Touch Portal</option>
+                            <option value="streamerbot">Streamer.bot</option>
+                            <option value="powershell">PowerShell</option>
+                            <option value="websocket">WebSocket</option>
+                        </select>
+                    </div>
+                    <div class="hint" style="margin-top:0" id="apiExampleHow"></div>
+                    <textarea id="apiExample" class="bar-json" rows="9" readonly spellcheck="false" aria-label="Example"></textarea>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Copy with your token</b>
+                            <span>The box shows your token only while it is shown above</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost" type="button" id="apiExampleCopy"><i class="fa fa-copy" aria-hidden="true"></i> Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Calls</h3>
+                        <span class="count" id="apiCallCount"></span>
+                    </div>
+                    <div class="hint" style="margin-top:0">Every call works as GET with the settings in the address, or as POST with a form, a JSON object or plain text (the text to send). The answer is JSON: <code>{"ok":true,"result":…}</code> or <code>{"ok":false,"error":"…"}</code>. Rules can react to <code>/api/event</code> with the <b>Control API call</b> trigger.</div>
+                    <div class="list" id="apiCalls"></div>
+                </div>
+            </section>
+
+            <!-- ================= CUSTOM LINES =================
+                 The three custom line pages are the same, so they are written
+                 out here before the main script binds the module switches. -->
+            <script>
+                "use strict";
+                (function () {
+                    const html = (n) => `
+            <section class="page" id="page-custom${n}">
+                <div class="page-head">
+                    <div>
+                        <h2 id="cl${n}Title">Custom line ${n}</h2>
+                        <p>Your own line: text from the control API or a rule, a command you choose, or a web address</p>
+                    </div>
+                    <span class="badge" id="cl${n}Badge">empty</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show this line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="custom${n}"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Right now</h3>
+                        <span class="count" id="cl${n}Runs"></span>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="cl${n}NowText">—</b><span>Text</span></div>
+                        <div class="stat"><b id="cl${n}NowWhen">—</b><span>Updated</span></div>
+                    </div>
+                    <div class="hint warn" id="cl${n}Error" hidden></div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Name</b>
+                            <span>For you, on this page and in rules</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="cl${n}Name" maxlength="24" autocomplete="off" aria-label="Name"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Text from</b>
+                            <span>Where the line gets its text</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="cl${n}Source" style="width:200px" aria-label="Text from">
+                                <option value="api">The API or a rule</option>
+                                <option value="command">A command or script</option>
+                                <option value="url">A web address</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Command</b>
+                            <span>Runs through cmd.exe without a window; the first line it prints is the text. E.g. <code>powershell -NoProfile -File C:\\scripts\\status.ps1</code></span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="cl${n}Command" maxlength="1024" autocomplete="off" spellcheck="false" style="width:260px" placeholder="echo Hello" aria-label="Command">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Web address</b>
+                            <span>http:// or https://, read with GET</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="cl${n}Url" maxlength="2048" autocomplete="off" spellcheck="false" style="width:260px" placeholder="https://example.com/status.json" aria-label="Web address">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>JSON field</b>
+                            <span>Picks one value out of a JSON reply, e.g. <code>data.viewers</code> or <code>items[0].title</code>. Empty uses the first line of the reply.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="cl${n}Path" maxlength="256" autocomplete="off" spellcheck="false" style="width:200px" placeholder="data.value" aria-label="JSON field">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Every</b>
+                            <span>Seconds between runs, while the line is on</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="cl${n}Interval" min="2" max="3600" step="1" style="width:110px" aria-label="Seconds between runs"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Give up after</b>
+                            <span>Seconds one run may take. A command still running then is stopped.</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="cl${n}Timeout" min="1" max="60" step="1" style="width:110px" aria-label="Timeout in seconds"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Run it now</b>
+                            <span>Tries the command or address once, even while the line is off</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost" type="button" id="cl${n}Run"><i class="fa fa-play" aria-hidden="true"></i> Run</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the text. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="cl${n}Label" placeholder="none" maxlength="16" autocomplete="off" aria-label="Label"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length limit</b>
+                            <span>Longer text is cut with &ldquo;&hellip;&rdquo;</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="cl${n}MaxChars" min="0" max="143" step="1" aria-label="Length limit">
+                            <span class="val" id="cl${n}MaxCharsVal"></span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When there is no text</b>
+                            <span>Shown instead. Leave empty to hide the line.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="cl${n}Fallback" placeholder="hide the line" maxlength="143" autocomplete="off" aria-label="Text when empty"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Set the text</b>
+                            <span id="cl${n}SetDesc">Try it here; tools set it with <code>/api/custom?id=custom${n}&amp;text=…</code> (see the API page) and rules with <b>Set a custom line</b>.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="cl${n}Test" maxlength="143" autocomplete="off" style="width:180px" placeholder="Some text" aria-label="Text to show">
+                            <button class="btn ghost" type="button" id="cl${n}Set">Set</button>
+                            <button class="btn ghost" type="button" id="cl${n}Clear">Clear</button>
+                        </div>
+                    </div>
+                </div>
+            </section>`;
+                    for (let n = 1; n <= 3; n++) document.currentScript.insertAdjacentHTML("beforebegin", html(n));
+                })();
+            </script>
 
             <!-- ================= APPEARANCE ================= -->
             <section class="page" id="page-appearance">
@@ -4355,6 +4652,7 @@
             ["system", "System"],
             ["social", "Apps"],
             ["steamvr", "SteamVR"],
+            ["custom", "Custom"],
         ];
         const MODULES = [
             { id: "afk", name: "AFK", icon: "fa-moon", category: "vrchat", desc: "AFK timer since last activity", keywords: "idle away" },
@@ -4378,6 +4676,9 @@
             { id: "twitch", name: "Twitch", icon: "fa-brands fa-twitch", category: "social", desc: "Live status, viewers and game", keywords: "stream live viewers followers" },
             { id: "soundpad", name: "Soundpad", icon: "fa-volume-high", category: "social", desc: "The sound you just played", keywords: "soundboard sound effect" },
             { id: "voicemod", name: "Voicemod", icon: "fa-masks-theater", category: "social", desc: "Voice changer and soundboard", keywords: "voice changer soundboard meme" },
+            { id: "custom1", name: "Custom line 1", icon: "fa-shapes", category: "custom", desc: "Text from the API, a command or a web address", keywords: "api command script url json stream deck streamer.bot touch portal custom" },
+            { id: "custom2", name: "Custom line 2", icon: "fa-shapes", category: "custom", desc: "Text from the API, a command or a web address", keywords: "api command script url json stream deck streamer.bot touch portal custom" },
+            { id: "custom3", name: "Custom line 3", icon: "fa-shapes", category: "custom", desc: "Text from the API, a command or a web address", keywords: "api command script url json stream deck streamer.bot touch portal custom" },
         ];
         const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
         const MODULE_NAME = Object.fromEntries(MODULES.map((m) => [m.id, m.name]));
@@ -4542,6 +4843,7 @@
             renderProfiles(st);
             renderBackups(st);
             renderRules(st);
+            if (typeof renderControl === "function") renderControl(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -9728,6 +10030,428 @@
             // Handy for debugging, and what the export/import buttons build on.
             window.fernAppearance = { snapshot: snapshot, applyAll: applyAll };
         })();
+    </script>
+    <script>
+        "use strict";
+        /* ---------------- control API, custom lines, clipboard shortcut ----------------
+           Its own block: the main script calls renderControl(st) on every
+           state push, and these controls bind their own listeners. */
+        const CTL = { showToken: false, exampleSig: "", tool: "curl" };
+        try { CTL.tool = localStorage.getItem("fern_api_tool") || "curl"; } catch (e) { }
+        const CUSTOM_SLOTS = [1, 2, 3];
+        const CUSTOM_SOURCE_LABEL = { api: "API", command: "command", url: "web" };
+
+        const API_CALLS = [
+            ["state", "What the chatbox shows, the lines, profiles, rules and switches"],
+            ["send?text=Hello&seconds=10", "Send a message; seconds=0 pins it until cleared"],
+            ["clear", "Remove the sent message"],
+            ["custom?id=custom1&text=Now live", "Set a custom line whose text comes from the API; seconds= makes it go away, empty text clears it"],
+            ["line?id=media&on=toggle", "Switch a line on, off or the other way, by id or name"],
+            ["profile?name=Streaming", "Switch profile; an empty name stops using one"],
+            ["dnd?on=toggle", "Do not disturb on, off or toggled"],
+            ["display?on=toggle", "The whole chatbox on or off"],
+            ["rule?name=Stream start", "Run a rule's actions now, by id or name"],
+            ["action?type=chat&text=Hi&seconds=5", "Run one rule action; /api/actions lists them and their settings"],
+            ["event?name=brb", "Fire the Control API call trigger, for rules"],
+            ["typing?on=true", "Show or hide the typing bubble"],
+            ["skip", "Show the next custom message"],
+            ["clipboard", "Send the clipboard's text"],
+            ["ws", "WebSocket: state as it changes, and calls as JSON such as {\"action\":\"send\",\"text\":\"hi\"}"],
+        ];
+
+        function ctlCopy(text, what) {
+            const done = () => toast("Copied " + what);
+            const fallback = () => {
+                const box = document.createElement("textarea");
+                box.value = text;
+                document.body.appendChild(box);
+                box.select();
+                let ok = false;
+                try { ok = document.execCommand("copy"); } catch (e) { }
+                box.remove();
+                if (ok) done(); else toast("Couldn't copy; select it and press Ctrl+C", true);
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+            else fallback();
+        }
+
+        // Fills a shortcut box from a key press, like the mic shortcut.
+        function ctlHotkeyBox(input, set) {
+            input.addEventListener("keydown", (ev) => {
+                if (ev.key === "Tab") return;
+                ev.preventDefault();
+                if (ev.key === "Escape") { input.blur(); return; }
+                if (ev.key === "Backspace" || ev.key === "Delete") { set(""); return; }
+                const mods = [ev.ctrlKey && "Ctrl", ev.altKey && "Alt", ev.shiftKey && "Shift", ev.metaKey && "Win"].filter(Boolean);
+                const code = ev.code || "";
+                let key = "";
+                if (/^Key[A-Z]$/.test(code)) key = code.slice(3);
+                else if (/^Digit\d$/.test(code)) key = code.slice(5);
+                else if (/^(F\d{1,2}|Numpad\d|Space|Insert|Home|End|PageUp|PageDown|Pause)$/.test(code)) key = code;
+                if (!key) { input.value = mods.length ? mods.join("+") + "+…" : ""; return; }
+                if (!mods.length && !HOTKEY_FREE.test(key)) {
+                    toast(key + " needs Ctrl, Alt, Shift or Win with it", true);
+                    return;
+                }
+                set(mods.concat(key).join("+"));
+            });
+        }
+
+        // Sets an input from the config unless it is being edited.
+        function ctlFill(id, value) {
+            const el = $(id);
+            if (el && document.activeElement !== el && el.value !== String(value)) el.value = value;
+        }
+
+        /* ---- API page ---- */
+        function apiBase(st) {
+            const port = (st && st.api && st.api.port) || 1931;
+            return "http://127.0.0.1:" + port;
+        }
+
+        function apiExample(tool, base, token) {
+            const t = token || "YOUR-TOKEN";
+            const q = (path) => base + "/api/" + path + (path.includes("?") ? "&" : "?") + "token=" + t;
+            const ws = base.replace(/^http/, "ws") + "/api/ws?token=" + t;
+            switch (tool) {
+                case "streamdeck":
+                    return {
+                        how: "Stream Deck has no web request action of its own: add a free HTTP plugin from the Stream Deck store (one that can send a GET request to a URL), then paste one address per button.",
+                        text: [
+                            "Be right back (30 s):", q("send?text=Be%20right%20back&seconds=30"), "",
+                            "Do not disturb on/off:", q("dnd?on=toggle"), "",
+                            "Media line on/off:", q("line?id=media&on=toggle"), "",
+                            "Streaming profile:", q("profile?name=Streaming"), "",
+                            "Run the rule \"Stream start\":", q("rule?name=Stream%20start"),
+                        ].join("\n"),
+                    };
+                case "touchportal":
+                    return {
+                        how: "Give a button Touch Portal's HTTP GET action and paste one address. To send text from Touch Portal, put its value in the address, URL encoded.",
+                        text: [
+                            "Send a message:", q("send?text=Hello%20from%20Touch%20Portal"), "",
+                            "Custom line 1:", q("custom?id=custom1&text=Starting%20soon"), "",
+                            "Clear custom line 1:", q("custom?id=custom1&text="), "",
+                            "Do not disturb on/off:", q("dnd?on=toggle"), "",
+                            "Or HTTP POST to " + base + "/api/send with the header",
+                            "Authorization: Bearer " + t + " and the JSON body {\"text\":\"Hello\",\"seconds\":10}",
+                        ].join("\n"),
+                    };
+                case "streamerbot":
+                    return {
+                        how: "Add the sub-action Core › Network › Fetch URL with an address below. %rawInputUrlEncoded% is what a chat command was given. For a live feed, add a WebSocket client (Servers/Clients › WebSocket Clients) with the WebSocket address.",
+                        text: [
+                            "!say <text> as a chatbox message:", q("send?text=%rawInputUrlEncoded%&seconds=15"), "",
+                            "Show who raided on custom line 2 for a minute:", q("custom?id=custom2&text=Raid%20from%20%user%&seconds=60"), "",
+                            "Fire the rule trigger \"Control API call\" named raid:", q("event?name=raid&user=%user%"), "",
+                            "WebSocket client endpoint:", ws,
+                        ].join("\n"),
+                    };
+                case "powershell":
+                    return {
+                        how: "Invoke-RestMethod sends a hashtable body as a form, which Fern reads like a query.",
+                        text: [
+                            "$fern = @{ Authorization = 'Bearer " + t + "' }",
+                            "Invoke-RestMethod -Method Post -Uri " + base + "/api/send -Headers $fern -Body @{ text = 'Hello'; seconds = 10 }",
+                            "Invoke-RestMethod -Method Post -Uri " + base + "/api/custom -Headers $fern -Body @{ id = 'custom1'; text = (Get-Date -Format t) }",
+                            "(Invoke-RestMethod -Uri " + base + "/api/state -Headers $fern).result.chatbox",
+                        ].join("\n"),
+                    };
+                case "websocket":
+                    return {
+                        how: "Connect without an Origin header (tools do; browsers can't). Fern sends {\"type\":\"state\",\"state\":…} whenever something changes and answers each call with {\"type\":\"result\",\"ok\":…}. requestId comes back in the answer.",
+                        text: [
+                            ws, "",
+                            "{\"action\":\"send\",\"text\":\"Hello\",\"seconds\":10,\"requestId\":1}",
+                            "{\"action\":\"custom\",\"id\":\"custom1\",\"text\":\"Now live\"}",
+                            "{\"action\":\"dnd\",\"on\":\"toggle\"}",
+                            "{\"action\":\"profile\",\"name\":\"Streaming\"}",
+                            "{\"action\":\"action\",\"type\":\"avatar_param\",\"params\":{\"name\":\"Wave\",\"value\":1}}",
+                        ].join("\n"),
+                    };
+            }
+            return {
+                how: "curl comes with Windows 10 and 11. Quote addresses that contain &.",
+                text: [
+                    "# Send a message for 30 seconds",
+                    "curl \"" + q("send?text=Be%20right%20back&seconds=30") + "\"",
+                    "",
+                    "# Set custom line 1, with the token in a header",
+                    "curl -H \"Authorization: Bearer " + t + "\" -d id=custom1 --data-urlencode \"text=Now playing: Celeste\" " + base + "/api/custom",
+                    "",
+                    "# Toggle do not disturb, switch profile, run a rule",
+                    "curl -H \"Authorization: Bearer " + t + "\" \"" + base + "/api/dnd?on=toggle\"",
+                    "curl -H \"Authorization: Bearer " + t + "\" \"" + base + "/api/profile?name=Streaming\"",
+                    "curl -H \"Authorization: Bearer " + t + "\" \"" + base + "/api/rule?name=Stream%20start\"",
+                    "",
+                    "# What Fern is showing",
+                    "curl -H \"Authorization: Bearer " + t + "\" " + base + "/api/state",
+                ].join("\n"),
+            };
+        }
+
+        function renderAPIExample(force) {
+            const st = S.state;
+            if (!st) return;
+            const a = st.api || {};
+            const base = apiBase(st);
+            const shown = CTL.showToken ? a.token || "" : "";
+            const sig = [CTL.tool, base, shown].join("|");
+            if (!force && sig === CTL.exampleSig) return;
+            CTL.exampleSig = sig;
+            const ex = apiExample(CTL.tool, base, shown);
+            $("apiExampleTool").value = CTL.tool;
+            $("apiExampleHow").textContent = ex.how;
+            $("apiExample").value = ex.text;
+            $("apiExample").rows = Math.min(14, ex.text.split("\n").length + 1);
+        }
+
+        (function buildAPICalls() {
+            const box = $("apiCalls");
+            API_CALLS.forEach(([path, desc]) => {
+                const row = document.createElement("div");
+                row.className = "row";
+                row.innerHTML = '<div class="row-main"><span class="row-name"><code></code></span><span class="row-desc"></span></div>';
+                row.querySelector("code").textContent = "/api/" + path;
+                row.querySelector(".row-desc").textContent = desc;
+                row.querySelector(".row-desc").title = desc;
+                box.appendChild(row);
+            });
+            $("apiCallCount").textContent = API_CALLS.length + " calls";
+        })();
+
+        function renderAPI(st) {
+            const a = st.api || {};
+            const c = st.config.ControlAPI || {};
+            if (!lockForms()) $("apiEnabled").checked = !!c.enabled;
+            ctlFill("apiPort", c.port || 1931);
+            $("apiToken").value = a.token || "";
+            $("apiToken").type = CTL.showToken ? "text" : "password";
+            $("apiTokenCopy").disabled = !a.token;
+            let badge = "off", text = "Off. Turn it on to get a token and a port.";
+            if (a.enabled && a.listening) {
+                badge = "port " + a.port;
+                text = "Listening on " + apiBase(st) + "/api. " + (a.calls ? a.calls + " call" + (a.calls === 1 ? "" : "s") + " so far, the last " + (a.lastAction || "") + " at " + fmtAgo(a.lastMs) + (a.lastError ? " (" + a.lastError + ")" : "") + "." : "No calls yet.") + (a.clients ? " " + a.clients + " WebSocket client" + (a.clients === 1 ? "" : "s") + " connected." : "");
+            } else if (a.enabled) {
+                badge = "not listening";
+                text = a.error || "Starting…";
+            }
+            $("apiBadge").textContent = badge;
+            $("apiBadge").classList.toggle("on", !!(a.enabled && a.listening));
+            if ($("apiStatus").textContent !== text) $("apiStatus").textContent = text;
+            $("apiStatus").classList.toggle("warn", !!(a.enabled && !a.listening && a.error));
+            renderAPIExample(false);
+            noticeToast("api", a.notice);
+        }
+
+        $("apiEnabled").addEventListener("change", (ev) => {
+            const on = ev.target.checked;
+            if (pushConfigNow((c) => { c.ControlAPI.enabled = on; })) toast(on ? "Control API on" : "Control API off");
+        });
+        $("apiPort").addEventListener("change", (ev) => {
+            const port = Math.round(Number(ev.target.value));
+            if (!(port >= 1024 && port <= 65535)) {
+                toast("Pick a port from 1024 to 65535", true);
+                ev.target.value = (config() && config().ControlAPI.port) || 1931;
+                return;
+            }
+            if (pushConfigNow((c) => { c.ControlAPI.port = port; })) toast("API port " + port);
+        });
+        $("apiTokenShow").addEventListener("click", () => {
+            CTL.showToken = !CTL.showToken;
+            if (S.state) renderAPI(S.state);
+        });
+        $("apiTokenCopy").addEventListener("click", () => {
+            const token = S.state && S.state.api && S.state.api.token;
+            if (token) ctlCopy(token, "the token");
+        });
+        $("apiTokenNew").addEventListener("click", () => {
+            const has = S.state && S.state.api && S.state.api.token;
+            if (has && !confirm("Make a new token? Tools using the current one stop working until you give them the new one.")) return;
+            send({ type: "api", action: "regenerate" });
+        });
+        $("apiExampleTool").addEventListener("change", (ev) => {
+            CTL.tool = ev.target.value;
+            try { localStorage.setItem("fern_api_tool", CTL.tool); } catch (e) { }
+            renderAPIExample(true);
+        });
+        $("apiExampleCopy").addEventListener("click", () => {
+            const st = S.state;
+            if (!st) return;
+            const token = (st.api && st.api.token) || "";
+            if (!token) toast("Turn the API on first to get a token", true);
+            ctlCopy(apiExample(CTL.tool, apiBase(st), token).text, token ? "the example with your token" : "the example");
+        });
+
+        /* ---- clipboard shortcut (App page) ---- */
+        const clipSecondsText = (v) => (v ? v + "s" : "until cleared");
+        function setClipHotkey(value) {
+            const hk = $("clipHotkey");
+            hk.value = value;
+            if (pushConfigNow((c) => { c.Clipboard.hotkey = value; })) toast(value ? "Clipboard shortcut: " + value : "Clipboard shortcut off");
+            hk.blur();
+        }
+        ctlHotkeyBox($("clipHotkey"), setClipHotkey);
+        $("clipHotkey").addEventListener("blur", () => {
+            const c = config();
+            if (c && c.Clipboard) $("clipHotkey").value = c.Clipboard.hotkey || "";
+        });
+        $("clipClear").addEventListener("click", () => setClipHotkey(""));
+        $("clipMaxChars").addEventListener("input", (ev) => {
+            const v = Number(ev.target.value);
+            $("clipMaxCharsVal").textContent = String(v);
+            pushConfig((c) => { c.Clipboard.max_chars = v; });
+        });
+        $("clipSeconds").addEventListener("input", (ev) => {
+            const v = Number(ev.target.value);
+            $("clipSecondsVal").textContent = clipSecondsText(v);
+            pushConfig((c) => { c.Clipboard.seconds = v; });
+        });
+        $("clipTooLong").addEventListener("change", (ev) => {
+            const v = ev.target.value;
+            pushConfigNow((c) => { c.Clipboard.too_long = v; });
+        });
+        $("clipSpeak").addEventListener("change", (ev) => {
+            const v = ev.target.checked;
+            pushConfigNow((c) => { c.Clipboard.speak = v; });
+        });
+        $("clipSendNow").addEventListener("click", () => send({ type: "clipboard", action: "send" }));
+
+        function renderClipboard(st) {
+            const o = st.config.Clipboard || {};
+            const cb = st.clipboard || {};
+            if (!lockForms()) {
+                ctlFill("clipHotkey", o.hotkey || "");
+                $("clipMaxChars").value = o.max_chars || 143;
+                $("clipSeconds").value = o.seconds || 0;
+                $("clipTooLong").value = o.too_long || "cut";
+                $("clipSpeak").checked = !!o.speak;
+            }
+            $("clipMaxCharsVal").textContent = String(o.max_chars || 143);
+            $("clipSecondsVal").textContent = clipSecondsText(o.seconds || 0);
+            $("clipBadge").textContent = o.hotkey || "off";
+            $("clipBadge").classList.toggle("on", !!o.hotkey);
+            const err = cb.hotkeyErr || "";
+            $("clipHotkeyDesc").textContent = err || "A shortcut that works in any app and sends the text you copied straight to the chatbox, with no confirmation. Click the box and press the keys; Backspace clears it.";
+            $("clipHotkeyDesc").classList.toggle("bad", !!err);
+            const n = cb.notice || {};
+            if (n.text) {
+                $("clipLast").textContent = n.text;
+                $("clipLast").classList.toggle("bad", !!n.bad);
+            }
+            noticeToast("clip", n);
+        }
+
+        /* ---- custom line pages ---- */
+        const customPath = (i, key) => ["CustomLines", "lines", i, key];
+        CUSTOM_SLOTS.forEach((n) => {
+            const i = n - 1, id = "custom" + n;
+            const p = "cl" + n;
+            const isSource = (src) => (c) => ((c.CustomLines && c.CustomLines.lines[i]) || {}).source === src;
+            DEPENDS.push(
+                [p + "Command", isSource("command")],
+                [p + "Url", isSource("url")],
+                [p + "Path", isSource("url")],
+                [p + "Interval", (c) => !isSource("api")(c)],
+                [p + "Timeout", (c) => !isSource("api")(c)],
+                [p + "Run", (c) => !isSource("api")(c)],
+                [p + "Test", isSource("api")],
+            );
+            [["Name", "name", 24], ["Label", "label", 16], ["Fallback", "fallback", 143]].forEach(([suffix, key, max]) => {
+                $(p + suffix).addEventListener("input", (ev) => {
+                    const v = Array.from(ev.target.value).slice(0, max).join("");
+                    pushConfig((c) => setField(c, customPath(i, key), v));
+                });
+            });
+            // A command or address applies when you leave the box, so a half
+            // typed one is never run.
+            [["Command", "command"], ["Url", "url"], ["Path", "json_path"]].forEach(([suffix, key]) => {
+                $(p + suffix).addEventListener("change", (ev) => {
+                    const v = ev.target.value.trim();
+                    pushConfigNow((c) => setField(c, customPath(i, key), v));
+                });
+            });
+            [["Interval", "interval_sec", 2, 3600], ["Timeout", "timeout_sec", 1, 60]].forEach(([suffix, key, lo, hi]) => {
+                $(p + suffix).addEventListener("change", (ev) => {
+                    const v = Math.min(hi, Math.max(lo, Math.round(num(ev.target.value, lo))));
+                    ev.target.value = v;
+                    pushConfigNow((c) => setField(c, customPath(i, key), v));
+                });
+            });
+            $(p + "Source").addEventListener("change", (ev) => {
+                const v = ev.target.value;
+                pushConfigNow((c) => setField(c, customPath(i, "source"), v));
+            });
+            $(p + "MaxChars").addEventListener("input", (ev) => {
+                const v = Number(ev.target.value);
+                $(p + "MaxCharsVal").textContent = v ? String(v) : "no limit";
+                pushConfig((c) => setField(c, customPath(i, "max_chars"), v));
+            });
+            $(p + "Run").addEventListener("click", () => {
+                if (send({ type: "customLine", action: "refresh", module: id })) toast("Running…");
+            });
+            $(p + "Set").addEventListener("click", () => {
+                const text = $(p + "Test").value.trim();
+                if (!text) { toast("Type some text first", true); return; }
+                send({ type: "customLine", action: "set", module: id, text: text, hold: 0 });
+            });
+            $(p + "Clear").addEventListener("click", () => send({ type: "customLine", action: "clear", module: id }));
+            $(p + "Test").addEventListener("keydown", (ev) => {
+                if (ev.key === "Enter") $(p + "Set").click();
+            });
+        });
+
+        function renderCustomLines(st) {
+            const lines = (st.config.CustomLines && st.config.CustomLines.lines) || [];
+            const status = (st.customLines && st.customLines.lines) || [];
+            const locked = lockForms();
+            CUSTOM_SLOTS.forEach((n) => {
+                const i = n - 1, p = "cl" + n;
+                const l = lines[i] || {};
+                const s = status[i] || {};
+                if (!locked) {
+                    ctlFill(p + "Name", l.name || "");
+                    ctlFill(p + "Source", l.source || "api");
+                    ctlFill(p + "Command", l.command || "");
+                    ctlFill(p + "Url", l.url || "");
+                    ctlFill(p + "Path", l.json_path || "");
+                    ctlFill(p + "Interval", l.interval_sec || 30);
+                    ctlFill(p + "Timeout", l.timeout_sec || 10);
+                    ctlFill(p + "Label", l.label || "");
+                    ctlFill(p + "Fallback", l.fallback || "");
+                    $(p + "MaxChars").value = l.max_chars || 0;
+                }
+                $(p + "MaxCharsVal").textContent = l.max_chars ? String(l.max_chars) : "no limit";
+                const title = l.name || "Custom line " + n;
+                if ($(p + "Title").textContent !== title) $(p + "Title").textContent = title;
+                const on = !!(st.modules && st.modules["custom" + n]);
+                const src = CUSTOM_SOURCE_LABEL[l.source] || "API";
+                $(p + "Badge").textContent = s.busy ? "running…" : src + (on ? " · on" : " · off");
+                $(p + "Badge").classList.toggle("on", on);
+                const text = s.text || "";
+                $(p + "NowText").textContent = text || (l.fallback ? "— (shows: " + l.fallback + ")" : "—");
+                $(p + "NowText").title = text;
+                let when = s.updatedMs ? fmtAgo(s.updatedMs) : "—";
+                if (s.untilMs) when += " · until " + fmtAgo(s.untilMs);
+                $(p + "NowWhen").textContent = when;
+                $(p + "Runs").textContent = l.source !== "api" && s.runs ? s.runs + " run" + (s.runs === 1 ? "" : "s") : "";
+                $(p + "Error").hidden = !s.error;
+                $(p + "Error").textContent = s.error ? "Last run failed: " + s.error : "";
+                if (l.source !== "api" && !on && !s.runs) {
+                    $(p + "Error").hidden = false;
+                    $(p + "Error").textContent = "Runs only while the line is on. Run tries it once.";
+                }
+            });
+            noticeToast("custom", st.customLines && st.customLines.notice);
+        }
+
+        function renderControl(st) {
+            if (!st || !st.config) return;
+            renderAPI(st);
+            renderClipboard(st);
+            renderCustomLines(st);
+        }
+        if (S.state) renderControl(S.state);
     </script>
 </body>
 
