@@ -50,6 +50,7 @@ func main() {
 	fmt.Printf("Fern %s listening on http://127.0.0.1:%d/\n", appVersion, port)
 
 	UI.OnHotkey = toggleMic
+	setupProfiles()
 	cfg := modules.GetConfig()
 	UI.Apply(behaviour(cfg.AppOptions))
 	go watchAppOptions(cfg.AppOptions)
@@ -72,6 +73,7 @@ func behaviour(o modules.AppOptions) UI.Behaviour {
 	if mods, key, _, err := modules.ParseHotkey(o.MicHotkey); err == nil {
 		b.HotkeyMods, b.HotkeyKey = mods, key
 	}
+	b.Extra = profileHotkeys()
 	return b
 }
 

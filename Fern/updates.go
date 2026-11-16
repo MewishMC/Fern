@@ -210,6 +210,7 @@ func startUpdate() {
 		fail(fmt.Errorf("could not get the updater: %w", err))
 		return
 	}
+	backupBeforeUpdate()
 	if _, err := os.StartProcess(updater, []string{updater, exe}, &os.ProcAttr{
 		Dir:   filepath.Dir(exe),
 		Env:   os.Environ(),

@@ -22,3 +22,15 @@ func TestNotifyIconDataLayout(t *testing.T) {
 		}
 	}
 }
+
+func TestMenuLabel(t *testing.T) {
+	for in, want := range map[string]string{
+		"Home":        "Home",
+		"Rock & Roll": "Rock && Roll",
+		"a\tb":        "a b",
+	} {
+		if got := menuLabel(in); got != want {
+			t.Errorf("menuLabel(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

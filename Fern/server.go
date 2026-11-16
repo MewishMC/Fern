@@ -80,6 +80,9 @@ type uiState struct {
 	GPUs    []modules.GPUInfo  `json:"gpus"`
 	App     appState           `json:"app"`
 	OSCIn   oscInState         `json:"oscIn"`
+
+	Profiles profilesState `json:"profiles"`
+	Backups  backupsState  `json:"backups"`
 }
 
 type appState struct {
@@ -214,6 +217,8 @@ func StartServer(listener net.Listener) {
 	mux.HandleFunc("/fonts/custom", handleCustomFont)
 	mux.HandleFunc("/textstyle.js", serveTextStyleJS)
 	mux.HandleFunc("/ws", handleSocket)
+	mux.HandleFunc("/backup/export", handleBackupExport)
+	mux.HandleFunc("/profiles/appearance", handleProfileAppearance)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
 	}
@@ -366,6 +371,10 @@ func handleCommand(cmd command) {
 		modules.VoicemodCommand(cmd.Action, cmd.Text)
 	case "heartReset":
 		modules.ResetHeartStats()
+	case "profile":
+		handleProfileCommand(cmd)
+	case "backup":
+		handleBackupCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -558,6 +567,9 @@ func buildState() uiState {
 		GPUs:    orEmpty(modules.GPUs()),
 		App:     appState{HotkeyErr: UI.HotkeyError(), SteamVR: currentSteamVR()},
 		OSCIn:   currentOSCIn(),
+
+		Profiles: currentProfiles(),
+		Backups:  currentBackups(),
 	}
 }
 

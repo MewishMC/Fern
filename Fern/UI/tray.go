@@ -2,6 +2,8 @@ package UI
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 	"sync"
 	"syscall"
 	"unsafe"
@@ -16,21 +18,52 @@ type Behaviour struct {
 	MinimizeToTray bool
 	HotkeyMods     uint32 // RegisterHotKey modifiers; HotkeyKey 0 means none
 	HotkeyKey      uint32
+	// Extra are more global shortcuts, such as the profile switches. Each one
+	// calls OnExtraHotkey with its ID.
+	Extra []Hotkey
+}
+
+// Hotkey is one more global shortcut.
+type Hotkey struct {
+	ID   string
+	Mods uint32 // RegisterHotKey modifiers
+	Key  uint32
+}
+
+// TrayItem is an entry in a tray menu section added by TrayItems.
+type TrayItem struct {
+	ID      string
+	Label   string
+	Checked bool
 }
 
 // OnHotkey runs on its own goroutine when the global shortcut is pressed.
 var OnHotkey func()
+
+// OnExtraHotkey runs on its own goroutine when one of Behaviour.Extra is
+// pressed.
+var OnExtraHotkey func(id string)
+
+// TrayItems, when set, is asked for a submenu each time the tray menu opens;
+// an empty list leaves it out. OnTrayItem runs on its own goroutine when one
+// of its entries is picked.
+var (
+	TrayItems  func() (title string, items []TrayItem)
+	OnTrayItem func(id string)
+)
 
 var (
 	behaviourMu sync.Mutex
 	wanted      Behaviour
 	windowReady bool
 	hotkeyErr   string
+	extraErrs   map[string]string
 
 	// Only touched on the main window's thread.
 	applied     Behaviour
 	trayShown   bool
 	hotkeyOn    bool
+	extraOn     []bool
 	mainHwnd    uintptr
 	trayIcon    uintptr
 	taskbarMade uint32 // "TaskbarCreated": Explorer restarted, add the icon again
@@ -52,6 +85,18 @@ func HotkeyError() string {
 	behaviourMu.Lock()
 	defer behaviourMu.Unlock()
 	return hotkeyErr
+}
+
+// HotkeyErrors says, by ID, which of Behaviour.Extra could not be registered
+// and why.
+func HotkeyErrors() map[string]string {
+	behaviourMu.Lock()
+	defer behaviourMu.Unlock()
+	out := make(map[string]string, len(extraErrs))
+	for id, msg := range extraErrs {
+		out[id] = msg
+	}
+	return out
 }
 
 // Quit closes Fern as if Quit were picked from the tray menu.
@@ -119,12 +164,19 @@ const (
 	swMinimize = 6
 
 	mfString    = 0x0
+	mfChecked   = 0x8
+	mfPopup     = 0x10
 	mfSeparator = 0x800
 	tpmRetCmd   = 0x100
 	tpmRightBtn = 0x2
 
 	menuShow = 1
 	menuQuit = 2
+	// menuExtra + i is entry i of TrayItems.
+	menuExtra = 100
+
+	// extraHotkeyID + i is Behaviour.Extra[i].
+	extraHotkeyID = 100
 
 	hotkeyID       = 1
 	modNoRepeat    = 0x4000
@@ -184,6 +236,9 @@ func applyBehaviour() {
 	if b.HotkeyMods != applied.HotkeyMods || b.HotkeyKey != applied.HotkeyKey || !hotkeyOn && b.HotkeyKey != 0 {
 		setHotkey(b.HotkeyMods, b.HotkeyKey)
 	}
+	if !slices.Equal(b.Extra, applied.Extra) {
+		setExtraHotkeys(b.Extra)
+	}
 	applied = b
 }
 
@@ -203,6 +258,35 @@ func setHotkey(mods, key uint32) {
 	}
 	behaviourMu.Lock()
 	hotkeyErr = msg
+	behaviourMu.Unlock()
+}
+
+func unregisterExtra() {
+	for i, on := range extraOn {
+		if on {
+			_, _, _ = procUnregisterHotKey.Call(mainHwnd, uintptr(extraHotkeyID+i))
+		}
+	}
+	extraOn = nil
+}
+
+func setExtraHotkeys(keys []Hotkey) {
+	unregisterExtra()
+	errs := map[string]string{}
+	extraOn = make([]bool, len(keys))
+	for i, k := range keys {
+		if k.Key == 0 {
+			continue
+		}
+		r, _, err := procRegisterHotKey.Call(mainHwnd, uintptr(extraHotkeyID+i), uintptr(k.Mods|modNoRepeat), uintptr(k.Key))
+		if r == 0 {
+			errs[k.ID] = fmt.Sprintf("Windows refused the shortcut, probably because another app uses it (%v)", err)
+			continue
+		}
+		extraOn[i] = true
+	}
+	behaviourMu.Lock()
+	extraErrs = errs
 	behaviourMu.Unlock()
 }
 
@@ -289,6 +373,11 @@ func mainMessage(msg, wParam, lParam uintptr) bool {
 			go OnHotkey()
 		}
 		return true
+	case msg == wmHotkey && wParam >= extraHotkeyID && wParam < extraHotkeyID+uintptr(len(applied.Extra)):
+		if OnExtraHotkey != nil {
+			go OnExtraHotkey(applied.Extra[wParam-extraHotkeyID].ID)
+		}
+		return true
 	case taskbarMade != 0 && uint32(msg) == taskbarMade:
 		if trayShown {
 			addTrayIcon()
@@ -318,6 +407,27 @@ func trayMenu() {
 	quit, _ := syscall.UTF16PtrFromString("Quit Fern")
 	_, _, _ = procAppendMenuW.Call(menu, mfString, menuShow, uintptr(unsafe.Pointer(show)))
 	_, _, _ = procAppendMenuW.Call(menu, mfSeparator, 0, 0)
+	var extra []TrayItem
+	if TrayItems != nil {
+		var title string
+		title, extra = TrayItems()
+		if len(extra) > 0 {
+			if sub, _, _ := procCreatePopupMenu.Call(); sub != 0 {
+				// The submenu belongs to menu from here on and goes with it.
+				for i, item := range extra {
+					flags := uintptr(mfString)
+					if item.Checked {
+						flags |= mfChecked
+					}
+					label, _ := syscall.UTF16PtrFromString(menuLabel(item.Label))
+					_, _, _ = procAppendMenuW.Call(sub, flags, uintptr(menuExtra+i), uintptr(unsafe.Pointer(label)))
+				}
+				name, _ := syscall.UTF16PtrFromString(menuLabel(title))
+				_, _, _ = procAppendMenuW.Call(menu, mfPopup, sub, uintptr(unsafe.Pointer(name)))
+				_, _, _ = procAppendMenuW.Call(menu, mfSeparator, 0, 0)
+			}
+		}
+	}
 	_, _, _ = procAppendMenuW.Call(menu, mfString, menuQuit, uintptr(unsafe.Pointer(quit)))
 	_, _, _ = procSetMenuDefaultItem.Call(menu, menuShow, 0)
 	var pt struct{ X, Y int32 }
@@ -332,7 +442,23 @@ func trayMenu() {
 		showMain()
 	case menuQuit:
 		mainView.Terminate()
+	default:
+		if i := int(cmd) - menuExtra; i >= 0 && i < len(extra) && OnTrayItem != nil {
+			go OnTrayItem(extra[i].ID)
+		}
 	}
+}
+
+// menuLabel keeps a name from turning a letter into a menu accelerator or
+// cutting the label short.
+func menuLabel(s string) string {
+	s = strings.ReplaceAll(s, "&", "&&")
+	return strings.Map(func(r rune) rune {
+		if r == 0 || r == '\t' {
+			return ' '
+		}
+		return r
+	}, s)
 }
 
 // cleanupMain removes the tray icon so it does not linger after exit.
@@ -341,5 +467,6 @@ func cleanupMain() {
 		_, _, _ = procUnregisterHotKey.Call(mainHwnd, hotkeyID)
 		hotkeyOn = false
 	}
+	unregisterExtra()
 	removeTrayIcon()
 }
