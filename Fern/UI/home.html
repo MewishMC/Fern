@@ -60,6 +60,7 @@
                 </div>
                 <div class="nav-group">
                     <span class="nav-title">Settings</span>
+                    <button class="nav-item" data-page="controllers" data-label="Controllers"><i class="fa fa-gamepad" aria-hidden="true"></i><span class="nav-label">Controllers</span></button>
                     <button class="nav-item" data-page="output" data-label="Output"><i class="fa fa-tower-broadcast" aria-hidden="true"></i><span class="nav-label">Output</span></button>
                     <button class="nav-item" data-page="app" data-label="App"><i class="fa fa-sliders" aria-hidden="true"></i><span class="nav-label">App</span></button>
                     <button class="nav-item" data-page="appearance" data-label="Appearance"><i class="fa fa-palette" aria-hidden="true"></i><span class="nav-label">Appearance</span></button>
@@ -3914,6 +3915,385 @@
                     </div>
                 </div>
             </section>
+            <!-- ================= CONTROLLERS ================= -->
+            <section class="page" id="page-controllers">
+                <div class="page-head">
+                    <div>
+                        <h2>Controllers</h2>
+                        <p>Haptics and controller input through SteamVR</p>
+                    </div>
+                    <span class="badge" id="vrinBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>SteamVR</b>
+                            <span><span id="vrinStatus">SteamVR not running</span></span>
+                        </div>
+                        <div class="field-control"><code class="window-now" id="vrinMode">—</code></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Last buzz</b>
+                            <span><span id="vrinHapticStatus">None yet</span></span>
+                        </div>
+                        <div class="field-control"><code class="window-now" id="vrinHapticCount">0</code></div>
+                    </div>
+                    <div class="hint" id="vrinNotice" hidden></div>
+                </div>
+
+                <div class="section-title">Haptics</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Buzz the controllers</b>
+                            <span>Master switch for the patterns below. Rules can buzz too, with the “Buzz the controllers” action.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrHapEnabled"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="section-title">Heartbeat</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Buzz on every beat</b>
+                            <span>One buzz per beat at your heart rate. Set up the source on the Heart rate page; Fern connects to it while this is on, even with the line off.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrHbOn"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Controller</b>
+                            <span>Which hand buzzes</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="vrHbHand" style="width:130px">
+                                <option value="both">Both</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Strength</b>
+                            <span>How hard it buzzes</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrHbStrength" min="1" max="100" step="1">
+                            <span class="val" id="vrHbStrengthVal">50%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length</b>
+                            <span>How long each pulse lasts</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrHbDuration" min="10" max="1000" step="10">
+                            <span class="val" id="vrHbDurationVal">100ms</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Pulses</b>
+                            <span>Buzzes in a row, with a short gap between them</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrHbPulses" min="1" max="5" step="1">
+                            <span class="val" id="vrHbPulsesVal">1</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Try it</b>
+                            <span>Plays this pattern once, even while it is switched off</span>
+                        </div>
+                        <div class="field-control"><button type="button" class="btn ghost" data-vr-test="heartbeat"><i class="fa fa-play" aria-hidden="true"></i> Buzz</button></div>
+                    </div>
+                </div>
+                <div class="section-title">Player joined</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Buzz when someone joins</b>
+                            <span>Buzzes when someone joins your instance. Your own join never buzzes.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrJoinOn"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Controller</b>
+                            <span>Which hand buzzes</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="vrJoinHand" style="width:130px">
+                                <option value="both">Both</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Strength</b>
+                            <span>How hard it buzzes</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrJoinStrength" min="1" max="100" step="1">
+                            <span class="val" id="vrJoinStrengthVal">50%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length</b>
+                            <span>How long each pulse lasts</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrJoinDuration" min="10" max="1000" step="10">
+                            <span class="val" id="vrJoinDurationVal">100ms</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Pulses</b>
+                            <span>Buzzes in a row, with a short gap between them</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrJoinPulses" min="1" max="5" step="1">
+                            <span class="val" id="vrJoinPulsesVal">1</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Try it</b>
+                            <span>Plays this pattern once, even while it is switched off</span>
+                        </div>
+                        <div class="field-control"><button type="button" class="btn ghost" data-vr-test="joined"><i class="fa fa-play" aria-hidden="true"></i> Buzz</button></div>
+                    </div>
+                </div>
+                <div class="section-title">Avatar parameter</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Buzz on a parameter</b>
+                            <span>Buzzes when an avatar parameter VRChat sends changes, e.g. a headpat contact.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrParOn"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Parameter</b>
+                            <span>As VRChat names it, without /avatar/parameters/</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="vrParamName" placeholder="e.g. Headpat" maxlength="64" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When</b>
+                            <span>Any new value, or only when it turns on (true, or above zero)</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="vrParamMode" style="width:150px">
+                                <option value="on">It turns on</option>
+                                <option value="change">It changes</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Controller</b>
+                            <span>Which hand buzzes</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="vrParHand" style="width:130px">
+                                <option value="both">Both</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Strength</b>
+                            <span>How hard it buzzes</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrParStrength" min="1" max="100" step="1">
+                            <span class="val" id="vrParStrengthVal">50%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length</b>
+                            <span>How long each pulse lasts</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrParDuration" min="10" max="1000" step="10">
+                            <span class="val" id="vrParDurationVal">100ms</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Pulses</b>
+                            <span>Buzzes in a row, with a short gap between them</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrParPulses" min="1" max="5" step="1">
+                            <span class="val" id="vrParPulsesVal">1</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Try it</b>
+                            <span>Plays this pattern once, even while it is switched off</span>
+                        </div>
+                        <div class="field-control"><button type="button" class="btn ghost" data-vr-test="param"><i class="fa fa-play" aria-hidden="true"></i> Buzz</button></div>
+                    </div>
+                </div>
+                <div class="section-title">Controller input</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Send controller input to your avatar</b>
+                            <span>Sticks, trackpads, triggers and fingers as avatar parameters over OSC</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInEnabled"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Read with</b>
+                            <span>SteamVR Input is the only way to get finger curl; the legacy state has axes and buttons. This also picks how haptics are played.</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="vrInSource" style="width:170px">
+                                <option value="auto">Auto</option>
+                                <option value="actions">SteamVR Input only</option>
+                                <option value="legacy">Legacy state only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Read while a game has focus</b>
+                            <span>Reads SteamVR Input at overlay priority. SteamVR then takes the bound inputs away from VRChat, so only turn this on if nothing arrives otherwise.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInGlobal"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Name prefix</b>
+                            <span>Put before every name, e.g. “Ctl/” gives Ctl/LeftStickX. Empty matches ThumbParams-style avatars.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="vrInPrefix" placeholder="none" maxlength="24" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Updates per second</b>
+                            <span>Only values that changed are sent</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrInRate" min="5" max="30" step="1">
+                            <span class="val" id="vrInRateVal">10</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Thumbsticks</b>
+                            <span><code>LeftStickX</code>, <code>LeftStickY</code> and the right ones, floats −1 to 1</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInSticks"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Trackpads</b>
+                            <span><code>LeftPadX</code>, <code>LeftPadY</code>, floats, and <code>LeftPadTouch</code>, a bool</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInPads"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Trigger and grip</b>
+                            <span><code>LeftTrigger</code> and <code>LeftGrip</code>, floats 0 to 1</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInTriggers"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Finger curl</b>
+                            <span><code>LeftThumbCurl</code> … <code>LeftPinkyCurl</code>, floats 0 (open) to 1 (fist). SteamVR Input only; Index controllers track every finger.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInFingers"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Thumb position</b>
+                            <span><code>LeftThumb</code>, an int: 0 nothing, 1 A/X, 2 B/Y, 3 trackpad, 4 thumbstick</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInThumb"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Directions</b>
+                            <span><code>LeftStickDir</code> and <code>LeftPadDir</code>, ints: 0 centre, then 1 up, 2 right, 3 down, 4 left. A trackpad only points while touched.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInDirs"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Eight directions</b>
+                            <span>1 up, 2 up-right … 8 up-left, clockwise</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="vrInEight"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Direction dead zone</b>
+                            <span>How far the stick or thumb must be from the centre</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="vrInDeadzone" min="10" max="90" step="5">
+                            <span class="val" id="vrInDeadzoneVal">50%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Sending now</div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="stat-grid vr-stats" id="vrinParams"></div>
+                    <div class="hint" id="vrinParamsEmpty">Nothing yet. Turn controller input on while SteamVR runs.</div>
+                </div>
+                <div class="hint">Fern is a background SteamVR app, and SteamVR may give a background app's input actions nothing while a game has input focus. Auto then falls back to the legacy state, which has no fingers; the status at the top says which one answered. <b>Read while a game has focus</b> gets past that at the cost of the game's input. Change the bindings under SteamVR Settings, Controllers, Manage controller bindings, Fern.</div>
+            </section>
             <!-- ================= OUTPUT ================= -->
             <section class="page" id="page-output">
                 <div class="page-head">
@@ -4542,6 +4922,7 @@
             renderProfiles(st);
             renderBackups(st);
             renderRules(st);
+            renderVRInput(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -6432,6 +6813,140 @@
             ["hrParamBeat", hrOsc],
             ["hrParamConnected", hrOsc],
         );
+        // Controllers page: SteamVR haptics and controller input.
+        const VRI = "SteamVRInput";
+        const VR_PATTERNS = [["vrHb", "heartbeat"], ["vrJoin", "joined"], ["vrPar", "param"]];
+        CHECKS.push(
+            ["vrHapEnabled", [VRI, "haptics", "enabled"]],
+            ["vrInEnabled", [VRI, "input", "enabled"]],
+            ["vrInGlobal", [VRI, "input", "global"]],
+            ["vrInSticks", [VRI, "input", "sticks"]],
+            ["vrInPads", [VRI, "input", "pads"]],
+            ["vrInTriggers", [VRI, "input", "triggers"]],
+            ["vrInFingers", [VRI, "input", "fingers"]],
+            ["vrInThumb", [VRI, "input", "thumb"]],
+            ["vrInDirs", [VRI, "input", "directions"]],
+            ["vrInEight", [VRI, "input", "eight_way"]],
+        );
+        VR_PATTERNS.forEach(([p, key]) => {
+            CHECKS.push([p + "On", [VRI, "haptics", key, "on"]]);
+            RANGES.push(
+                [p + "Strength", [VRI, "haptics", key, "strength"], p + "StrengthVal", (v) => v + "%"],
+                [p + "Duration", [VRI, "haptics", key, "duration_ms"], p + "DurationVal", asMs],
+                [p + "Pulses", [VRI, "haptics", key, "pulses"], p + "PulsesVal", asIs],
+            );
+        });
+        RANGES.push(
+            ["vrInRate", [VRI, "input", "rate_hz"], "vrInRateVal", asIs],
+            ["vrInDeadzone", [VRI, "input", "deadzone"], "vrInDeadzoneVal", (v) => v + "%"],
+        );
+        TEXTS.push(
+            ["vrParamName", [VRI, "haptics", "param_name"], 64],
+            ["vrInPrefix", [VRI, "input", "prefix"], 24],
+        );
+        const vrHap = (c) => c[VRI].haptics.enabled;
+        const vrIn = (c) => c[VRI].input.enabled;
+        const vrActionsOK = (c) => vrIn(c) && c[VRI].input.source !== "legacy";
+        VR_PATTERNS.forEach(([p, key]) => {
+            const on = (c) => vrHap(c) && c[VRI].haptics[key].on;
+            DEPENDS.push([p + "On", vrHap], [p + "Hand", on], [p + "Strength", on], [p + "Duration", on], [p + "Pulses", on]);
+        });
+        DEPENDS.push(
+            ["vrParamName", (c) => vrHap(c) && c[VRI].haptics.param.on],
+            ["vrParamMode", (c) => vrHap(c) && c[VRI].haptics.param.on],
+            ["vrInSource", vrIn],
+            ["vrInGlobal", vrActionsOK],
+            ["vrInPrefix", vrIn],
+            ["vrInRate", vrIn],
+            ["vrInSticks", vrIn],
+            ["vrInPads", vrIn],
+            ["vrInTriggers", vrIn],
+            ["vrInFingers", vrActionsOK],
+            ["vrInThumb", vrIn],
+            ["vrInDirs", vrIn],
+            ["vrInEight", (c) => vrIn(c) && c[VRI].input.directions],
+            ["vrInDeadzone", (c) => vrIn(c) && c[VRI].input.directions],
+        );
+        const VR_SELECTS = [
+            ...VR_PATTERNS.map(([p, key]) => [p + "Hand", [VRI, "haptics", key, "hand"]]),
+            ["vrParamMode", [VRI, "haptics", "param_mode"]],
+            ["vrInSource", [VRI, "input", "source"]],
+        ];
+        VR_SELECTS.forEach(([id, path]) => {
+            $(id).addEventListener("change", (ev) => pushConfigNow((c) => setField(c, path, ev.target.value)));
+        });
+        document.querySelectorAll("[data-vr-test]").forEach((b) => {
+            b.addEventListener("click", () => send({ type: "vrInput", action: "test", module: b.dataset.vrTest }));
+        });
+
+        function renderVRInput(st) {
+            const c = st.config;
+            if (!c || !c[VRI]) return;
+            if (!lockForms()) {
+                VR_SELECTS.forEach(([id, path]) => {
+                    if (document.activeElement !== $(id)) $(id).value = field(c, path);
+                });
+            }
+            const v = st.vrInput || {};
+            const sv = st.steamvr || {};
+            const o = c[VRI];
+            const wanted = o.haptics.enabled || o.input.enabled;
+            let status;
+            if (!sv.running) status = "SteamVR not running";
+            else if (v.connected) status = "Connected" + (v.interface ? " (" + v.interface + ")" : "");
+            else if (!wanted) status = "SteamVR is running. Turn haptics or controller input on and Fern will connect.";
+            else status = sv.error ? "Can't connect yet: " + sv.error : "Connecting to SteamVR…";
+            if (v.connected && v.actionsErr && o.input.source !== "legacy") status += ". SteamVR Input unavailable: " + v.actionsErr;
+            $("vrinStatus").textContent = status;
+
+            let mode = "—";
+            if (v.connected && o.input.enabled) {
+                const hands = [v.left && "left", v.right && "right"].filter(Boolean).join(" + ");
+                if (v.mode === "actions") mode = "SteamVR Input" + (hands ? ", " + hands : "");
+                else if (v.mode === "legacy") mode = "Legacy state" + (hands ? ", " + hands : "");
+                else mode = "no input";
+            } else if (v.connected) mode = "input off";
+            $("vrinMode").textContent = mode;
+
+            const badge = $("vrinBadge");
+            const live = v.connected && !!v.mode;
+            badge.textContent = !wanted ? "off" : v.connected ? (live ? "reading" : "connected") : (sv.running ? "connecting" : "SteamVR off");
+            badge.classList.toggle("on", !!v.connected);
+
+            $("vrinHapticStatus").textContent = v.hapticError ? "Could not buzz: " + v.hapticError
+                : v.haptics ? "Played through " + (v.hapticMode || "SteamVR") : "None yet";
+            $("vrinHapticCount").textContent = String(v.haptics || 0);
+
+            if (S.vrNoticeSeq === undefined) S.vrNoticeSeq = v.noticeSeq || 0;
+            else if (v.noticeSeq !== S.vrNoticeSeq) {
+                S.vrNoticeSeq = v.noticeSeq;
+                if (v.notice) toast(v.notice, !!v.noticeBad);
+            }
+            const fingersNote = o.input.enabled && o.input.fingers && v.mode === "legacy" && !v.curl;
+            $("vrinNotice").hidden = !fingersNote;
+            $("vrinNotice").textContent = fingersNote ? "Finger curl needs SteamVR Input; the legacy state has none, so the curl parameters stay at 0." : "";
+
+            const params = v.params || [];
+            const sig = params.map((p) => p.name + "=" + p.value).join("|");
+            if (sig !== S.vrParamsSig) {
+                S.vrParamsSig = sig;
+                const grid = $("vrinParams");
+                grid.textContent = "";
+                params.forEach((p) => {
+                    const cell = document.createElement("div");
+                    cell.className = "stat";
+                    const b = document.createElement("b");
+                    b.textContent = p.value;
+                    const span = document.createElement("span");
+                    span.textContent = p.name;
+                    cell.append(b, span);
+                    grid.appendChild(cell);
+                });
+                grid.hidden = !params.length;
+                $("vrinParamsEmpty").hidden = !!params.length;
+            }
+        }
+
         function applyDepends(c) {
             if (!c) return;
             DEPENDS.forEach(([id, active]) => {
