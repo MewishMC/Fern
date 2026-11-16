@@ -138,6 +138,12 @@ func moduleText(id string, cfg Config) string {
 		return gpuLine(cfg)
 	case ModuleWorld:
 		return worldLine(cfg)
+	case ModuleCalendar:
+		return calendarLine(cfg)
+	case ModulePrices:
+		return pricesLine(cfg)
+	case ModuleSteam:
+		return steamLine(cfg)
 	}
 	return ""
 }

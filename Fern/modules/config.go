@@ -44,6 +44,7 @@ var DefaultOrder = []string{
 	ModuleHeart,
 	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 	ModuleNetwork, ModuleGPU, ModuleWorld,
+	ModuleCalendar, ModulePrices, ModuleSteam,
 }
 
 var knownModules = func() map[string]bool {
@@ -78,6 +79,9 @@ type DisplayOptions struct {
 	Network      bool     `json:"network"`
 	GPU          bool     `json:"gpu"`
 	World        bool     `json:"world"`
+	Calendar     bool     `json:"calendar"`
+	Prices       bool     `json:"prices"`
+	Steam        bool     `json:"steam"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -625,6 +629,11 @@ type Config struct {
 	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
 	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
 
+	// Calendar, price and Steam lines; see calendar.go, prices.go and steam.go.
+	CalendarOptions CalendarOptions `json:"CalendarOptions"`
+	PriceOptions    PriceOptions    `json:"PriceOptions"`
+	SteamOptions    SteamOptions    `json:"SteamOptions"`
+
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
@@ -891,6 +900,10 @@ func DefaultConfig() Config {
 		STTOptions:    defaultSTTOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
+
+		CalendarOptions: defaultCalendarOptions(),
+		PriceOptions:    defaultPriceOptions(),
+		SteamOptions:    defaultSteamOptions(),
 	}
 }
 
@@ -915,6 +928,9 @@ func (c Config) clone() Config {
 	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	out.Rules = c.Rules.clone()
 	out.DND = c.DND.clone()
+	out.CalendarOptions.Files = append([]string{}, c.CalendarOptions.Files...)
+	out.PriceOptions.Pairs = append([]string{}, c.PriceOptions.Pairs...)
+	out.SteamOptions.Ignore = append([]string{}, c.SteamOptions.Ignore...)
 	return out
 }
 
@@ -1111,6 +1127,12 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.GPU
 	case ModuleWorld:
 		return &d.World
+	case ModuleCalendar:
+		return &d.Calendar
+	case ModulePrices:
+		return &d.Prices
+	case ModuleSteam:
+		return &d.Steam
 	}
 	return nil
 }
@@ -1383,6 +1405,9 @@ func (c *Config) sanitize() {
 	sanitizeTexts(c)
 	c.Rules.sanitize()
 	c.DND.sanitize()
+	sanitizeCalendar(&c.CalendarOptions)
+	sanitizePrices(&c.PriceOptions)
+	sanitizeSteam(&c.SteamOptions)
 }
 
 func scheduleSave() {
