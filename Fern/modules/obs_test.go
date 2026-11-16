@@ -388,3 +388,17 @@ func TestOBSRulesRegistered(t *testing.T) {
 		t.Error(err)
 	}
 }
+
+func TestOBSLateReplyAfterShut(t *testing.T) {
+	c := newOBSConn(nil)
+	c.pmu.Lock()
+	c.pending["fern-1"] = make(chan obsReply, 1)
+	c.pmu.Unlock()
+	c.shut()
+	c.shut()
+	// A reply that was already on its way must not panic.
+	c.deliver("fern-1", obsReply{ok: true})
+	if _, err := c.call("GetVersion", nil); err != errOBSOffline {
+		t.Errorf("call after shut: %v", err)
+	}
+}

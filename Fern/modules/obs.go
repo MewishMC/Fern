@@ -334,11 +334,12 @@ type obsConn struct {
 	seq     atomic.Uint64
 	pmu     sync.Mutex
 	pending map[string]chan obsReply
-	closed  bool
+	gone    chan struct{} // closed when the session ends
+	once    sync.Once
 }
 
 func newOBSConn(c *websocket.Conn) *obsConn {
-	return &obsConn{conn: c, pending: map[string]chan obsReply{}}
+	return &obsConn{conn: c, pending: map[string]chan obsReply{}, gone: make(chan struct{})}
 }
 
 func (c *obsConn) write(op int, d any) error {
@@ -367,11 +368,12 @@ var errOBSOffline = errors.New("OBS isn't connected")
 func (c *obsConn) call(typ string, data any) (json.RawMessage, error) {
 	id := c.nextID()
 	ch := make(chan obsReply, 1)
-	c.pmu.Lock()
-	if c.closed {
-		c.pmu.Unlock()
+	select {
+	case <-c.gone:
 		return nil, errOBSOffline
+	default:
 	}
+	c.pmu.Lock()
 	c.pending[id] = ch
 	c.pmu.Unlock()
 	defer func() {
@@ -387,10 +389,9 @@ func (c *obsConn) call(typ string, data any) (json.RawMessage, error) {
 		return nil, errOBSOffline
 	}
 	select {
-	case r, ok := <-ch:
-		if !ok {
-			return nil, errOBSOffline
-		}
+	case <-c.gone:
+		return nil, errOBSOffline
+	case r := <-ch:
 		if !r.ok {
 			if r.comment != "" {
 				return nil, fmt.Errorf("OBS: %s", r.comment)
@@ -415,17 +416,10 @@ func (c *obsConn) deliver(id string, r obsReply) {
 	}
 }
 
+// shut fails every waiting call. Reply channels are never closed, so a
+// reply arriving late cannot panic.
 func (c *obsConn) shut() {
-	c.pmu.Lock()
-	defer c.pmu.Unlock()
-	if c.closed {
-		return
-	}
-	c.closed = true
-	for id, ch := range c.pending {
-		close(ch)
-		delete(c.pending, id)
-	}
+	c.once.Do(func() { close(c.gone) })
 }
 
 func currentOBSConn() *obsConn {
