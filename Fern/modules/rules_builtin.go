@@ -320,7 +320,7 @@ func registerBuiltinTriggers() {
 		ID: TriggerProfileSwitched, Label: "Profile switched", Category: "Fern",
 		Description: "A profile is switched to, from anywhere",
 		Fields: []RuleField{
-			{Key: "profile", Label: "Profile", Type: FieldSelect, Source: SourceProfiles, Hint: "Any profile when empty"},
+			{Key: "profile", Label: "Profile", Type: FieldSelect, Source: SourceProfiles, Placeholder: "Any profile"},
 		},
 		Match: func(p RuleParams, ev RuleEvent) bool {
 			want := p.String("profile")
@@ -350,7 +350,7 @@ func registerBuiltinActions() {
 	mustRegister(RegisterRuleAction(RuleAction{
 		ID: ActionProfile, Label: "Switch profile", Category: "Fern",
 		Description: "Undo switches back to the profile that was active",
-		Fields:      []RuleField{{Key: "profile", Label: "Profile", Type: FieldSelect, Source: SourceProfiles, Hint: "Empty stops saving into a profile"}},
+		Fields:      []RuleField{{Key: "profile", Label: "Profile", Type: FieldSelect, Source: SourceProfiles, Placeholder: "No profile", Hint: "No profile stops saving changes into one"}},
 		Run: func(_ RuleContext, p RuleParams) (func(), error) {
 			name := p.String("profile")
 			before := ActiveProfile()
@@ -467,7 +467,7 @@ func registerBuiltinActions() {
 		ID: ActionGroup, Label: "Use a message group", Category: "Chatbox",
 		Description: "Limits the custom messages to one group",
 		Fields: []RuleField{
-			{Key: "group", Label: "Group", Type: FieldSelect, Source: SourceGroups, Hint: "Empty cycles through every hearted message"},
+			{Key: "group", Label: "Group", Type: FieldSelect, Source: SourceGroups, Placeholder: "All hearted messages"},
 			{Key: "show", Label: "Turn the text line on", Type: FieldBool, Default: true},
 		},
 		Run: func(_ RuleContext, p RuleParams) (func(), error) {
@@ -533,7 +533,7 @@ func registerBuiltinActions() {
 	mustRegister(RegisterRuleAction(RuleAction{
 		ID: ActionRunRule, Label: "Run another rule's actions", Category: "Fern",
 		Description: "Ignores that rule's trigger, conditions and cooldown",
-		Fields:      []RuleField{{Key: "rule", Label: "Rule", Type: FieldSelect, Source: SourceRules}},
+		Fields:      []RuleField{{Key: "rule", Label: "Rule", Type: FieldSelect, Source: SourceRules, Placeholder: "Pick a rule"}},
 		Run: func(ctx RuleContext, p RuleParams) (func(), error) {
 			if ctx.eng == nil {
 				return nil, errors.New("rules aren't running")
