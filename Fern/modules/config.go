@@ -100,6 +100,16 @@ type TextOptions struct {
 	Speed   int    `json:"speed"`
 	Shuffle bool   `json:"shuffle"`
 	Label   string `json:"label"` // optional prefix before the message
+	// Weighted makes the shuffle favour messages that have gone unseen the
+	// longest. It only applies while Shuffle is on.
+	Weighted bool `json:"weighted"`
+	// Group limits the rotation to the messages in one group; empty means
+	// every hearted message. Groups lists the groups, empty ones included.
+	Group  string   `json:"group"`
+	Groups []string `json:"groups"`
+	// Icons go in front of the messages, one per message change.
+	Icons       []string `json:"icons"`
+	IconsRandom bool     `json:"icons_random"`
 }
 
 // LoadingOptions controls the loading module.
@@ -119,9 +129,29 @@ type AfkOptions struct {
 	// and window switches. The JSON key predates the name.
 	MovementOnly bool    `json:"poopyafk"`
 	AFKTime      float64 `json:"afk_time"`
-	AFKMessage   string  `json:"afk_message"`
-	ShowTimer    bool    `json:"show_timer"`
-	TimerStyle   string  `json:"timer_style"` // full, short, minutes
+	// AFKMessage is the text shown with the timer. {time} and {since} place
+	// the idle time and the time AFK started; without them the timer is
+	// added at the end.
+	AFKMessage string `json:"afk_message"`
+	// PlainMessage is the text shown when the timer is off. Empty means the
+	// timer text with its placeholders taken out.
+	PlainMessage string `json:"afk_message_plain"`
+	Icon         string `json:"icon"` // optional prefix, like 💤
+	ShowTimer    bool   `json:"show_timer"`
+	TimerStyle   string `json:"timer_style"` // full, short, minutes, compact, words
+	TimerFont    string `json:"timer_font"`  // a TextStyles id for the timer, or ""
+
+	// Activity sources (see afkSources). MovementOnly overrides them.
+	UseMovement bool   `json:"use_movement"`
+	UseVoice    bool   `json:"use_voice"`
+	UseOSC      bool   `json:"use_osc_other"`
+	UseWindow   bool   `json:"use_window"`
+	InputMode   string `json:"input_mode"` // keyboard and mouse: always, desktop, off
+
+	// Manual is the "I'm AFK" switch: on until it is turned off, whatever
+	// detection says. ManualSince is when it was turned on (unix ms).
+	Manual      bool  `json:"manual"`
+	ManualSince int64 `json:"manual_since"`
 }
 
 // MediaOptions controls how the now playing line is rendered.
@@ -301,7 +331,7 @@ type OSCOptions struct {
 // Config is the persisted application configuration.
 type Config struct {
 	DisplayOptions DisplayOptions `json:"display_options"`
-	TextMessages   []string       `json:"TextMessages"`
+	TextMessages   []TextMessage  `json:"TextMessages"`
 	WindowOptions  WindowOptions  `json:"WindowOptions"`
 	TextOptions    TextOptions    `json:"TextOptions"`
 	LoadingOptions LoadingOptions `json:"LoadingOptions"`
@@ -351,7 +381,7 @@ func DefaultConfig() Config {
 			MaxChars:     144,
 			MaxLines:     9,
 		},
-		TextMessages: []string{"♡ hi there", "♡ have a good day", "♡ be kind"},
+		TextMessages: Messages("♡ hi there", "♡ have a good day", "♡ be kind"),
 		WindowOptions: WindowOptions{
 			Simplified: true,
 			Label:      "",
@@ -377,8 +407,15 @@ func DefaultConfig() Config {
 			AutoDetect: true,
 			AFKTime:    10,
 			AFKMessage: "AFK",
+			Icon:       "💤",
 			ShowTimer:  true,
 			TimerStyle: "full",
+
+			UseMovement: true,
+			UseVoice:    true,
+			UseOSC:      true,
+			UseWindow:   true,
+			InputMode:   AfkInputAlways,
 		},
 		MediaOptions: MediaOptions{
 			ShowProgress:   true,
@@ -483,7 +520,9 @@ func DefaultConfig() Config {
 func (c Config) clone() Config {
 	out := c
 	out.DisplayOptions.Order = append([]string{}, c.DisplayOptions.Order...)
-	out.TextMessages = append([]string{}, c.TextMessages...)
+	out.TextMessages = append([]TextMessage{}, c.TextMessages...)
+	out.TextOptions.Groups = append([]string{}, c.TextOptions.Groups...)
+	out.TextOptions.Icons = append([]string{}, c.TextOptions.Icons...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	out.BatteryOptions.Devices = append([]BatteryDevice{}, c.BatteryOptions.Devices...)
@@ -828,10 +867,11 @@ func (c *Config) sanitize() {
 	}
 	c.LoadingOptions.Dots = clampInt(c.LoadingOptions.Dots, 1, 6)
 	switch c.AfkOptions.TimerStyle {
-	case "full", "short", "minutes":
+	case "full", "short", "minutes", "compact", "words":
 	default:
 		c.AfkOptions.TimerStyle = "full"
 	}
+	c.AfkOptions.sanitize()
 
 	c.sanitizeSteamVR()
 	c.HeartRate.sanitize()
@@ -844,19 +884,7 @@ func (c *Config) sanitize() {
 		c.OSCOptions.Port = 9000
 	}
 
-	// Keep messages exactly as typed, blanks included. Editing a message briefly
-	// empties it, and dropping blank entries here made rows vanish mid-edit and
-	// shifted every index after them. Blank entries are skipped when rendering.
-	if c.TextMessages != nil {
-		if len(c.TextMessages) > 200 {
-			c.TextMessages = c.TextMessages[:200]
-		}
-		limited := make([]string, 0, len(c.TextMessages))
-		for _, m := range c.TextMessages {
-			limited = append(limited, RuneLimit(m, 144))
-		}
-		c.TextMessages = limited
-	}
+	sanitizeTexts(c)
 }
 
 func scheduleSave() {

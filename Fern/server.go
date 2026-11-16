@@ -89,6 +89,11 @@ type afkState struct {
 	IdleMS  int64 `json:"idleMs"`
 	LimitMS int64 `json:"limitMs"`
 	Talking bool  `json:"talking"`
+	Manual  bool  `json:"manual"`
+	// Style is the AFK preset the settings match, or "" for a custom look.
+	Style   string                   `json:"style"`
+	Styles  []modules.AfkSample      `json:"styles"`
+	Sources []modules.AfkSourceState `json:"sources"`
 }
 
 type perfState struct {
@@ -186,6 +191,7 @@ func StartServer(listener net.Listener) {
 	})
 	mux.HandleFunc("/fonts/system", handleSystemFonts)
 	mux.HandleFunc("/fonts/custom", handleCustomFont)
+	mux.HandleFunc("/textstyle.js", serveTextStyleJS)
 	mux.HandleFunc("/ws", handleSocket)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
@@ -292,6 +298,8 @@ func handleCommand(cmd command) {
 		go func() { _ = modules.MediaControl(cmd.Action) }()
 	case "skipText":
 		modules.SkipMessage()
+	case "afkStyle":
+		modules.ApplyAfkPreset(cmd.Text)
 	case "reset":
 		modules.ResetConfig()
 	case "save":
@@ -438,6 +446,10 @@ func buildState() uiState {
 			IdleMS:  idle.Milliseconds(),
 			LimitMS: int64(cfgAfk.AFKTime * 1000),
 			Talking: modules.Talking(),
+			Manual:  cfgAfk.Manual,
+			Style:   modules.AfkPresetMatch(cfgAfk),
+			Styles:  modules.AfkPresetSamples(cfg),
+			Sources: modules.AfkSourcesNow(),
 		},
 		Perf: perfState{
 			CPU:        modules.CpuUsage(),

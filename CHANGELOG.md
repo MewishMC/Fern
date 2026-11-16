@@ -54,6 +54,25 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 - Dictation: hold or click the mic button next to Send now, with a microphone picker, noise
   gate with a live level meter and silence timeout. Speech is transcribed by an
   OpenAI-compatible endpoint, can be translated, and can be sent straight away.
+- AFK detection can count keyboard and mouse use in any app, next to VRChat movement, voice,
+  other OSC and window switching. Pick which ones count; keyboard and mouse can be limited to
+  desktop. Each source shows when it last saw you.
+- An **I'm AFK** switch on the AFK page and an **I'm AFK** button on Live keep you AFK until
+  you turn it off.
+- 14 AFK styles with live previews, a separate text for when the timer is off, an optional
+  icon (💤 by default), `{time}` and `{since}` placeholders, two new timer formats ("1h 12m",
+  "12 minutes") and Unicode lettering for the timer.
+- An **Aa** button on the AFK texts and the text label restyles them in small caps,
+  superscript, bold, italic, monospace, double struck or fullwidth.
+- Custom messages have a heart to take them in or out of the rotation and an optional group.
+  The rotation can be limited to one group.
+- A weighted shuffle that brings back the messages you haven't seen for longest.
+- A list of icons put in front of custom messages, the next one (or a random one) each time
+  the message changes.
+
+### Changed
+- Custom messages are saved as objects with a heart and a group. Existing message lists are
+  converted when loaded; older Fern versions cannot read the new format.
 
 ## v2.2 - Custom bars
 
