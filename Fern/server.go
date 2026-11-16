@@ -84,6 +84,8 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	VRInput modules.VRInputStatus `json:"vrInput"`
 }
 
 type appState struct {
@@ -388,6 +390,8 @@ func handleCommand(cmd command) {
 		handleDNDCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
+	case "vrInput":
+		handleVRInputCommand(cmd)
 	}
 }
 
@@ -582,6 +586,8 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		VRInput: modules.CurrentVRInput(),
 	}
 }
 

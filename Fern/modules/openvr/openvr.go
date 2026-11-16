@@ -158,15 +158,20 @@ type systemLayout struct {
 	pollEvent      int // PollNextEvent
 	ackQuit        int // AcknowledgeQuit_Exiting
 	setSDK         int // SetSDKVersion, -1 when the version has none
+
+	controllerState int // GetControllerState
+	hapticPulse     int // TriggerHapticPulse
 }
 
 // The slots were read from openvr_capi.h at v2.15.6 (IVRSystem_026) and
 // v2.5.1 (IVRSystem_022), and checked against offsetof() with gcc.
 var systemLayouts = []systemLayout{
 	{version: "IVRSystem_026", slots: 51, controllerRole: 19, deviceClass: 20, connected: 21, boolProp: 22,
-		floatProp: 23, int32Prop: 24, stringProp: 28, pollEvent: 30, ackQuit: 47, setSDK: 50},
+		floatProp: 23, int32Prop: 24, stringProp: 28, pollEvent: 30, ackQuit: 47, setSDK: 50,
+		controllerState: 37, hapticPulse: 39},
 	{version: "IVRSystem_022", slots: 46, controllerRole: 18, deviceClass: 19, connected: 20, boolProp: 21,
-		floatProp: 22, int32Prop: 23, stringProp: 27, pollEvent: 29, ackQuit: 43, setSDK: -1},
+		floatProp: 22, int32Prop: 23, stringProp: 27, pollEvent: 29, ackQuit: 43, setSDK: -1,
+		controllerState: 33, hapticPulse: 35},
 }
 
 // compositorLayout gives the slots used in one IVRCompositor FnTable version.
@@ -254,8 +259,10 @@ func IsHmdPresent() (bool, error) {
 type Session struct {
 	sys     []uintptr
 	comp    []uintptr
+	inp     []uintptr
 	sysL    systemLayout
 	compL   compositorLayout
+	inL     inputLayout
 	stopped bool
 }
 
@@ -310,6 +317,12 @@ func Init() (*Session, error) {
 			break
 		}
 	}
+	for _, l := range inputLayouts {
+		if p, _ := genericInterface(l.version); p != 0 {
+			s.inp, s.inL = table(p, l.slots), l
+			break
+		}
+	}
 	if s.sysL.setSDK >= 0 {
 		// The C++ VR_Init does this too; it tells the runtime which SDK built us.
 		syscall.SyscallN(s.sys[s.sysL.setSDK], sdkMajor, sdkMinor, sdkBuild)
@@ -331,7 +344,7 @@ func (s *Session) Shutdown() {
 		return
 	}
 	s.stopped = true
-	s.sys, s.comp = nil, nil
+	s.sys, s.comp, s.inp = nil, nil, nil
 	syscall.SyscallN(procShutdownInternal.Addr())
 }
 
