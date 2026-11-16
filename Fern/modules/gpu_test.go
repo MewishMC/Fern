@@ -126,6 +126,11 @@ func TestGPUSourcesOnThisMachine(t *testing.T) {
 	mem := adapterMemory(q.values(gpuMemoryPath))
 	t.Logf("load %v, memory %v", load, mem)
 	for _, g := range list {
+		// Microsoft's software renderer (vendor 0x1414, the only adapter on
+		// CI runners) has no dedicated memory counter.
+		if g.VendorID == 0x1414 {
+			continue
+		}
 		if _, ok := mem[g.LUID]; !ok {
 			t.Errorf("no memory counter for %s (%s)", g.Name, g.LUID)
 		}
