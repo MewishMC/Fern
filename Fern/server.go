@@ -84,6 +84,10 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	Calendar modules.CalendarStatus `json:"calendar"`
+	Prices   modules.PricesStatus   `json:"prices"`
+	Steam    modules.SteamStatus    `json:"steam"`
 }
 
 type appState struct {
@@ -386,6 +390,8 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "calendar", "prices", "steam":
+		handleWebLinesCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -524,6 +530,9 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+			modules.ModuleCalendar: d.Calendar,
+			modules.ModulePrices:   d.Prices,
+			modules.ModuleSteam:    d.Steam,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -582,6 +591,10 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		Calendar: modules.CurrentCalendarStatus(),
+		Prices:   modules.CurrentPricesStatus(),
+		Steam:    modules.CurrentSteamStatus(),
 	}
 }
 
