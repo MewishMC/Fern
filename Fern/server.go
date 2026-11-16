@@ -75,7 +75,20 @@ type uiState struct {
 	Lyrics    modules.LyricsStatus  `json:"lyrics"`
 	Weather   modules.WeatherStatus `json:"weather"`
 
-	Social modules.SocialInfo `json:"social"`
+	Social  modules.SocialInfo `json:"social"`
+	Network networkState       `json:"network"`
+	GPUs    []modules.GPUInfo  `json:"gpus"`
+	App     appState           `json:"app"`
+}
+
+type appState struct {
+	HotkeyErr string       `json:"hotkeyErr"`
+	SteamVR   steamVRState `json:"steamvr"`
+}
+
+type networkState struct {
+	Adapters []modules.NetAdapter `json:"adapters"`
+	Busiest  string               `json:"busiest"`
 }
 
 // assistState is the Assist page: AI tools, text to speech and speech to
@@ -109,9 +122,11 @@ type perfState struct {
 }
 
 type logsState struct {
-	Join     []modules.LogEvent `json:"join"`
-	Leave    []modules.LogEvent `json:"leave"`
-	Activity []modules.LogEvent `json:"activity"`
+	Join     []modules.LogEvent   `json:"join"`
+	Leave    []modules.LogEvent   `json:"leave"`
+	Activity []modules.LogEvent   `json:"activity"`
+	World    *modules.WorldInfo   `json:"world"` // null when not in an instance
+	Session  modules.SessionStats `json:"session"`
 }
 
 type holdState struct {
@@ -321,6 +336,10 @@ func handleCommand(cmd command) {
 		_ = modules.SaveNow()
 	case "update":
 		go startUpdate()
+	case "steamvr":
+		go steamVRAction(cmd.Action)
+	case "showWindow":
+		UI.ShowWindow()
 	case "secret":
 		// The value is never echoed or logged; the panel only learns it is set.
 		_ = modules.SetPanelSecret(cmd.Module, cmd.Text)
@@ -481,6 +500,9 @@ func buildState() uiState {
 			modules.ModuleTwitch:   d.Twitch,
 			modules.ModuleSoundpad: d.Soundpad,
 			modules.ModuleVoicemod: d.Voicemod,
+			modules.ModuleNetwork:  d.Network,
+			modules.ModuleGPU:      d.GPU,
+			modules.ModuleWorld:    d.World,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -508,6 +530,8 @@ func buildState() uiState {
 			Join:     orEmpty(modules.JoinLogs()),
 			Leave:    orEmpty(modules.LeaveLogs()),
 			Activity: orEmpty(modules.ActivityFeed()),
+			World:    currentWorld(),
+			Session:  modules.Session(),
 		},
 		History:   orEmpty(modules.History()),
 		Hold:      holdState{Text: holdText, Until: holdUntil, Pinned: holdPinned},
@@ -529,7 +553,22 @@ func buildState() uiState {
 		Lyrics:  modules.CurrentLyricsStatus(),
 		Weather: modules.CurrentWeatherStatus(),
 		Social:  modules.CurrentSocial(cfg),
+		Network: currentNetwork(),
+		GPUs:    orEmpty(modules.GPUs()),
+		App:     appState{HotkeyErr: UI.HotkeyError(), SteamVR: currentSteamVR()},
 	}
+}
+
+func currentWorld() *modules.WorldInfo {
+	if w, ok := modules.CurrentWorld(); ok {
+		return &w
+	}
+	return nil
+}
+
+func currentNetwork() networkState {
+	list, busiest := modules.NetAdapters()
+	return networkState{Adapters: orEmpty(list), Busiest: busiest}
 }
 
 // orEmpty keeps nil slices from reaching the page as JSON null.

@@ -16,5 +16,7 @@ func StartWorkers() {
 	startTwitchWorker()
 	startSoundpadWorker()
 	startVoicemodWorker()
+	startNetworkWorker()
+	startGPUWorker()
 	go watchVRChatProcess()
 }

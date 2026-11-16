@@ -79,6 +79,9 @@ func watchVRChatProcess() {
 	}
 }
 
+// ProcessRunning reports whether a process with this executable name exists.
+func ProcessRunning(exe string) bool { return processRunning(exe) }
+
 // processRunning reports whether a process with this executable name exists.
 func processRunning(exe string) bool {
 	const th32csSnapProcess = 0x2

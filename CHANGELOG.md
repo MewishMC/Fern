@@ -118,6 +118,30 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 - Send now has live typing (sends as you type, kept to VRChat's rate), shows VRChat's typing
   bubble while you write, remembers your last 20 messages to resend with a click, and
   suggests a whole earlier message as you type it (Tab takes it).
+- A Network line with download and upload speed, the session peak and totals, and how busy
+  the connection is against the link speed or the fastest rate seen. Units pick themselves
+  (kbps, Mbps, Gbps or bytes), small raised labels save characters, and the adapter can be
+  picked or left on automatic (the busiest one).
+- A GPU line with load and video memory for any graphics card, read from the counters Task
+  Manager uses, plus the temperature on NVIDIA cards. The card can be picked or left on
+  automatic.
+- The CPU and GPU lines can show a custom name instead of the detected model.
+- A VRChat world line with the world name, player count and peak, instance type, region,
+  time in the instance and session stats.
+- The VRChat log line can announce screenshots and finished world loads ("Loaded The Black
+  Cat in 14s · 230 MB"), marks players you already met this session ("joined again") and can
+  hide events after a set time.
+- The Logs page shows this session: the current world and instance, players here and the
+  peak, worlds visited and players met.
+- An App page with an optional tray icon (click to show, right-click to quit), start
+  minimised, close to tray and minimise to tray.
+- A global shortcut that toggles your VRChat mic over OSC.
+- Fern can register itself with SteamVR to start minimised with it and quit when SteamVR
+  closes. This only happens when you press Register while SteamVR is running.
+
+### Changed
+- VRChat log events use the time from the log line, and "OnPlayerLeftRoom" lines no longer
+  show up as a player called "Room" leaving.
 
 ## v2.2 - Custom bars
 

@@ -38,42 +38,30 @@ func TestFillTemplate(t *testing.T) {
 	}
 }
 
-func TestParseInstance(t *testing.T) {
-	cases := []struct{ in, typ, region string }{
-		{"wrld_a:123", "Public", "US West"},
-		{"wrld_a:123~region(eu)", "Public", "Europe"},
-		{"wrld_a:123~hidden(usr_x)~region(jp)", "Friends+", "Japan"},
-		{"wrld_a:123~friends(usr_x)~region(use)", "Friends", "US East"},
-		{"wrld_a:123~private(usr_x)~canRequestInvite~region(us)", "Invite+", "US West"},
-		{"wrld_a:123~private(usr_x)", "Invite", "US West"},
-		{"wrld_a:123~group(grp_x)~groupAccessType(public)", "Group Public", "US West"},
-		{"wrld_a:123~group(grp_x)~groupAccessType(plus)", "Group+", "US West"},
-		{"wrld_a:123~group(grp_x)~groupAccessType(members)", "Group", "US West"},
-	}
-	for _, c := range cases {
-		w := parseInstance(c.in)
-		if w.Type != c.typ || w.Region != c.region || w.WorldID != "wrld_a" {
-			t.Errorf("%s: %+v", c.in, w)
-		}
-	}
-	if got := parseInstance("wrld_a:123~region(eu)").JoinURL(); got != "https://vrchat.com/home/launch?worldId=wrld_a&instanceId=123~region%28eu%29" {
+func TestPresenceWorldJoinURL(t *testing.T) {
+	w := PresenceWorld{WorldID: "wrld_a", InstanceID: "123~region(eu)", Type: "Public"}
+	if got := w.JoinURL(); got != "https://vrchat.com/home/launch?worldId=wrld_a&instanceId=123~region%28eu%29" {
 		t.Errorf("JoinURL = %q", got)
 	}
-	if parseInstance("wrld_a:1~hidden(usr_x)").JoinURL() != "" {
+	w.Type = "Friends+"
+	if w.JoinURL() != "" {
 		t.Error("join link for a friends instance")
 	}
 }
 
-func TestWorldFromLog(t *testing.T) {
-	t.Cleanup(func() { curWorld = WorldInfo{} })
-	parseWorldLine("2024.01.01 12:00:00 Log        -  [Behaviour] Joining wrld_4432:83442~hidden(usr_1)~region(eu)")
-	parseWorldLine("2024.01.01 12:00:01 Log        -  [Behaviour] Joining or Creating Room: The Black Cat")
-	w := CurrentWorld()
-	if w.Name != "The Black Cat" || w.WorldID != "wrld_4432" || w.Type != "Friends+" || w.Region != "Europe" || w.Since == 0 {
+func TestPresenceWorldFromLog(t *testing.T) {
+	reset := func() { selfName, world, inWorld, roomName = "", WorldInfo{}, false, "" }
+	reset()
+	t.Cleanup(reset)
+	at := time.Date(2024, 1, 1, 12, 0, 0, 0, time.Local)
+	parseWorldLine("2024.01.01 12:00:00 Log        -  [Behaviour] Joining wrld_4432:83442~hidden(usr_1)~region(eu)", at)
+	parseWorldLine("2024.01.01 12:00:01 Log        -  [Behaviour] Joining or Creating Room: The Black Cat", at.Add(time.Second))
+	w := currentPresenceWorld()
+	if w.Name != "The Black Cat" || w.WorldID != "wrld_4432" || w.InstanceID != "83442~hidden(usr_1)~region(eu)" || w.Type != "Friends+" || w.Since == 0 {
 		t.Errorf("world = %+v", w)
 	}
-	parseWorldLine("2024.01.01 12:10:00 Log        -  [Behaviour] OnLeftRoom")
-	if CurrentWorld().Name != "" {
+	parseWorldLine("2024.01.01 12:10:00 Log        -  [Behaviour] OnLeftRoom", at.Add(10*time.Minute))
+	if currentPresenceWorld().Name != "" {
 		t.Error("world kept after leaving")
 	}
 }

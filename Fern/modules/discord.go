@@ -17,16 +17,16 @@ import (
 
 // DiscordInfo is what the Discord page shows.
 type DiscordInfo struct {
-	Link     LinkStatus `json:"link"`
-	User     string     `json:"user"`     // signed-in Discord user, once known
-	Presence string     `json:"presence"` // the presence being shown, "" when none
-	Voice    LinkStatus `json:"voice"`
-	Channel  string     `json:"channel"`
-	Count    int        `json:"count"`
-	Speaking []string   `json:"speaking"`
-	Mute     bool       `json:"mute"`
-	Deaf     bool       `json:"deaf"`
-	World    WorldInfo  `json:"world"`
+	Link     LinkStatus    `json:"link"`
+	User     string        `json:"user"`     // signed-in Discord user, once known
+	Presence string        `json:"presence"` // the presence being shown, "" when none
+	Voice    LinkStatus    `json:"voice"`
+	Channel  string        `json:"channel"`
+	Count    int           `json:"count"`
+	Speaking []string      `json:"speaking"`
+	Mute     bool          `json:"mute"`
+	Deaf     bool          `json:"deaf"`
+	World    PresenceWorld `json:"world"`
 }
 
 // discordVoice is the voice channel as last reported over RPC.
@@ -113,7 +113,7 @@ func CurrentDiscord(cfg Config) DiscordInfo {
 	if info.Speaking == nil {
 		info.Speaking = []string{}
 	}
-	info.World = CurrentWorld()
+	info.World = currentPresenceWorld()
 	return info
 }
 
@@ -209,7 +209,7 @@ func discordLine(cfg Config) string {
 }
 
 // presenceActivity builds the Rich Presence activity, or nil for none.
-func presenceActivity(cfg Config, w WorldInfo, vrchatRunning bool, players int, inVR bool) map[string]any {
+func presenceActivity(cfg Config, w PresenceWorld, vrchatRunning bool, players int, inVR bool) map[string]any {
 	o := cfg.DiscordOptions
 	if !o.Presence || (o.OnlyInVRChat && !vrchatRunning) {
 		return nil
@@ -356,7 +356,7 @@ type discordSession struct {
 	lastPresenceAt time.Time
 
 	// hooks, swapped in tests
-	world   func() WorldInfo
+	world   func() PresenceWorld
 	running func() bool
 	players func() int
 	inVR    func() bool
@@ -375,7 +375,7 @@ func newDiscordSession(t ipcTransport, cfgFn func() Config) *discordSession {
 		clientID: cfgFn().DiscordOptions.ClientID,
 		pending:  map[string]func(rpcMessage){},
 		tokenCh:  make(chan tokenResult, 1),
-		world:    CurrentWorld,
+		world:    currentPresenceWorld,
 		running:  func() bool { return CurrentVRChatStatus().Running },
 		players:  PlayerCount,
 		inVR:     InVR,

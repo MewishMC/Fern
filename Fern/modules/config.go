@@ -31,6 +31,9 @@ const (
 	ModuleTwitch   = "twitch"
 	ModuleSoundpad = "soundpad"
 	ModuleVoicemod = "voicemod"
+	ModuleNetwork  = "network"
+	ModuleGPU      = "gpu"
+	ModuleWorld    = "world"
 )
 
 // DefaultOrder is the order used before the user picks one.
@@ -40,6 +43,7 @@ var DefaultOrder = []string{
 	ModuleBattery, ModuleVRPerf,
 	ModuleHeart,
 	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
+	ModuleNetwork, ModuleGPU, ModuleWorld,
 }
 
 var knownModules = func() map[string]bool {
@@ -71,6 +75,9 @@ type DisplayOptions struct {
 	Twitch       bool     `json:"twitch"`
 	Soundpad     bool     `json:"soundpad"`
 	Voicemod     bool     `json:"voicemod"`
+	Network      bool     `json:"network"`
+	GPU          bool     `json:"gpu"`
+	World        bool     `json:"world"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -256,19 +263,75 @@ type MemoryOptions struct {
 
 // CPUOptions controls the CPU line.
 type CPUOptions struct {
-	Label     string `json:"label"`
-	ShowName  bool   `json:"show_name"`
-	ShowCores bool   `json:"show_cores"`
-	ShowUsage bool   `json:"show_usage"`
-	Decimals  int    `json:"decimals"`
+	Label      string `json:"label"`
+	ShowName   bool   `json:"show_name"`
+	CustomName string `json:"custom_name"` // replaces the detected model when set
+	ShowCores  bool   `json:"show_cores"`
+	ShowUsage  bool   `json:"show_usage"`
+	Decimals   int    `json:"decimals"`
+}
+
+// GPUOptions controls the graphics card line.
+type GPUOptions struct {
+	Label         string `json:"label"`
+	Adapter       string `json:"adapter"` // adapter name; empty picks the one with the most VRAM
+	ShowName      bool   `json:"show_name"`
+	CustomName    string `json:"custom_name"` // replaces the detected name when set
+	ShowUsage     bool   `json:"show_usage"`
+	ShowVRAM      bool   `json:"show_vram"`
+	ShowVRAMTotal bool   `json:"show_vram_total"`
+	ShowTemp      bool   `json:"show_temp"` // NVIDIA only, through the driver's nvml.dll
+	Fahrenheit    bool   `json:"fahrenheit"`
+}
+
+// NetworkOptions controls the network traffic line.
+type NetworkOptions struct {
+	Label         string `json:"label"`
+	Adapter       string `json:"adapter"` // adapter alias; empty follows the busiest one
+	ShowDown      bool   `json:"show_down"`
+	ShowUp        bool   `json:"show_up"`
+	ShowPeakDown  bool   `json:"show_peak_down"`
+	ShowPeakUp    bool   `json:"show_peak_up"`
+	ShowTotalDown bool   `json:"show_total_down"`
+	ShowTotalUp   bool   `json:"show_total_up"`
+	ShowUtil      bool   `json:"show_util"`
+	UtilVsPeak    bool   `json:"util_vs_peak"` // against the fastest rate seen, not the link speed
+	Bytes         bool   `json:"bytes"`        // MB/s instead of Mbps
+	SmallLabels   bool   `json:"small_labels"` // raised units and labels, fewer characters
 }
 
 // LogsOptions controls the VRChat log line.
 type LogsOptions struct {
-	Label     string `json:"label"`
-	ShowJoin  bool   `json:"show_join"`
-	ShowLeave bool   `json:"show_leave"`
-	MaxChars  int    `json:"max_chars"`
+	Label          string `json:"label"`
+	ShowJoin       bool   `json:"show_join"`
+	ShowLeave      bool   `json:"show_leave"`
+	ShowScreenshot bool   `json:"show_screenshot"`
+	ShowLoaded     bool   `json:"show_loaded"`     // "Loaded <world> in 12s"
+	MarkSeenAgain  bool   `json:"mark_seen_again"` // "<name> joined again" for players met earlier
+	HideAfter      int    `json:"hide_after"`      // seconds an event stays; 0 keeps it until the next
+	MaxChars       int    `json:"max_chars"`
+}
+
+// WorldOptions controls the VRChat world and instance line.
+type WorldOptions struct {
+	Label      string `json:"label"`
+	ShowName   bool   `json:"show_name"`
+	ShowCount  bool   `json:"show_count"`
+	ShowPeak   bool   `json:"show_peak"`
+	ShowType   bool   `json:"show_type"`
+	ShowRegion bool   `json:"show_region"`
+	ShowTime   bool   `json:"show_time"`  // time in this instance
+	ShowStats  bool   `json:"show_stats"` // worlds visited and players met this session
+	MaxChars   int    `json:"max_chars"`  // limit for the world name; 0 means none
+}
+
+// AppOptions controls the window, tray and global shortcut.
+type AppOptions struct {
+	Tray           bool   `json:"tray"`             // icon in the notification area
+	StartMinimized bool   `json:"start_minimized"`  // to the tray when it is on, else the taskbar
+	CloseToTray    bool   `json:"close_to_tray"`    // the X button hides the window
+	MinimizeToTray bool   `json:"minimize_to_tray"` // minimising hides the window
+	MicHotkey      string `json:"mic_hotkey"`       // global shortcut that toggles the VRChat mic; empty is off
 }
 
 // BatteryOptions controls the SteamVR tracker battery line.
@@ -541,6 +604,10 @@ type Config struct {
 	WeatherOptions WeatherOptions `json:"WeatherOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	ChatOptions    ChatOptions    `json:"ChatOptions"`
+	NetworkOptions NetworkOptions `json:"NetworkOptions"`
+	GPUOptions     GPUOptions     `json:"GPUOptions"`
+	WorldOptions   WorldOptions   `json:"WorldOptions"`
+	AppOptions     AppOptions     `json:"AppOptions"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 	AssistOptions  AssistOptions  `json:"AssistOptions"`
 	TTSOptions     TTSOptions     `json:"TTSOptions"`
@@ -660,10 +727,33 @@ func DefaultConfig() Config {
 			Decimals:  0,
 		},
 		LogsOptions: LogsOptions{
-			Label:     "",
-			ShowJoin:  true,
-			ShowLeave: true,
-			MaxChars:  80,
+			Label:          "",
+			ShowJoin:       true,
+			ShowLeave:      true,
+			ShowScreenshot: true,
+			ShowLoaded:     true,
+			MarkSeenAgain:  true,
+			MaxChars:       80,
+		},
+		WorldOptions: WorldOptions{
+			ShowName:   true,
+			ShowCount:  true,
+			ShowType:   true,
+			ShowRegion: true,
+			MaxChars:   40,
+		},
+		GPUOptions: GPUOptions{
+			Label:         "ᵍᵖᵘ",
+			ShowName:      true,
+			ShowUsage:     true,
+			ShowVRAM:      true,
+			ShowVRAMTotal: true,
+		},
+		NetworkOptions: NetworkOptions{
+			ShowDown:    true,
+			ShowUp:      true,
+			ShowUtil:    true,
+			SmallLabels: true,
 		},
 		BatteryOptions: BatteryOptions{
 			Template:        "{icon} {name} {batt}%{charging} {low}",
@@ -997,6 +1087,12 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.Soundpad
 	case ModuleVoicemod:
 		return &d.Voicemod
+	case ModuleNetwork:
+		return &d.Network
+	case ModuleGPU:
+		return &d.GPU
+	case ModuleWorld:
+		return &d.World
 	}
 	return nil
 }
@@ -1164,6 +1260,10 @@ func (c *Config) sanitize() {
 	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)
 	c.CPUOptions.Label = RuneLimit(strings.TrimSpace(c.CPUOptions.Label), 16)
 	c.CPUOptions.Decimals = clampInt(c.CPUOptions.Decimals, 0, 2)
+	c.CPUOptions.CustomName = RuneLimit(strings.TrimSpace(c.CPUOptions.CustomName), 40)
+	c.GPUOptions.Label = RuneLimit(strings.TrimSpace(c.GPUOptions.Label), 16)
+	c.GPUOptions.CustomName = RuneLimit(strings.TrimSpace(c.GPUOptions.CustomName), 40)
+	c.GPUOptions.Adapter = RuneLimit(strings.TrimSpace(c.GPUOptions.Adapter), 128)
 	c.WindowOptions.Label = RuneLimit(strings.TrimSpace(c.WindowOptions.Label), 16)
 	c.WindowOptions.MaxChars = clampInt(c.WindowOptions.MaxChars, 0, 144)
 	c.WindowOptions.HiddenText = RuneLimit(strings.TrimSpace(c.WindowOptions.HiddenText), 40)
@@ -1205,7 +1305,19 @@ func (c *Config) sanitize() {
 	sanitizeLyrics(&c.LyricsOptions)
 	sanitizeTime(&c.TimeOptions)
 	sanitizeWeather(&c.WeatherOptions)
+	c.LogsOptions.HideAfter = clampInt(c.LogsOptions.HideAfter, 0, 3600)
+	c.WorldOptions.Label = RuneLimit(strings.TrimSpace(c.WorldOptions.Label), 16)
+	c.WorldOptions.MaxChars = clampInt(c.WorldOptions.MaxChars, 0, 144)
+	if c.AppOptions.MicHotkey != "" {
+		if _, _, canonical, err := ParseHotkey(c.AppOptions.MicHotkey); err == nil {
+			c.AppOptions.MicHotkey = canonical
+		} else {
+			c.AppOptions.MicHotkey = ""
+		}
+	}
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
+	c.NetworkOptions.Label = RuneLimit(strings.TrimSpace(c.NetworkOptions.Label), 16)
+	c.NetworkOptions.Adapter = RuneLimit(strings.TrimSpace(c.NetworkOptions.Adapter), 256)
 	if c.LoadingOptions.Dots == 0 {
 		c.LoadingOptions.Dots = 6
 	}

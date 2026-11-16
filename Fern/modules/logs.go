@@ -15,8 +15,10 @@ import (
 
 // LogEvent is one timestamped line shown in the UI.
 type LogEvent struct {
-	Time int64  `json:"time"`
-	Text string `json:"text"`
+	Time  int64  `json:"time"`
+	Text  string `json:"text"`
+	Kind  string `json:"kind,omitempty"`  // EventJoin, EventLeave, ... for VRChat events
+	Again bool   `json:"again,omitempty"` // a join by someone already met this session
 }
 
 var (
@@ -38,7 +40,12 @@ const (
 	maxHistorySize  = 40
 )
 
+// logDirectory is VRChat's log folder. FERN_VRCHAT_LOGS points it elsewhere,
+// for testing with a prepared log or a non-standard VRChat install.
 func logDirectory() string {
+	if dir := os.Getenv("FERN_VRCHAT_LOGS"); dir != "" {
+		return dir
+	}
 	return filepath.Join(os.Getenv("USERPROFILE"), "AppData", "LocalLow", "VRChat", "VRChat")
 }
 
@@ -94,6 +101,11 @@ func scanLog() {
 	defer logMu.Unlock()
 
 	if path != logPath {
+		// A new log means VRChat restarted: nobody from the old one is around.
+		// The session numbers carry on.
+		if logPath != "" {
+			leaveInstance()
+		}
 		logPath = path
 		logOffset = 0
 		logRemainder = ""
@@ -118,33 +130,42 @@ func scanLog() {
 	lines := strings.Split(chunk, "\n")
 	logRemainder = lines[len(lines)-1]
 	for _, line := range lines[:len(lines)-1] {
-		parseLogLine(line)
+		parseLogLine(strings.TrimRight(line, "\r"))
 	}
 }
 
+// parseLogLine updates the players, world and activity from one log line.
+// The caller holds logMu.
 func parseLogLine(line string) {
-	parseWorldLine(line)
+	at := logTime(line)
+	if parseWorldLine(line, at) {
+		return
+	}
 	switch {
-	case strings.Contains(line, "OnPlayerJoined"):
-		name := playerName(line, "OnPlayerJoined")
+	// "OnPlayerJoined:" and "OnPlayerLeftRoom" are other messages that share
+	// the prefix; only "OnPlayerJoined <name>" is a join.
+	case strings.Contains(line, "] OnPlayerJoined ") && strings.Contains(line, "[Behaviour]"):
+		name := playerName(line, "OnPlayerJoined ")
 		if name == "" {
 			return
 		}
-		ev := LogEvent{Time: time.Now().UnixMilli(), Text: name}
 		if _, ok := joined[name]; ok {
 			return
 		}
+		ev := LogEvent{Time: at.UnixMilli(), Text: name, Kind: EventJoin}
 		joined[name] = ev
 		delete(left, name)
 		order = append(order, name)
-		addActivity(fmt.Sprintf("%s joined", name))
-	case strings.Contains(line, "OnPlayerLeft"):
-		name := playerName(line, "OnPlayerLeft")
+		ev.Again = notePlayerJoined(name, at)
+		joined[name] = ev
+		act := addActivityAt(at, EventJoin, name+" joined")
+		act.Again = ev.Again
+	case strings.Contains(line, "] OnPlayerLeft ") && strings.Contains(line, "[Behaviour]"):
+		name := playerName(line, "OnPlayerLeft ")
 		if name == "" {
 			return
 		}
-		ev := LogEvent{Time: time.Now().UnixMilli(), Text: name}
-		left[name] = ev
+		left[name] = LogEvent{Time: at.UnixMilli(), Text: name, Kind: EventLeave}
 		delete(joined, name)
 		for i, n := range order {
 			if n == name {
@@ -152,25 +173,27 @@ func parseLogLine(line string) {
 				break
 			}
 		}
-		addActivity(fmt.Sprintf("%s left", name))
+		addActivityAt(at, EventLeave, name+" left")
 	}
 }
 
-func addActivity(text string) {
-	activity = append(activity, LogEvent{Time: time.Now().UnixMilli(), Text: text})
+// addActivityAt appends an event to the feed and returns it for small edits.
+func addActivityAt(at time.Time, kind, text string) *LogEvent {
+	activity = append(activity, LogEvent{Time: at.UnixMilli(), Text: text, Kind: kind})
 	if len(activity) > maxActivitySize {
 		activity = activity[len(activity)-maxActivitySize:]
 	}
+	return &activity[len(activity)-1]
 }
 
-// playerName extracts the display name in front of the usr_ id.
+// playerName extracts the display name in front of the usr_ id, which newer
+// VRChat builds add in brackets.
 func playerName(line, marker string) string {
-	idx := strings.Index(line, marker)
-	if idx < 0 {
+	rest, ok := after(line, marker)
+	if !ok {
 		return ""
 	}
-	rest := strings.TrimSpace(line[idx+len(marker):])
-	if un := strings.Index(rest, "(usr_"); un >= 0 {
+	if un := strings.LastIndex(rest, " (usr_"); un >= 0 && strings.HasSuffix(rest, ")") {
 		rest = rest[:un]
 	}
 	return strings.TrimSpace(rest)
@@ -204,37 +227,59 @@ func LeaveLogs() []LogEvent {
 	return all
 }
 
-// ActivityFeed returns recent join/leave events, newest last.
+// ActivityFeed returns recent VRChat events, newest last.
 func ActivityFeed() []LogEvent {
 	logMu.Lock()
 	defer logMu.Unlock()
 	return append([]LogEvent{}, activity...)
 }
 
-// logsLine renders the latest join/leave that is still enabled.
+// logsLine renders the latest VRChat event that is still enabled.
 func logsLine(cfg Config) string {
-	o := cfg.LogsOptions
 	logMu.Lock()
-	line := ""
-	for i := len(activity) - 1; i >= 0; i-- {
-		text := activity[i].Text
-		if strings.HasSuffix(text, " joined") && !o.ShowJoin {
-			continue
-		}
-		if strings.HasSuffix(text, " left") && !o.ShowLeave {
-			continue
-		}
-		line = text
-		break
-	}
+	line := latestLogEvent(cfg.LogsOptions, activity, nowFunc())
 	logMu.Unlock()
-	if line == "" {
-		return ""
+	return line
+}
+
+func latestLogEvent(o LogsOptions, events []LogEvent, now time.Time) string {
+	for i := len(events) - 1; i >= 0; i-- {
+		ev := events[i]
+		switch ev.Kind {
+		case EventJoin:
+			if !o.ShowJoin {
+				continue
+			}
+		case EventLeave:
+			if !o.ShowLeave {
+				continue
+			}
+		case EventScreenshot:
+			if !o.ShowScreenshot {
+				continue
+			}
+		case EventLoaded:
+			if !o.ShowLoaded {
+				continue
+			}
+		default:
+			continue
+		}
+		// Only the newest enabled event counts: once it is too old the line
+		// goes quiet instead of falling back to an even older one.
+		if o.HideAfter > 0 && now.Sub(time.UnixMilli(ev.Time)) > time.Duration(o.HideAfter)*time.Second {
+			return ""
+		}
+		text := ev.Text
+		if ev.Kind == EventJoin && ev.Again && o.MarkSeenAgain {
+			text += " again"
+		}
+		if limit := o.MaxChars; limit > 0 {
+			text = RuneLimit(text, limit)
+		}
+		return withLabel(o.Label, text)
 	}
-	if limit := o.MaxChars; limit > 0 {
-		line = RuneLimit(line, limit)
-	}
-	return withLabel(o.Label, line)
+	return ""
 }
 
 // PlayerCount is how many players are currently known to be in the instance.

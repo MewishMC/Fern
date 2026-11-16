@@ -2585,6 +2585,11 @@ html.glass.has-bg {
     border-bottom: 1px solid var(--border-subtle);
 }
 
+/* App page: a field description that reports a problem. */
+.field-label span.bad {
+    color: var(--red);
+}
+
 /* ---------------- app integrations ---------------- */
 
 input[type="password"] {

@@ -144,8 +144,8 @@ func runSession(t *testing.T, fake *fakeDiscord, cfg Config) (*discordSession, f
 		}
 		return cfg
 	})
-	s.world = func() WorldInfo {
-		return WorldInfo{Name: "The Black Cat", WorldID: "wrld_1", InstanceID: "123~region(eu)", Type: "Public", Region: "Europe", Since: 1000}
+	s.world = func() PresenceWorld {
+		return PresenceWorld{Name: "The Black Cat", WorldID: "wrld_1", InstanceID: "123~region(eu)", Type: "Public", Region: "Europe", Since: 1000}
 	}
 	s.running = func() bool { return true }
 	s.players = func() int { return 12 }
@@ -343,19 +343,19 @@ func TestPresenceTextLimits(t *testing.T) {
 		t.Errorf("long presence = %d runes", len([]rune(got)))
 	}
 	cfg := DefaultConfig()
-	if presenceActivity(cfg, WorldInfo{}, true, 0, false) != nil {
+	if presenceActivity(cfg, PresenceWorld{}, true, 0, false) != nil {
 		t.Error("presence shown while switched off")
 	}
 	cfg.DiscordOptions.Presence = true
-	if presenceActivity(cfg, WorldInfo{}, false, 0, false) != nil {
+	if presenceActivity(cfg, PresenceWorld{}, false, 0, false) != nil {
 		t.Error("presence shown while VRChat is closed")
 	}
-	act := presenceActivity(cfg, WorldInfo{}, true, 0, false)
+	act := presenceActivity(cfg, PresenceWorld{}, true, 0, false)
 	if act["details"] != "In VRChat" || act["state"] != "Desktop" {
 		t.Errorf("unknown world presence = %v", act)
 	}
 	cfg.DiscordOptions.JoinButton = true
-	act = presenceActivity(cfg, WorldInfo{WorldID: "wrld_1", InstanceID: "1~private(usr_1)", Type: "Invite"}, true, 3, true)
+	act = presenceActivity(cfg, PresenceWorld{WorldID: "wrld_1", InstanceID: "1~private(usr_1)", Type: "Invite"}, true, 3, true)
 	if _, ok := act["buttons"]; ok {
 		t.Error("join button offered for an invite-only instance")
 	}

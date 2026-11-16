@@ -132,6 +132,12 @@ func moduleText(id string, cfg Config) string {
 		return soundpadLine(cfg)
 	case ModuleVoicemod:
 		return voicemodLine(cfg)
+	case ModuleNetwork:
+		return networkLine(cfg)
+	case ModuleGPU:
+		return gpuLine(cfg)
+	case ModuleWorld:
+		return worldLine(cfg)
 	}
 	return ""
 }

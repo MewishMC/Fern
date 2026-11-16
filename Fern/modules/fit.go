@@ -8,8 +8,8 @@ import (
 // DefaultDropOrder is which line goes first when the chatbox is too long:
 // the clock first, your own text last.
 var DefaultDropOrder = []string{
-	ModuleTime, ModuleWeather, ModuleCPU, ModuleMemory, ModuleVRPerf, ModuleBattery,
-	ModuleWindow, ModuleLogs, ModuleLoading, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
+	ModuleTime, ModuleWeather, ModuleNetwork, ModuleCPU, ModuleGPU, ModuleMemory, ModuleVRPerf, ModuleBattery,
+	ModuleWindow, ModuleLogs, ModuleWorld, ModuleLoading, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 	ModuleDiscord, ModuleLyrics, ModuleHeart, ModuleAFK, ModuleMedia, ModuleText,
 }
 

@@ -38,8 +38,10 @@ func Assets() fs.FS {
 var debug = slices.Contains(os.Args, "--debug")
 
 // StartWebview opens the native window pointed at the local UI server. It blocks
-// until the window is closed, so it must run on the main thread.
-func StartWebview(url string) {
+// until the window is closed, so it must run on the main thread. With
+// minimized set the window starts in the tray (when Apply turned the tray
+// icon on) or minimised on the taskbar.
+func StartWebview(url string, minimized bool) {
 	w := webview.New(debug)
 	defer os.Exit(0)
 
@@ -59,6 +61,9 @@ func StartWebview(url string) {
 	w.SetTitle("Fern ｢フェルン｣")
 	mainView = w
 	hookClose(uintptr(w.Window()), closeMain)
+	setupMain(uintptr(w.Window()))
+	startHidden(minimized)
+	defer cleanupMain()
 	w.Run()
 }
 
@@ -166,6 +171,9 @@ func hookClose(hwnd uintptr, which uintptr) {
 }
 
 func closeWndProc(hwnd, msg, wParam, lParam, which, _ uintptr) uintptr {
+	if which == closeMain && mainMessage(msg, wParam, lParam) {
+		return 0
+	}
 	if msg == wmClose {
 		switch {
 		case which == closeMain && mainView != nil:
