@@ -84,6 +84,7 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+	Voice    voiceState    `json:"voice"`
 }
 
 type appState struct {
@@ -326,13 +327,14 @@ func handleCommand(cmd command) {
 		}
 	case "send":
 		hold := time.Duration(cmd.Hold) * time.Second
-		modules.SetHold(cmd.Text, hold)
-		modules.SpeakSent(cmd.Text)
-		modules.AddChatHistory(cmd.Text)
+		text := modules.FilterText(modules.SurfaceTyped, cmd.Text)
+		modules.SetHold(text, hold)
+		modules.SpeakSent(text)
+		modules.AddChatHistory(text)
 	case "clearChatHistory":
 		modules.ClearChatHistory()
 	case "live":
-		modules.SetLive(cmd.Text, time.Duration(cmd.Hold)*time.Second)
+		modules.SetLive(modules.FilterText(modules.SurfaceTyped, cmd.Text), time.Duration(cmd.Hold)*time.Second)
 	case "typing":
 		go sendTyping(cmd.Enabled)
 	case "clearHold":
@@ -409,6 +411,9 @@ func handleAssistCommand(cmd command) {
 			modules.StopSpeaking()
 		case "refresh":
 			go modules.RefreshSpeechDevices()
+			modules.RefreshEngineVoices()
+		case "voices":
+			modules.RefreshEngineVoices()
 		}
 	case "stt":
 		switch cmd.Action {
@@ -422,6 +427,12 @@ func handleAssistCommand(cmd command) {
 			modules.StopListening()
 		case "cancel":
 			modules.CancelListening()
+		case "test":
+			modules.TestSTTConnection()
+		case "serverStart":
+			go func() { _ = modules.StartSTTServer() }()
+		case "serverStop":
+			modules.StopSTTServer()
 		}
 	}
 }
@@ -582,6 +593,7 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+		Voice:    currentVoice(cfg),
 	}
 }
 
