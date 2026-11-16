@@ -224,6 +224,15 @@ type WorldOptions struct {
 	MaxChars   int    `json:"max_chars"`  // limit for the world name; 0 means none
 }
 
+// AppOptions controls the window, tray and global shortcut.
+type AppOptions struct {
+	Tray           bool   `json:"tray"`             // icon in the notification area
+	StartMinimized bool   `json:"start_minimized"`  // to the tray when it is on, else the taskbar
+	CloseToTray    bool   `json:"close_to_tray"`    // the X button hides the window
+	MinimizeToTray bool   `json:"minimize_to_tray"` // minimising hides the window
+	MicHotkey      string `json:"mic_hotkey"`       // global shortcut that toggles the VRChat mic; empty is off
+}
+
 // OSCOptions is where chatbox messages are sent.
 type OSCOptions struct {
 	Host string `json:"host"`
@@ -247,6 +256,7 @@ type Config struct {
 	GPUOptions     GPUOptions     `json:"GPUOptions"`
 	WorldOptions   WorldOptions   `json:"WorldOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
+	AppOptions     AppOptions     `json:"AppOptions"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 }
 
@@ -714,6 +724,13 @@ func (c *Config) sanitize() {
 	c.LogsOptions.HideAfter = clampInt(c.LogsOptions.HideAfter, 0, 3600)
 	c.WorldOptions.Label = RuneLimit(strings.TrimSpace(c.WorldOptions.Label), 16)
 	c.WorldOptions.MaxChars = clampInt(c.WorldOptions.MaxChars, 0, 144)
+	if c.AppOptions.MicHotkey != "" {
+		if _, _, canonical, err := ParseHotkey(c.AppOptions.MicHotkey); err == nil {
+			c.AppOptions.MicHotkey = canonical
+		} else {
+			c.AppOptions.MicHotkey = ""
+		}
+	}
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
 	c.NetworkOptions.Label = RuneLimit(strings.TrimSpace(c.NetworkOptions.Label), 16)
 	c.NetworkOptions.Adapter = RuneLimit(strings.TrimSpace(c.NetworkOptions.Adapter), 256)

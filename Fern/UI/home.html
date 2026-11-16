@@ -55,6 +55,7 @@
                 <div class="nav-group">
                     <span class="nav-title">Settings</span>
                     <button class="nav-item" data-page="output" data-label="Output"><i class="fa fa-tower-broadcast" aria-hidden="true"></i><span class="nav-label">Output</span></button>
+                    <button class="nav-item" data-page="app" data-label="App"><i class="fa fa-sliders" aria-hidden="true"></i><span class="nav-label">App</span></button>
                     <button class="nav-item" data-page="appearance" data-label="Appearance"><i class="fa fa-palette" aria-hidden="true"></i><span class="nav-label">Appearance</span></button>
                 </div>
             </nav>
@@ -1549,6 +1550,92 @@
                 <div class="hint">Every change is saved to <code>%LOCALAPPDATA%\Fern\config.json</code> as you make it.</div>
             </section>
 
+            <!-- ================= APP ================= -->
+            <section class="page" id="page-app">
+                <div class="page-head">
+                    <div>
+                        <h2>App</h2>
+                        <p>Window, tray, the mic shortcut and starting with SteamVR</p>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Window and tray</h3>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Tray icon</b>
+                            <span>An icon next to the clock: click it to show Fern, right-click to quit</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="appTray"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Start minimised</b>
+                            <span>Open in the tray when the icon is on, otherwise minimised on the taskbar</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="appStartMin"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Close to tray</b>
+                            <span>The X button hides the window and Fern keeps running</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="appCloseToTray"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Minimise to tray</b>
+                            <span>Minimising hides the window instead of leaving it on the taskbar</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="appMinToTray"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Mic shortcut</h3>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Toggle the VRChat mic</b>
+                            <span id="appHotkeyDesc">A shortcut that works in any app, sent to VRChat over OSC. Click the box and press the keys; Backspace clears it.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="appMicHotkey" placeholder="Click, then press keys" autocomplete="off" spellcheck="false" style="width:170px">
+                            <button class="btn ghost" type="button" id="appMicClear" title="Turn the shortcut off">Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Start with SteamVR</h3>
+                        <span class="badge" id="steamvrBadge">off</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Register Fern with SteamVR</b>
+                            <span>SteamVR then opens Fern minimised when it starts and Fern quits when SteamVR closes. SteamVR has to be running while you press this. You can switch it off later in SteamVR's settings under Startup / Shutdown, or with Remove.</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn" type="button" id="btnSteamVRAdd"><i class="fa fa-vr-cardboard" aria-hidden="true"></i> Register</button>
+                            <button class="btn ghost" type="button" id="btnSteamVRRemove">Remove</button>
+                        </div>
+                    </div>
+                    <div class="hint" id="steamvrInfo"></div>
+                </div>
+            </section>
+
             <!-- ================= APPEARANCE ================= -->
             <section class="page" id="page-appearance">
                 <div class="page-head">
@@ -1840,7 +1927,62 @@
             renderLogs(st);
             renderNetwork(st);
             renderGPU(st);
+            renderApp(st);
         }
+
+        /* ---------------- app ---------------- */
+        function renderApp(st) {
+            const app = st.app || {};
+            const hk = $("appMicHotkey");
+            if (document.activeElement !== hk) hk.value = st.config.AppOptions.mic_hotkey || "";
+            const err = app.hotkeyErr || "";
+            $("appHotkeyDesc").textContent = err ||
+                "A shortcut that works in any app, sent to VRChat over OSC. Click the box and press the keys; Backspace clears it.";
+            $("appHotkeyDesc").classList.toggle("bad", !!err);
+            const vr = app.steamvr || {};
+            $("btnSteamVRAdd").disabled = !!vr.busy;
+            $("btnSteamVRRemove").disabled = !!vr.busy || !vr.manifest;
+            $("steamvrBadge").textContent = vr.busy ? "working…" : vr.manifest ? "manifest written" : "off";
+            const info = (vr.message ? vr.message + ". " : "") + (vr.manifest ? "Manifest: " + vr.manifest : "");
+            $("steamvrInfo").textContent = info;
+            $("steamvrInfo").hidden = !info;
+            if (vr.message && vr.message !== S.steamvrMsg && S.steamvrMsg !== undefined) toast(vr.message, !!vr.failed);
+            S.steamvrMsg = vr.message || "";
+        }
+        // Letters, digits and Space need a modifier, as Fern refuses them alone.
+        const HOTKEY_FREE = /^(F\d{1,2}|Insert|Home|End|PageUp|PageDown|Pause)$/;
+        function setMicHotkey(value) {
+            const hk = $("appMicHotkey");
+            hk.value = value;
+            if (pushConfigNow((c) => { c.AppOptions.mic_hotkey = value; })) toast(value ? "Mic shortcut: " + value : "Mic shortcut off");
+            hk.blur();
+        }
+        $("appMicHotkey").addEventListener("keydown", (ev) => {
+            if (ev.key === "Tab") return;
+            ev.preventDefault();
+            const hk = ev.target;
+            if (ev.key === "Escape") { hk.blur(); return; }
+            if (ev.key === "Backspace" || ev.key === "Delete") { setMicHotkey(""); return; }
+            const mods = [ev.ctrlKey && "Ctrl", ev.altKey && "Alt", ev.shiftKey && "Shift", ev.metaKey && "Win"].filter(Boolean);
+            const code = ev.code || "";
+            let key = "";
+            if (/^Key[A-Z]$/.test(code)) key = code.slice(3);
+            else if (/^Digit\d$/.test(code)) key = code.slice(5);
+            else if (/^(F\d{1,2}|Numpad\d|Space|Insert|Home|End|PageUp|PageDown|Pause)$/.test(code)) key = code;
+            if (!key) { hk.value = mods.length ? mods.join("+") + "+…" : ""; return; }
+            if (!mods.length && !HOTKEY_FREE.test(key)) {
+                toast(key + " needs Ctrl, Alt, Shift or Win with it", true);
+                return;
+            }
+            setMicHotkey(mods.concat(key).join("+"));
+        });
+        $("appMicHotkey").addEventListener("blur", () => {
+            const c = config();
+            if (c) $("appMicHotkey").value = c.AppOptions.mic_hotkey || "";
+        });
+        $("appMicClear").addEventListener("click", () => setMicHotkey(""));
+        $("btnSteamVRAdd").addEventListener("click", () => { send({ type: "steamvr", action: "register" }); });
+        $("btnSteamVRRemove").addEventListener("click", () => { send({ type: "steamvr", action: "unregister" }); });
 
         /* ---------------- gpu ---------------- */
         function renderGPU(st) {
@@ -2541,6 +2683,10 @@
             ["worldRegion", ["WorldOptions", "show_region"]],
             ["worldTime", ["WorldOptions", "show_time"]],
             ["worldStats", ["WorldOptions", "show_stats"]],
+            ["appTray", ["AppOptions", "tray"]],
+            ["appStartMin", ["AppOptions", "start_minimized"]],
+            ["appCloseToTray", ["AppOptions", "close_to_tray"]],
+            ["appMinToTray", ["AppOptions", "minimize_to_tray"]],
         ];
 
         const asIs = (v) => String(v);
@@ -2623,6 +2769,8 @@
             ["logsSeenAgain", (c) => c.LogsOptions.show_join],
             ["worldMaxChars", (c) => c.WorldOptions.show_name],
             ["worldPeak", (c) => c.WorldOptions.show_count],
+            ["appCloseToTray", (c) => c.AppOptions.tray],
+            ["appMinToTray", (c) => c.AppOptions.tray],
         ];
         function applyDepends(c) {
             if (!c) return;

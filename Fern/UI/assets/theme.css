@@ -2023,3 +2023,8 @@ html.glass.has-bg {
     margin: 0 0 12px;
     border-bottom: 1px solid var(--border-subtle);
 }
+
+/* App page: a field description that reports a problem. */
+.field-label span.bad {
+    color: var(--red);
+}

@@ -70,6 +70,12 @@ type uiState struct {
 	Update    updateState           `json:"update"`
 	Network   networkState          `json:"network"`
 	GPUs      []modules.GPUInfo     `json:"gpus"`
+	App       appState              `json:"app"`
+}
+
+type appState struct {
+	HotkeyErr string       `json:"hotkeyErr"`
+	SteamVR   steamVRState `json:"steamvr"`
 }
 
 type networkState struct {
@@ -290,6 +296,10 @@ func handleCommand(cmd command) {
 		_ = modules.SaveNow()
 	case "update":
 		go startUpdate()
+	case "steamvr":
+		go steamVRAction(cmd.Action)
+	case "showWindow":
+		UI.ShowWindow()
 	}
 }
 
@@ -416,6 +426,7 @@ func buildState() uiState {
 		Update:    currentUpdate(),
 		Network:   currentNetwork(),
 		GPUs:      orEmpty(modules.GPUs()),
+		App:       appState{HotkeyErr: UI.HotkeyError(), SteamVR: currentSteamVR()},
 	}
 }
 
