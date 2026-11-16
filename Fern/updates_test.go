@@ -99,6 +99,15 @@ func TestEnsureUpdaterDownloadsWhenMissing(t *testing.T) {
 	}
 }
 
+func TestUpdaterDirIsDataFolder(t *testing.T) {
+	base := t.TempDir()
+	t.Setenv("LOCALAPPDATA", base)
+	exeDir := t.TempDir()
+	if got, want := updaterDir(exeDir), filepath.Join(base, "Fern"); got != want {
+		t.Errorf("updaterDir = %q, want %q", got, want)
+	}
+}
+
 func TestEnsureUpdaterKeepsExisting(t *testing.T) {
 	dir := t.TempDir()
 	existing := filepath.Join(dir, "update.exe")

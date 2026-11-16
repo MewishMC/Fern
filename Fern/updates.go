@@ -19,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"Fern/modules"
 )
 
 const (
@@ -180,7 +182,7 @@ func versionParts(v string) ([]int, bool) {
 	return out, true
 }
 
-// startUpdate makes sure update.exe sits next to Fern.exe (fetching it from
+// startUpdate makes sure update.exe is in Fern's data folder (fetching it from
 // the release if it is missing), starts it, and exits so it can swap the file.
 func startUpdate() {
 	updateMu.Lock()
@@ -205,7 +207,7 @@ func startUpdate() {
 		fail(err)
 		return
 	}
-	updater, err := ensureUpdater(rel, filepath.Dir(exe))
+	updater, err := ensureUpdater(rel, updaterDir(filepath.Dir(exe)))
 	if err != nil {
 		fail(fmt.Errorf("could not get the updater: %w", err))
 		return
@@ -222,6 +224,17 @@ func startUpdate() {
 	// Give the socket a moment to tell the panel, then get out of the way.
 	time.Sleep(300 * time.Millisecond)
 	os.Exit(0)
+}
+
+// updaterDir is where the updater is kept: %LOCALAPPDATA%\Fern, next to the
+// config, so nothing extra lands beside Fern.exe. The updater gets Fern's path
+// as an argument, so it can run from there. Without a data folder it falls back
+// to exeDir.
+var updaterDir = func(exeDir string) string {
+	if dir := modules.DataDir(); dir != "" {
+		return dir
+	}
+	return exeDir
 }
 
 // ensureUpdater returns the path of update.exe in dir, downloading it from
