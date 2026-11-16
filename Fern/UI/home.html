@@ -668,7 +668,7 @@
                 <div class="page-head">
                     <div>
                         <h2>CPU</h2>
-                        <p>Processor name, core count and load</p>
+                        <p>Processor name, core count and load, plus temperature, power, clock and fan from a sensor app</p>
                     </div>
                     <span class="badge" id="cpuBadge">—</span>
                 </div>
@@ -735,6 +735,69 @@
                         <div class="field-control">
                             <input type="range" id="cpuDecimals" min="0" max="2" step="1">
                             <span class="val" id="cpuDecimalsVal">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head">
+                        <h3>Temperature, power, clock and fan</h3>
+                        <span class="count" id="cpuSensorInfo"></span>
+                    </div>
+                    <div class="hint" style="margin-top:0" id="cpuSensorHint"></div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="cpuNowTemp">—</b><span>Temperature</span></div>
+                        <div class="stat"><b id="cpuNowPower">—</b><span>Package power</span></div>
+                        <div class="stat"><b id="cpuNowClock">—</b><span>Clock</span></div>
+                        <div class="stat"><b id="cpuNowFan">—</b><span>Fan</span></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show temperature</b>
+                            <span>Pick the sensor, or let Fern find the package temperature</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="cpuTempSensor" class="compact" style="width:200px" aria-label="CPU temperature sensor"></select>
+                            <label class="switch"><input type="checkbox" id="cpuTemp"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show power</b>
+                            <span>Package power in watts</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="cpuPowerSensor" class="compact" style="width:200px" aria-label="CPU power sensor"></select>
+                            <label class="switch"><input type="checkbox" id="cpuPower"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show clock</b>
+                            <span>Automatic averages the cores</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="cpuClockSensor" class="compact" style="width:200px" aria-label="CPU clock sensor"></select>
+                            <label class="switch"><input type="checkbox" id="cpuClock"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show fan</b>
+                            <span>Automatic looks for the board's CPU fan header</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="cpuFanSensor" class="compact" style="width:200px" aria-label="CPU fan sensor"></select>
+                            <label class="switch"><input type="checkbox" id="cpuFan"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Fahrenheit</b>
+                            <span>°F instead of °C</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="cpuFahrenheit"><span></span></label>
                         </div>
                     </div>
                 </div>
@@ -888,7 +951,7 @@
                 <div class="page-head">
                     <div>
                         <h2>GPU</h2>
-                        <p>Graphics card load and video memory, from the counters Task Manager uses</p>
+                        <p>Graphics card load and video memory, plus temperature, power, clock and fan from a sensor app</p>
                     </div>
                     <span class="badge" id="gpuBadge">—</span>
                 </div>
@@ -991,6 +1054,556 @@
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="gpuFahrenheit"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head">
+                        <h3>Power, clock and fan</h3>
+                        <span class="count" id="gpuSensorInfo"></span>
+                    </div>
+                    <div class="hint" style="margin-top:0" id="gpuSensorHint"></div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="gpuNowPower">—</b><span>Power</span></div>
+                        <div class="stat"><b id="gpuNowClock">—</b><span>Core clock</span></div>
+                        <div class="stat"><b id="gpuNowFan">—</b><span>Fan</span></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Temperature sensor</b>
+                            <span>For AMD and Intel cards, or to use another reading than the NVIDIA driver's</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="gpuTempSensor" class="compact" style="width:200px" aria-label="GPU temperature sensor"></select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show power</b>
+                            <span>Board or package power in watts</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="gpuPowerSensor" class="compact" style="width:200px" aria-label="GPU power sensor"></select>
+                            <label class="switch"><input type="checkbox" id="gpuPower"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show clock</b>
+                            <span>Core clock</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="gpuClockSensor" class="compact" style="width:200px" aria-label="GPU clock sensor"></select>
+                            <label class="switch"><input type="checkbox" id="gpuClock"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show fan</b>
+                            <span>Fan speed in rpm</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="gpuFanSensor" class="compact" style="width:200px" aria-label="GPU fan sensor"></select>
+                            <label class="switch"><input type="checkbox" id="gpuFan"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= SENSORS ================= -->
+            <section class="page" id="page-sensors">
+                <div class="page-head">
+                    <div>
+                        <h2>Sensors</h2>
+                        <p>Temperatures, power, clocks and fans, read from HWiNFO or LibreHardwareMonitor</p>
+                    </div>
+                    <span class="badge" id="sensorsBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the sensors line</b>
+                            <span>Adds the sensors you pick below to the chatbox, in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="sensors"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Source</h3>
+                        <span class="count" id="sensorSourceInfo"></span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Read from</b>
+                            <span>Windows has no shared way to read these without a driver, so Fern asks a monitoring app you run. Automatic tries HWiNFO, then LibreHardwareMonitor.</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="sensorSource" aria-label="Sensor source">
+                                <option value="auto">Automatic</option>
+                                <option value="hwinfo">HWiNFO</option>
+                                <option value="lhm">LibreHardwareMonitor</option>
+                                <option value="off">Off</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>LibreHardwareMonitor address</b>
+                            <span>Its web server's data.json. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sensorLHMURL" style="width:240px" maxlength="300" autocomplete="off" spellcheck="false" placeholder="http://localhost:8085/data.json"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Status</b>
+                            <span id="sensorStatusText">Waiting for the first read</span>
+                        </div>
+                        <div class="field-control"><button class="btn ghost" type="button" id="sensorRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Look again</button></div>
+                    </div>
+                    <div id="sensorSetup" hidden>
+                        <div class="hint"><b>HWiNFO:</b> open its <b>Settings</b>, tick <b>Shared Memory Support</b> and keep HWiNFO running (the sensors window can stay closed). The free version turns sharing off after 12 hours; tick it again when the readings stop.</div>
+                        <div class="hint"><b>LibreHardwareMonitor:</b> run it as administrator, then in <b>Options</b> turn on <b>Remote Web Server</b> and <b>Run</b> (port 8085). While it runs as administrator Fern can also read it through WMI without the web server.</div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the sensors. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sensorLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Each sensor</b>
+                            <span><code>{name}</code> <code>{value}</code> <code>{num}</code> <code>{unit}</code> <code>{min}</code> <code>{max}</code> <code>{hardware}</code></span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sensorTemplate" placeholder="{name} {value}" maxlength="80" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between sensors</b>
+                            <span>Spaces count</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sensorSeparator" placeholder=" · " maxlength="8" autocomplete="off" style="width:80px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Fahrenheit</b>
+                            <span>Temperatures in °F instead of °C</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="sensorFahrenheit"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">On the line <span class="badge" id="sensorPickCount">0</span></div>
+                <div class="list" id="sensorPicks"></div>
+                <div class="hint">Name a sensor to change what <code>{name}</code> shows. A sensor that is missing right now (the app is closed, or the part was removed) is skipped.</div>
+
+                <div class="section-title" style="margin-top:16px">All sensors <span class="badge" id="sensorAllCount">0</span></div>
+                <div class="card" style="margin-bottom:8px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Find</b>
+                            <span>Hardware, name or type, such as “gpu temp” or “fan”</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="sensorSearch" style="width:200px" placeholder="Search sensors" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                </div>
+                <div class="list" id="sensorAll"></div>
+            </section>
+
+            <!-- ================= UPTIME ================= -->
+            <section class="page" id="page-uptime">
+                <div class="page-head">
+                    <div>
+                        <h2>Uptime</h2>
+                        <p>How long the PC has been on, and how long Fern has been running</p>
+                    </div>
+                    <span class="badge" id="uptimeLineBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the uptime line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="uptime"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="uptimePCNow">—</b><span>PC</span></div>
+                        <div class="stat"><b id="uptimeFernNow">—</b><span>Fern</span></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the line. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="uptimeLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>PC uptime</b>
+                            <span>Time since Windows started. With fast startup on, a shut down PC keeps counting, as in Task Manager.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="uptimeShowPC"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>PC text</b>
+                            <span>Before the PC's time</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="uptimePCText" placeholder="PC up" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Fern session</b>
+                            <span>Time since Fern started</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="uptimeShowFern"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Fern text</b>
+                            <span>Before Fern's time</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="uptimeFernText" placeholder="Fern" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Style</b>
+                            <span>3d 4h, 3 days 4 hours, or hours and minutes like 76:04</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="uptimeStyle" aria-label="Uptime style">
+                                <option value="short">Short</option>
+                                <option value="long">Words</option>
+                                <option value="clock">Clock</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Units</b>
+                            <span>How many of days, hours, minutes and seconds to show</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="uptimeUnits" min="1" max="4" step="1">
+                            <span class="val" id="uptimeUnitsVal">2</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= PING ================= -->
+            <section class="page" id="page-ping">
+                <div class="page-head">
+                    <div>
+                        <h2>Ping</h2>
+                        <p>Round trip to a server you choose</p>
+                    </div>
+                    <span class="badge" id="pingBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the ping line</b>
+                            <span>Adds it to the chatbox in the order set on Lines. Fern only pings while this line, a rule or this page needs it.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="ping"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="pingNow">—</b><span>Last</span></div>
+                        <div class="stat"><b id="pingAvg">—</b><span>Average</span></div>
+                        <div class="stat"><b id="pingLoss">—</b><span>Lost</span></div>
+                    </div>
+                    <div class="hint" id="pingInfo"></div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Host</b>
+                            <span>A name or address, such as 1.1.1.1 or a game server. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pingHost" maxlength="253" autocomplete="off" spellcheck="false" placeholder="1.1.1.1"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Method</b>
+                            <span>ICMP is a normal ping. Many servers ignore it, so Automatic times a TCP connection instead when no answer comes.</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="pingMethod" aria-label="Ping method">
+                                <option value="auto">Automatic</option>
+                                <option value="icmp">ICMP only</option>
+                                <option value="tcp">TCP connect</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>TCP port</b>
+                            <span>443 answers on most web servers</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="pingPort" min="1" max="65535" step="1" style="width:100px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Every</b>
+                            <span>How often to ping</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="pingInterval" min="2" max="60" step="1">
+                            <span class="val" id="pingIntervalVal">5s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the time. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pingLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the host</b>
+                            <span>Its name before the time</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="pingShowHost"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Average</b>
+                            <span>Over the last 20 pings</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="pingShowAvg"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Packet loss</b>
+                            <span>Share of the last 20 pings that got no answer</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="pingShowLoss"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>No answer</b>
+                            <span>Shown when a ping times out. Leave empty to drop the line instead.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pingTimeoutText" placeholder="timeout" maxlength="16" autocomplete="off"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= DISK ================= -->
+            <section class="page" id="page-disk">
+                <div class="page-head">
+                    <div>
+                        <h2>Disk usage</h2>
+                        <p>Space used and free on the drives you pick</p>
+                    </div>
+                    <span class="badge" id="diskBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the disk line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="disk"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-title">Drives</div>
+                <div class="list" id="diskDrives"></div>
+                <div class="hint" style="margin-bottom:12px">Switch on the drives to show, in the order you switch them on. With none on, the line shows the drive Windows is on. Network drives are left out.</div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the drives. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="diskLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Drive letter</b>
+                            <span>C: before each drive</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="diskShowLetter"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Used</b>
+                            <span>Space in use</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="diskShowUsed"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Size</b>
+                            <span>The drive's capacity, after the used space as 412/931 GB</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="diskShowTotal"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Free</b>
+                            <span>Space left</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="diskShowFree"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Percent used</b>
+                            <span>How full the drive is</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="diskShowPercent"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between drives</b>
+                            <span>Spaces count</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="diskSeparator" placeholder=" | " maxlength="8" autocomplete="off" style="width:80px"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= PC BATTERY ================= -->
+            <section class="page" id="page-pcbattery">
+                <div class="page-head">
+                    <div>
+                        <h2>PC battery</h2>
+                        <p>Your laptop's charge, with a mark while it charges</p>
+                    </div>
+                    <span class="badge" id="pcBatteryBadge">—</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the PC battery line</b>
+                            <span>Adds it to the chatbox in the order set on Lines. A PC without a battery shows nothing.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="pcbattery"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Battery</b>
+                            <span id="pcBatteryStatus">—</span>
+                        </div>
+                        <div class="field-control"><code class="window-now" id="pcBatteryNow">—</code></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Prefix before the icon. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pcBatteryLabel" placeholder="none" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Icon</b>
+                            <span>Before the charge</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pcBatteryIcon" placeholder="🔋" maxlength="4" autocomplete="off" style="width:80px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Low at</b>
+                            <span>Below this the low icon is used</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="pcBatteryLow" min="0" max="100" step="5">
+                            <span class="val" id="pcBatteryLowVal">20%</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Low icon</b>
+                            <span>Used instead of the icon when the battery is low and not charging</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pcBatteryLowIcon" placeholder="🪫" maxlength="4" autocomplete="off" style="width:80px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Charging mark</b>
+                            <span>After the charge while it charges</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pcBatteryCharging" placeholder="⚡" maxlength="4" autocomplete="off" style="width:80px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Plugged in mark</b>
+                            <span>After the charge while plugged in but not charging, as when it is full</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="pcBatteryPlugged" placeholder="🔌" maxlength="4" autocomplete="off" style="width:80px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Time left</b>
+                            <span>Windows' estimate while on battery</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="pcBatteryShowTime"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Hide while plugged in</b>
+                            <span>Only show the line on battery</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="pcBatteryHideOnAC"><span></span></label>
                         </div>
                     </div>
                 </div>
@@ -4371,6 +4984,11 @@
             { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
             { id: "gpu", name: "GPU", icon: "fa-display", category: "system", desc: "Graphics card load and VRAM", keywords: "graphics video card vram nvidia amd temperature" },
             { id: "network", name: "Network", icon: "fa-wifi", category: "system", desc: "Download and upload speed", keywords: "internet bandwidth ethernet wifi traffic" },
+            { id: "sensors", name: "Sensors", icon: "fa-temperature-half", category: "system", desc: "Temperatures, power, clocks and fans you pick", keywords: "hwinfo librehardwaremonitor lhm temperature temp fan rpm power watts clock voltage hardware" },
+            { id: "ping", name: "Ping", icon: "fa-signal", category: "system", desc: "Round trip to a server", keywords: "latency ms lag internet icmp" },
+            { id: "disk", name: "Disk usage", icon: "fa-hard-drive", category: "system", desc: "Space used on your drives", keywords: "drive storage ssd hdd space free" },
+            { id: "uptime", name: "Uptime", icon: "fa-stopwatch", category: "system", desc: "PC uptime and Fern session time", keywords: "time running session boot" },
+            { id: "pcbattery", name: "PC battery", icon: "fa-battery-half", category: "system", desc: "Laptop charge and charging", keywords: "laptop battery power charging plugged ac" },
             { id: "window", name: "Active window", icon: "fa-window-maximize", category: "system", desc: "Active window title", keywords: "focus app program" },
             { id: "battery", name: "Tracker battery", icon: "fa-battery-three-quarters", category: "steamvr", desc: "Headset, controller and tracker charge", keywords: "steamvr vr battery tracker controller headset fbt charge" },
             { id: "vrperf", name: "VR performance", icon: "fa-gauge-high", category: "steamvr", desc: "Frame rate, reprojection and GPU time", keywords: "steamvr vr fps frames reprojection gpu performance" },
@@ -4537,6 +5155,8 @@
             renderHeart(st);
             renderNetwork(st);
             renderGPU(st);
+            renderSensors(st);
+            renderSystem(st);
             renderApp(st);
             renderOSCIn(st);
             renderProfiles(st);
@@ -6432,6 +7052,522 @@
             ["hrParamBeat", hrOsc],
             ["hrParamConnected", hrOsc],
         );
+        /* ---------------- hardware sensors and system lines ----------------
+           Sensors come from HWiNFO or LibreHardwareMonitor through Fern; the
+           CPU and GPU pages pick from the same list. Uptime, ping, disk and
+           the PC battery are plain Windows readings. */
+        const CPU = "CPUOptions", GPU = "GPUOptions", SEN = "SensorOptions";
+        const UPT = "UptimeOptions", PNG = "PingOptions", DSK = "DiskOptions", PCB = "PCBatteryOptions";
+        CHECKS.push(
+            ["cpuTemp", [CPU, "show_temp"]],
+            ["cpuPower", [CPU, "show_power"]],
+            ["cpuClock", [CPU, "show_clock"]],
+            ["cpuFan", [CPU, "show_fan"]],
+            ["cpuFahrenheit", [CPU, "fahrenheit"]],
+            ["gpuPower", [GPU, "show_power"]],
+            ["gpuClock", [GPU, "show_clock"]],
+            ["gpuFan", [GPU, "show_fan"]],
+            ["sensorFahrenheit", [SEN, "fahrenheit"]],
+            ["uptimeShowPC", [UPT, "show_pc"]],
+            ["uptimeShowFern", [UPT, "show_fern"]],
+            ["pingShowHost", [PNG, "show_host"]],
+            ["pingShowAvg", [PNG, "show_avg"]],
+            ["pingShowLoss", [PNG, "show_loss"]],
+            ["diskShowLetter", [DSK, "show_letter"]],
+            ["diskShowUsed", [DSK, "show_used"]],
+            ["diskShowTotal", [DSK, "show_total"]],
+            ["diskShowFree", [DSK, "show_free"]],
+            ["diskShowPercent", [DSK, "show_percent"]],
+            ["pcBatteryShowTime", [PCB, "show_time"]],
+            ["pcBatteryHideOnAC", [PCB, "hide_on_ac"]],
+        );
+        RANGES.push(
+            ["uptimeUnits", [UPT, "units"], "uptimeUnitsVal", asIs],
+            ["pingInterval", [PNG, "interval_sec"], "pingIntervalVal", (v) => v + "s"],
+            ["pcBatteryLow", [PCB, "low_threshold"], "pcBatteryLowVal", asPercentOrOff],
+        );
+        TEXTS.push(
+            ["sensorLabel", [SEN, "label"], 16],
+            ["sensorTemplate", [SEN, "template"], 80],
+            ["sensorSeparator", [SEN, "separator"], 8],
+            ["uptimeLabel", [UPT, "label"], 16],
+            ["uptimePCText", [UPT, "pc_text"], 16],
+            ["uptimeFernText", [UPT, "fern_text"], 16],
+            ["pingLabel", [PNG, "label"], 16],
+            ["pingTimeoutText", [PNG, "timeout_text"], 16],
+            ["diskLabel", [DSK, "label"], 16],
+            ["diskSeparator", [DSK, "separator"], 8],
+            ["pcBatteryLabel", [PCB, "label"], 16],
+            ["pcBatteryIcon", [PCB, "icon"], 4],
+            ["pcBatteryLowIcon", [PCB, "low_icon"], 4],
+            ["pcBatteryCharging", [PCB, "charging_mark"], 4],
+            ["pcBatteryPlugged", [PCB, "plugged_mark"], 4],
+        );
+        DEPENDS.push(
+            ["cpuFahrenheit", (c) => c[CPU].show_temp],
+            ["sensorLHMURL", (c) => ["auto", "lhm"].includes(c[SEN].source)],
+            ["uptimePCText", (c) => c[UPT].show_pc],
+            ["uptimeFernText", (c) => c[UPT].show_fern],
+            ["uptimeUnits", (c) => c[UPT].style !== "clock"],
+            ["pingPort", (c) => c[PNG].method !== "icmp"],
+            ["pcBatteryLowIcon", (c) => c[PCB].low_threshold > 0],
+        );
+
+        const SYS_SELECTS = [
+            ["sensorSource", [SEN, "source"]],
+            ["uptimeStyle", [UPT, "style"]],
+            ["pingMethod", [PNG, "method"]],
+        ];
+        SYS_SELECTS.forEach(([id, path]) => {
+            $(id).addEventListener("change", (ev) => {
+                const v = ev.target.value;
+                pushConfigNow((c) => setField(c, path, v));
+                if (id === "sensorSource") send({ type: "sensors", action: "refresh" });
+            });
+        });
+        commitField($("sensorLHMURL"), (v) => {
+            v = v.trim();
+            return v === "" || /^https?:\/\/[^\s/]+/i.test(v) ? v : null;
+        }, (c, v) => { c[SEN].lhm_url = v; }, "Use an address like http://localhost:8085/data.json");
+        $("sensorLHMURL").addEventListener("change", () => setTimeout(() => send({ type: "sensors", action: "refresh" }), 300));
+        commitField($("pingHost"), (v) => {
+            v = v.trim();
+            return /^[^\s/\\]{0,253}$/.test(v) ? v : null;
+        }, (c, v) => { c[PNG].host = v; }, "A host is a name or address without spaces or slashes");
+        $("pingHost").addEventListener("change", () => setTimeout(() => send({ type: "sensors", action: "ping" }), 300));
+        commitField($("pingPort"), (v) => {
+            const n = Number(v);
+            return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : null;
+        }, (c, v) => { c[PNG].port = v; }, "The port must be a whole number from 1 to 65535");
+        $("sensorRefresh").addEventListener("click", () => send({ type: "sensors", action: "refresh" }));
+
+        // The pages that show live sensor or ping readings keep Fern reading
+        // them while they are open, even with every line off.
+        const WATCH_PAGES = ["sensors", "cpu", "gpu", "ping"];
+        const sensorWatch = { page: "", at: 0 };
+        setInterval(() => {
+            const active = document.querySelector(".page.active");
+            const page = active ? active.id.replace(/^page-/, "") : "";
+            if (!WATCH_PAGES.includes(page)) { sensorWatch.page = ""; return; }
+            if (page === sensorWatch.page && Date.now() - sensorWatch.at < 120000) return;
+            if (S.ws && S.ws.readyState === WebSocket.OPEN && send({ type: "sensors", action: "watch" })) {
+                sensorWatch.page = page;
+                sensorWatch.at = Date.now();
+            }
+        }, 1000);
+
+        const SENSOR_SOURCES = { hwinfo: "HWiNFO", "lhm-web": "LibreHardwareMonitor (web server)", "lhm-wmi": "LibreHardwareMonitor (WMI)" };
+
+        // The same formatting the chatbox uses (FormatSensor in sensors.go).
+        function fmtSensor(s, fahrenheit) {
+            if (!s) return "—";
+            const v = Number(s.value) || 0;
+            const trim = (n, d) => String(Number(n.toFixed(d)));
+            switch (s.type) {
+                case "temperature": return fahrenheit ? Math.round(v * 9 / 5 + 32) + "°F" : Math.round(v) + "°C";
+                case "power": return (Math.abs(v) < 10 ? trim(v, 1) : Math.round(v)) + " W";
+                case "clock": return v >= 1000 ? (v / 1000).toFixed(2) + " GHz" : Math.round(v) + " MHz";
+                case "fan": return Math.round(v) + " rpm";
+                case "load": case "control": return Math.round(v) + "%";
+                case "voltage": return trim(v, 3) + " V";
+                case "current": return trim(v, 2) + " A";
+            }
+            return trim(v, 1) + (s.unit ? " " + s.unit : "");
+        }
+
+        function sensorsState(st) {
+            return st.sensors || { status: {}, list: [], cpu: {}, gpu: {} };
+        }
+
+        // Where the CPU and GPU lines read from: [select id, options section, pick key, sensor type, readings key].
+        const HW_PICKS = [
+            ["cpuTempSensor", CPU, "temp", "temperature", "cpu"],
+            ["cpuPowerSensor", CPU, "power", "power", "cpu"],
+            ["cpuClockSensor", CPU, "clock", "clock", "cpu"],
+            ["cpuFanSensor", CPU, "fan", "fan", "cpu"],
+            ["gpuTempSensor", GPU, "temp", "temperature", "gpu"],
+            ["gpuPowerSensor", GPU, "power", "power", "gpu"],
+            ["gpuClockSensor", GPU, "clock", "clock", "gpu"],
+            ["gpuFanSensor", GPU, "fan", "fan", "gpu"],
+        ];
+        HW_PICKS.forEach(([id, sec, key]) => {
+            $(id).addEventListener("change", (ev) => {
+                const v = ev.target.value;
+                pushConfigNow((c) => {
+                    c[sec].sensors = Object.assign({ temp: "", power: "", clock: "", fan: "" }, c[sec].sensors || {});
+                    c[sec].sensors[key] = v;
+                });
+            });
+        });
+
+        function renderHWPicks(st, list) {
+            const ss = sensorsState(st);
+            HW_PICKS.forEach(([id, sec, key, type, part]) => {
+                const select = $(id);
+                const picked = ((st.config[sec].sensors || {})[key]) || "";
+                const auto = picked ? null : (ss[part] || {})[key];
+                const of = list.filter((s) => s.type === type);
+                const sig = of.map((s) => s.key + "\u0001" + s.name).join("\u0002") + "|" + picked + "|" + (auto ? auto.key : "") + "|" + st.config[CPU].fahrenheit;
+                if (select.dataset.sig === sig || document.activeElement === select) return;
+                select.dataset.sig = sig;
+                select.innerHTML = "";
+                const first = document.createElement("option");
+                first.value = "";
+                first.textContent = "Automatic" + (auto ? " (" + auto.name + ")" : "");
+                select.appendChild(first);
+                const groups = {};
+                of.forEach((s) => {
+                    if (!groups[s.hardware]) {
+                        groups[s.hardware] = document.createElement("optgroup");
+                        groups[s.hardware].label = s.hardware;
+                        select.appendChild(groups[s.hardware]);
+                    }
+                    const opt = document.createElement("option");
+                    opt.value = s.key;
+                    opt.textContent = s.name;
+                    groups[s.hardware].appendChild(opt);
+                });
+                if (picked && !of.some((s) => s.key === picked)) {
+                    const opt = document.createElement("option");
+                    opt.value = picked;
+                    opt.textContent = "Picked sensor (not found now)";
+                    select.appendChild(opt);
+                }
+                select.value = picked;
+            });
+        }
+
+        function sensorHint(st) {
+            const ss = sensorsState(st);
+            const src = SENSOR_SOURCES[ss.status.source];
+            if (src) return "";
+            if (st.config[SEN].source === "off") return "Sensors are off on the Sensors page.";
+            return "Temperatures, power, clocks and fans come from HWiNFO or LibreHardwareMonitor, and neither is answering. The Sensors page shows how to set one up.";
+        }
+
+        function renderSensorStats(st) {
+            const ss = sensorsState(st);
+            const src = SENSOR_SOURCES[ss.status.source] || "";
+            const cpu = ss.cpu || {}, gpu = ss.gpu || {};
+            const cf = !!st.config[CPU].fahrenheit;
+            const setText = (id, text) => { if ($(id).textContent !== text) $(id).textContent = text; };
+            setText("cpuNowTemp", fmtSensor(cpu.temp, cf));
+            setText("cpuNowPower", fmtSensor(cpu.power));
+            setText("cpuNowClock", fmtSensor(cpu.clock));
+            setText("cpuNowFan", fmtSensor(cpu.fan));
+            setText("gpuNowPower", fmtSensor(gpu.power));
+            setText("gpuNowClock", fmtSensor(gpu.clock));
+            setText("gpuNowFan", fmtSensor(gpu.fan));
+            setText("cpuSensorInfo", src ? (cpu.hardware || "") + " · " + src : "");
+            setText("gpuSensorInfo", src ? (gpu.hardware || "") + " · " + src : "");
+            const hint = sensorHint(st);
+            ["cpuSensorHint", "gpuSensorHint"].forEach((id) => {
+                setText(id, hint);
+                $(id).hidden = !hint;
+            });
+            // The GPU page's temperature falls back on the sensor app for
+            // cards whose driver does not report one.
+            const gpus = st.gpus || [];
+            const o = st.config[GPU];
+            const g = gpus.find((x) => x.name === o.adapter) || gpus.reduce((best, x) => (!best || x.vramTotal > best.vramTotal ? x : best), null);
+            if (g && (!g.hasTemp || (o.sensors && o.sensors.temp)) && gpu.temp) {
+                setText("gpuNowTemp", fmtSensor(gpu.temp, !!o.fahrenheit));
+                setText("gpuTempDesc", "Read from " + src);
+            } else if (g && !g.hasTemp) {
+                setText("gpuTempDesc", "This card's driver doesn't report it; HWiNFO or LibreHardwareMonitor can (see Sensors)");
+            }
+        }
+
+        function renderSensors(st) {
+            const ss = sensorsState(st);
+            const status = ss.status || {};
+            const list = ss.list || [];
+            const c = st.config;
+            const src = SENSOR_SOURCES[status.source] || "";
+            let text;
+            if (src) {
+                text = "Reading " + status.count + " sensors from " + src + (status.updated ? ", last at " + fmtAgo(status.updated) : "");
+            } else if (c[SEN].source === "off") {
+                text = "Off. No line shows temperatures, power, clocks or fans.";
+            } else if (status.error === "Not in use") {
+                text = "Waiting: nothing uses sensors yet. This page reads them while it is open.";
+            } else if (status.tried && status.tried.length) {
+                text = status.tried.map((p) => (SENSOR_SOURCES[p.source] || p.source) + ": " + p.error).join(" · ");
+            } else {
+                text = "Looking for HWiNFO or LibreHardwareMonitor…";
+            }
+            if ($("sensorStatusText").textContent !== text) $("sensorStatusText").textContent = text;
+            $("sensorSetup").hidden = !!src || c[SEN].source === "off";
+            $("sensorsBadge").textContent = src ? status.count + " sensors" : (c[SEN].source === "off" ? "off" : "no source");
+            $("sensorSourceInfo").textContent = src;
+            if (!lockForms()) {
+                SYS_SELECTS.forEach(([id, path]) => {
+                    if (document.activeElement !== $(id)) $(id).value = String(field(c, path));
+                });
+                if (document.activeElement !== $("sensorLHMURL")) $("sensorLHMURL").value = c[SEN].lhm_url || "";
+                if (document.activeElement !== $("pingHost")) $("pingHost").value = c[PNG].host || "";
+                if (document.activeElement !== $("pingPort")) $("pingPort").value = c[PNG].port;
+            }
+            renderHWPicks(st, list);
+            renderSensorStats(st);
+            renderSensorPicks(st, list);
+            renderSensorAll(st, list);
+        }
+
+        /* the sensors line: picked sensors, then every sensor to pick from */
+        function sensorPicks(st) {
+            return ((lockForms() && S.sensorPicks) || st.config[SEN].picks || []).map((p) => Object.assign({}, p));
+        }
+
+        function editSensorPicks(mutate, now) {
+            if (!S.state) return false;
+            const picks = sensorPicks(S.state);
+            mutate(picks);
+            const next = picks.map((p) => ({ key: p.key, name: p.name || "" }));
+            const ok = (now ? pushConfigNow : pushConfig)((c) => { c[SEN].picks = next.map((p) => Object.assign({}, p)); });
+            if (!ok) return false;
+            S.sensorPicks = next;
+            if (now) {
+                renderSensorPicks(S.state, sensorsState(S.state).list || [], true);
+                renderSensorAll(S.state, sensorsState(S.state).list || [], true);
+            }
+            return true;
+        }
+
+        function renderSensorPicks(st, list, force) {
+            const picks = sensorPicks(st);
+            const byKey = {};
+            list.forEach((s) => { byKey[s.key] = s; });
+            const el = $("sensorPicks");
+            $("sensorPickCount").textContent = picks.length + " / 16";
+            const sig = JSON.stringify(picks) + "|" + picks.map((p) => (byKey[p.key] ? byKey[p.key].name : "")).join(",");
+            if (force || (sig !== S.sensorPickSig && !el.contains(document.activeElement))) {
+                S.sensorPickSig = sig;
+                el.replaceChildren();
+                if (!picks.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "log-empty";
+                    empty.textContent = "Nothing picked yet. Add sensors from the list below.";
+                    el.appendChild(empty);
+                }
+                picks.forEach((p, index) => {
+                    const s = byKey[p.key];
+                    const row = document.createElement("div");
+                    row.className = "row vr-device";
+                    row.dataset.index = String(index);
+                    row.dataset.key = p.key;
+                    row.innerHTML =
+                        '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                        '<span class="vr-batt"></span>' +
+                        '<input class="msg-input vr-name" type="text" maxlength="24" autocomplete="off" aria-label="Name on the line">' +
+                        '<div class="row-actions">' +
+                        '<button class="chev" data-pick-move="-1" title="Earlier" aria-label="Move earlier"' + (index === 0 ? " disabled" : "") + ">▲</button>" +
+                        '<button class="chev" data-pick-move="1" title="Later" aria-label="Move later"' + (index === picks.length - 1 ? " disabled" : "") + ">▼</button>" +
+                        "</div>" +
+                        '<button class="mini-x" title="Take off the line" aria-label="Take off the line">✕</button>';
+                    row.querySelector(".row-name").textContent = s ? s.name : "Not found now";
+                    row.querySelector(".row-desc").textContent = s ? s.hardware + " · " + s.type : p.key;
+                    const name = row.querySelector(".vr-name");
+                    name.value = p.name || "";
+                    name.placeholder = "Show as " + (s ? s.name : "its name");
+                    el.appendChild(row);
+                });
+            }
+            const f = !!st.config[SEN].fahrenheit;
+            el.querySelectorAll(".vr-device").forEach((row) => {
+                const s = byKey[row.dataset.key];
+                const v = row.querySelector(".vr-batt");
+                const text = s ? fmtSensor(s, f) : "missing";
+                if (v.textContent !== text) v.textContent = text;
+                v.classList.toggle("off", !s);
+            });
+        }
+        $("sensorPicks").addEventListener("input", (ev) => {
+            if (!ev.target.classList.contains("vr-name")) return;
+            const index = +ev.target.closest(".vr-device").dataset.index;
+            const value = Array.from(ev.target.value).slice(0, 24).join("");
+            editSensorPicks((picks) => { if (picks[index]) picks[index].name = value; });
+        });
+        $("sensorPicks").addEventListener("focusout", () => {
+            setTimeout(() => { if (S.state) renderSensorPicks(S.state, sensorsState(S.state).list || []); }, 0);
+        });
+        $("sensorPicks").addEventListener("click", (ev) => {
+            const row = ev.target.closest(".vr-device");
+            if (!row) return;
+            const index = +row.dataset.index;
+            const move = ev.target.closest("[data-pick-move]");
+            if (move) {
+                const to = index + Number(move.dataset.pickMove);
+                editSensorPicks((picks) => {
+                    if (to < 0 || to >= picks.length) return;
+                    const [p] = picks.splice(index, 1);
+                    picks.splice(to, 0, p);
+                }, true);
+                return;
+            }
+            if (ev.target.closest(".mini-x")) editSensorPicks((picks) => { picks.splice(index, 1); }, true);
+        });
+
+        const SENSOR_ROWS_MAX = 150;
+        function renderSensorAll(st, list, force) {
+            const el = $("sensorAll");
+            const q = $("sensorSearch").value.trim().toLowerCase();
+            const words = q.split(/\s+/).filter(Boolean);
+            const shown = list.filter((s) => {
+                const text = (s.hardware + " " + s.name + " " + s.type + " " + s.kind).toLowerCase();
+                return words.every((w) => text.includes(w));
+            });
+            $("sensorAllCount").textContent = String(list.length);
+            const picked = new Set(sensorPicks(st).map((p) => p.key));
+            const rows = shown.slice(0, SENSOR_ROWS_MAX);
+            const sig = rows.map((s) => s.key).join("\u0001") + "|" + [...picked].join(",") + "|" + shown.length;
+            if (force || (sig !== S.sensorAllSig && !el.contains(document.activeElement))) {
+                S.sensorAllSig = sig;
+                el.replaceChildren();
+                if (!rows.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "log-empty";
+                    empty.textContent = list.length ? "No sensor matches." : "No sensors yet. Start HWiNFO or LibreHardwareMonitor (see Source above).";
+                    el.appendChild(empty);
+                }
+                rows.forEach((s) => {
+                    const row = document.createElement("div");
+                    row.className = "row vr-device";
+                    row.dataset.key = s.key;
+                    row.innerHTML =
+                        '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                        '<span class="vr-batt"></span>' +
+                        '<button class="btn ghost small" type="button" data-pick-add><i class="fa fa-plus" aria-hidden="true"></i> Add</button>';
+                    row.querySelector(".row-name").textContent = s.name;
+                    row.querySelector(".row-desc").textContent = s.hardware + " · " + s.type;
+                    const add = row.querySelector("[data-pick-add]");
+                    add.disabled = picked.has(s.key) || picked.size >= 16;
+                    if (picked.has(s.key)) add.innerHTML = '<i class="fa fa-check" aria-hidden="true"></i> Added';
+                    el.appendChild(row);
+                });
+                if (shown.length > rows.length) {
+                    const more = document.createElement("div");
+                    more.className = "log-empty";
+                    more.textContent = (shown.length - rows.length) + " more. Search to narrow the list.";
+                    el.appendChild(more);
+                }
+            }
+            const byKey = {};
+            list.forEach((s) => { byKey[s.key] = s; });
+            const f = !!st.config[SEN].fahrenheit;
+            el.querySelectorAll(".vr-device").forEach((row) => {
+                const v = row.querySelector(".vr-batt");
+                const text = fmtSensor(byKey[row.dataset.key], f);
+                if (v.textContent !== text) v.textContent = text;
+            });
+        }
+        $("sensorSearch").addEventListener("input", () => { if (S.state) renderSensorAll(S.state, sensorsState(S.state).list || [], true); });
+        $("sensorAll").addEventListener("click", (ev) => {
+            const add = ev.target.closest("[data-pick-add]");
+            if (!add) return;
+            const key = add.closest(".vr-device").dataset.key;
+            editSensorPicks((picks) => {
+                if (picks.length < 16 && !picks.some((p) => p.key === key)) picks.push({ key, name: "" });
+            }, true);
+        });
+
+        /* uptime, ping, disks and the PC battery */
+        function fmtUptime(sec) {
+            sec = Math.max(0, Math.floor(sec || 0));
+            const d = Math.floor(sec / 86400), h = Math.floor(sec / 3600) % 24, m = Math.floor(sec / 60) % 60;
+            if (d) return d + "d " + h + "h";
+            if (h) return h + "h " + m + "m";
+            return m + "m " + (sec % 60) + "s";
+        }
+        function fmtDisk(bytes) {
+            const gb = (bytes || 0) / 1073741824;
+            if (gb >= 1000) return String(Number((gb / 1024).toFixed(1))) + " TB";
+            return (gb < 10 ? String(Number(gb.toFixed(1))) : String(Math.round(gb))) + " GB";
+        }
+
+        function renderSystem(st) {
+            const sys = st.system || {};
+            const c = st.config;
+            $("uptimePCNow").textContent = fmtUptime(sys.pcUptimeSec);
+            $("uptimeFernNow").textContent = fmtUptime(sys.fernUptimeSec);
+            $("uptimeLineBadge").textContent = (st.samples && st.samples.uptime) || "—";
+
+            const p = sys.ping || {};
+            const live = p.active && p.updated && !p.error;
+            $("pingNow").textContent = live ? (p.ms >= 0 ? p.ms + " ms" : "timeout") : "—";
+            $("pingAvg").textContent = live && p.avgMs >= 0 ? p.avgMs + " ms" : "—";
+            $("pingLoss").textContent = live && p.samples ? p.loss + "%" : "—";
+            $("pingBadge").textContent = live ? (p.ms >= 0 ? p.ms + " ms" : "timeout") : (c[PNG].host ? "idle" : "no host");
+            let info = "";
+            if (!c[PNG].host) info = "Set a host to ping.";
+            else if (p.error && p.active) info = p.error;
+            else if (live) info = (p.address && p.address !== p.host ? p.host + " is " + p.address + ". " : "") +
+                (p.method === "tcp" ? "Timed with a TCP connect to port " + c[PNG].port + (c[PNG].method === "auto" ? ", since ICMP got no answer." : ".") : "Answered ICMP ping.");
+            else info = "Fern pings while the line is on, a rule needs it, or this page is open.";
+            if ($("pingInfo").textContent !== info) $("pingInfo").textContent = info;
+
+            renderDisks(st, sys.disks || []);
+
+            const pw = sys.power || {};
+            let status, now;
+            if (!pw.hasBattery) {
+                status = "This PC has no battery, so the line stays empty";
+                now = "—";
+            } else {
+                now = (pw.percent >= 0 ? pw.percent + "%" : "?") + (pw.charging ? " ⚡" : "");
+                status = pw.charging ? "Charging" : pw.onAC ? "Plugged in" : "On battery" +
+                    (pw.secondsLeft > 0 ? ", about " + fmtUptime(pw.secondsLeft) + " left" : "");
+                if (pw.saver) status += " · battery saver on";
+            }
+            $("pcBatteryStatus").textContent = status;
+            $("pcBatteryNow").textContent = now;
+            $("pcBatteryBadge").textContent = pw.hasBattery ? now : "no battery";
+        }
+
+        function renderDisks(st, disks) {
+            const chosen = st.config[DSK].drives || [];
+            const el = $("diskDrives");
+            const sig = JSON.stringify(disks.map((d) => [d.drive, d.label, d.total, d.free])) + "|" + chosen.join(",");
+            const first = disks[0];
+            $("diskBadge").textContent = (st.samples && st.samples.disk) || (first ? first.drive : "—");
+            if (sig === S.diskSig || el.contains(document.activeElement)) return;
+            S.diskSig = sig;
+            el.replaceChildren();
+            if (!disks.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "Reading drives…";
+                el.appendChild(empty);
+            }
+            disks.forEach((d) => {
+                const used = d.total - d.free;
+                const row = document.createElement("div");
+                row.className = "row vr-device";
+                row.innerHTML =
+                    '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                    '<span class="vr-batt"></span>' +
+                    '<label class="switch" title="Show on the disk line"><input type="checkbox" class="disk-on" aria-label="Show on the disk line"><span></span></label>';
+                row.querySelector(".row-name").textContent = d.drive + (d.label ? " " + d.label : "") + (d.fixed ? "" : " (removable)");
+                row.querySelector(".row-desc").textContent = fmtDisk(used) + " of " + fmtDisk(d.total) + " used · " + fmtDisk(d.free) + " free";
+                row.querySelector(".vr-batt").textContent = d.total ? Math.round(used * 100 / d.total) + "%" : "";
+                const on = row.querySelector(".disk-on");
+                on.dataset.drive = d.drive;
+                on.checked = chosen.includes(d.drive);
+                el.appendChild(row);
+            });
+        }
+        $("diskDrives").addEventListener("change", (ev) => {
+            const on = ev.target.closest(".disk-on");
+            if (!on) return;
+            const drive = on.dataset.drive;
+            const checked = on.checked;
+            pushConfigNow((c) => {
+                const list = (c[DSK].drives || []).filter((d) => d !== drive);
+                if (checked) list.push(drive);
+                c[DSK].drives = list;
+            });
+        });
+
         function applyDepends(c) {
             if (!c) return;
             DEPENDS.forEach(([id, active]) => {
