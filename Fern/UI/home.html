@@ -4056,7 +4056,7 @@
                 <div class="page-head">
                     <div>
                         <h2>Loading</h2>
-                        <p>Growing dots, or your own text with dots after it</p>
+                        <p>Growing dots or your own text typed out, with optional text in front</p>
                     </div>
                 </div>
 
@@ -4084,11 +4084,20 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
-                            <b>Show dots</b>
+                            <b>Animate</b>
                             <span>Off shows the loading text only</span>
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="loadDots"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Animation text</b>
+                            <span>Typed out one character at a time: test reads t, te, tes, test. Leave empty for dots.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="loadAnim" placeholder="dots" maxlength="80" autocomplete="off">
                         </div>
                     </div>
                     <div class="field">
@@ -4100,6 +4109,53 @@
                             <input type="range" id="loadDotsRange" min="1" max="6" step="1">
                             <span class="val" id="loadDotsVal">6</span>
                         </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Blank fill</b>
+                            <span>Stands in for the characters not shown yet, so the line keeps its width: t___, te__</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="loadFillPreset" aria-label="Blank fill">
+                                <option value="">None</option>
+                                <option value="&#x2800;">Braille blank (U+2800)</option>
+                                <option value="&#x3164;">Hangul filler (U+3164)</option>
+                                <option value="&#x2007;">Figure space (U+2007)</option>
+                                <option value="_">Underscore _</option>
+                                <option value="&#xB7;">Middle dot &middot;</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                            <input type="text" id="loadFillCustom" maxlength="16" autocomplete="off" placeholder="one character" aria-label="Custom blank fill" style="width:9em;display:none">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When it is all shown</b>
+                            <span>Start over from one character, or erase back one at a time</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="loadStyle" aria-label="When it is all shown">
+                                <option value="restart">Start over</option>
+                                <option value="bounce">Erase back</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Hold the whole text</b>
+                            <span>Extra steps it stays fully shown before moving on</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="loadHold" min="0" max="5" step="1">
+                            <span class="val" id="loadHoldVal">off</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Preview</b>
+                            <span>Every step once, in order</span>
+                        </div>
+                        <div class="field-control"><code class="bar-preview" id="loadPreview"></code></div>
                     </div>
                     <div class="field">
                         <div class="field-label">
@@ -4121,6 +4177,7 @@
                         </div>
                     </div>
                 </div>
+                <div class="hint">VRChat trims and squeezes plain spaces, so a space as the blank fill mostly disappears. The braille blank and the Hangul filler are not spaces to VRChat and keep their width; the figure space is a space character and may still be trimmed at the end of the line. How wide each blank looks depends on the chatbox font.</div>
             </section>
 
             <!-- ================= AFK ================= -->
@@ -8087,7 +8144,7 @@
             { id: "lyrics", name: "Lyrics", icon: "fa-microphone", category: "media", desc: "Synced lyrics for the playing track", keywords: "lrc lrclib karaoke song words" },
             { id: "lastfm", name: "Last.fm", icon: "fa-brands fa-lastfm", category: "media", desc: "Now scrobbling, play count and loved", keywords: "scrobble scrobbling audioscrobbler plays loved music spotify" },
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
-            { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
+            { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Growing dots or your own typed-out text", keywords: "dots animation typing" },
             { id: "weather", name: "Weather", icon: "fa-cloud-sun", category: "system", desc: "Conditions and temperature from Open-Meteo", keywords: "temperature forecast rain wind humidity" },
             { id: "calendar", name: "Calendar", icon: "fa-calendar-days", category: "system", desc: "Your next event from iCal links or .ics files", keywords: "ics ical google outlook event meeting schedule agenda" },
             { id: "prices", name: "Prices", icon: "fa-chart-line", category: "system", desc: "Exchange rates and crypto prices", keywords: "currency exchange rate crypto bitcoin btc eth stock price coingecko frankfurter" },
@@ -8273,6 +8330,7 @@
             renderLogs(st);
             renderSocial(st);
             renderLyrics(st);
+            renderLoading(st);
             renderCounters(st);
             renderWeather(st);
             if (typeof renderAssist === "function") renderAssist(st);
@@ -9952,6 +10010,7 @@
             ["liveRate", ["ChatOptions", "live_rate_ms"], "liveRateVal", asSeconds(1)],
             ["spinRate", ["LoadingOptions", "rate_ms"], "spinRateVal", asMs],
             ["loadDotsRange", ["LoadingOptions", "dots"], "loadDotsVal", asIs],
+            ["loadHold", ["LoadingOptions", "hold"], "loadHoldVal", (v) => (v ? v + (v === 1 ? " step" : " steps") : "off")],
             ["speedRange", ["TextOptions", "speed"], "speedVal", asSeconds(1)],
             ["mediaBarWidth", ["MediaOptions", "bar_width"], "mediaBarWidthVal", asIs],
             ["mediaMaxChars", ["MediaOptions", "max_chars"], "mediaMaxCharsVal", asIs],
@@ -9994,6 +10053,7 @@
             ["linePrefix", ["display_options", "line_prefix"], 16],
             ["lineSuffix", ["display_options", "line_suffix"], 16],
             ["loadText", ["LoadingOptions", "text"], 40],
+            ["loadAnim", ["LoadingOptions", "anim"], 40],
             ["textLabel", ["TextOptions", "label"], 16],
             ["clockLabel", ["TimeOptions", "label"], Infinity],
             ["mediaFilter", ["MediaOptions", "app_filter"], Infinity],
@@ -10080,7 +10140,11 @@
             ["liveRate", (c) => c.ChatOptions.live_typing],
             ["chatAutocomplete", (c) => c.ChatOptions.keep_history],
             ["clockNoAmPm", (c) => !c.TimeOptions.use_24h],
-            ["loadDotsRange", (c) => c.LoadingOptions.show_dots],
+            ["loadDotsRange", (c) => c.LoadingOptions.show_dots && !c.LoadingOptions.anim],
+            ["loadAnim", (c) => c.LoadingOptions.show_dots],
+            ["loadFillPreset", (c) => c.LoadingOptions.show_dots],
+            ["loadStyle", (c) => c.LoadingOptions.show_dots],
+            ["loadHold", (c) => c.LoadingOptions.show_dots],
             ["spinRate", (c) => c.LoadingOptions.fast],
             ["mediaBarWidth", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarPreset", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
@@ -11250,6 +11314,7 @@
                 const v = Array.from(ev.target.value).slice(0, max).join("");
                 pushConfig((c) => setField(c, path, v));
                 if (id.startsWith("mediaBar")) renderBarPreview();
+                if (id === "loadText" || id === "loadAnim") renderLoadingPreview();
             });
         });
 
@@ -12829,6 +12894,98 @@
         }
         commitField($("lyricsFolder"), (v) => v.trim().replace(/^"|"$/g, ""),
             (c, v) => { c.LyricsOptions.folder = v; }, "");
+
+        /* ---------------- loading page ---------------- */
+        // textUnits mirrors textUnits in Texts.go, so the preview splits the
+        // animation text into the same characters the chatbox does.
+        function textUnits(s) {
+            const units = [];
+            let cur = [], join = false;
+            const ri = (cp) => cp >= 0x1f1e6 && cp <= 0x1f1ff;
+            const extends_ = (ch, cp) => cp === 0x200d || (cp >= 0xfe00 && cp <= 0xfe0f) || (cp >= 0xe0100 && cp <= 0xe01ef) ||
+                (cp >= 0x1f3fb && cp <= 0x1f3ff) || (cp >= 0xe0020 && cp <= 0xe007f) || /\p{M}/u.test(ch);
+            for (const ch of s) {
+                const cp = ch.codePointAt(0);
+                const attach = cur.length > 0 && (join || extends_(ch, cp) || (ri(cp) && cur.length === 1 && ri(cur[0].codePointAt(0))));
+                if (!attach && cur.length) { units.push(cur.join("")); cur = []; }
+                cur.push(ch);
+                join = cp === 0x200d;
+            }
+            if (cur.length) units.push(cur.join(""));
+            return units;
+        }
+        // The unit cut and the frames mirror sanitizeLoading and loadingFrames.
+        function unitLimit(s, n) {
+            let out = "", used = 0;
+            for (const u of textUnits(s)) {
+                const c = Array.from(u).length;
+                if (used + c > n) break;
+                used += c;
+                out += u;
+            }
+            return out;
+        }
+        function loadingFrames(o) {
+            let units = textUnits(unitLimit((o.anim || "").split(/\s+/).filter(Boolean).join(" "), 40));
+            if (!units.length) units = Array(Math.max(o.dots || 6, 1)).fill(".");
+            const n = units.length;
+            const frame = (k) => units.slice(0, k).join("") + (o.fill || "").repeat(n - k);
+            const frames = [];
+            for (let k = 1; k <= n; k++) frames.push(frame(k));
+            for (let i = 0; i < (o.hold || 0); i++) frames.push(frame(n));
+            if (o.style === "bounce") for (let k = n - 1; k >= 2; k--) frames.push(frame(k));
+            return frames;
+        }
+        function cleanFill(v) {
+            const first = textUnits(Array.from(v).filter((ch) => !/\p{Cc}/u.test(ch)).join(""))[0] || "";
+            return Array.from(first).length <= 8 ? first : "";
+        }
+        const LOAD_FILLS = Array.from($("loadFillPreset").options).map((opt) => opt.value).filter((v) => v !== "custom");
+        let loadFillPicked = false; // Custom was picked, even while its box is still empty
+        // With no argument, preview what is in the fields right now rather
+        // than the last state Fern sent.
+        function renderLoadingPreview(o) {
+            const c = config();
+            if (!c) return;
+            o = Object.assign({}, c.LoadingOptions, o || {
+                text: $("loadText").value,
+                anim: $("loadAnim").value,
+            });
+            const text = o.text.split(/\s+/).filter(Boolean).join(" ").replace(/\.+$/, "");
+            const custom = $("loadFillPreset").value === "custom";
+            $("loadFillCustom").style.display = custom ? "" : "none";
+            if (!o.show_dots) { $("loadPreview").textContent = text || "(empty)"; return; }
+            $("loadPreview").textContent = loadingFrames(o).map((f) => text + f).join("  ›  ");
+        }
+        function renderLoading(st) {
+            const o = st.config.LoadingOptions;
+            if (!lockForms()) {
+                if (document.activeElement !== $("loadStyle")) $("loadStyle").value = o.style === "bounce" ? "bounce" : "restart";
+                const fill = o.fill || "";
+                if (fill && !LOAD_FILLS.includes(fill)) loadFillPicked = true;
+                if (fill && LOAD_FILLS.includes(fill) && document.activeElement !== $("loadFillCustom")) loadFillPicked = false;
+                if (document.activeElement !== $("loadFillPreset")) $("loadFillPreset").value = loadFillPicked ? "custom" : fill;
+                if (document.activeElement !== $("loadFillCustom")) $("loadFillCustom").value = loadFillPicked ? fill : "";
+            }
+            renderLoadingPreview(o);
+        }
+        $("loadStyle").addEventListener("change", (ev) => {
+            const v = ev.target.value;
+            pushConfigNow((c) => { c.LoadingOptions.style = v; });
+            renderLoadingPreview({ style: v });
+        });
+        $("loadFillPreset").addEventListener("change", (ev) => {
+            loadFillPicked = ev.target.value === "custom";
+            const v = loadFillPicked ? cleanFill($("loadFillCustom").value) : ev.target.value;
+            pushConfigNow((c) => { c.LoadingOptions.fill = v; });
+            renderLoadingPreview({ fill: v });
+            if (loadFillPicked) $("loadFillCustom").focus();
+        });
+        $("loadFillCustom").addEventListener("input", (ev) => {
+            const v = cleanFill(ev.target.value);
+            pushConfig((c) => { c.LoadingOptions.fill = v; });
+            renderLoadingPreview({ fill: v });
+        });
 
         /* ---------------- time page ---------------- */
         // Chromium knows the IANA zone list, so the picker needs no table of

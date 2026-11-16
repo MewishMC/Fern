@@ -189,6 +189,12 @@ type LoadingOptions struct {
 	Text     string `json:"text"` // shown before the growing dots; empty means dots only
 	ShowDots bool   `json:"show_dots"`
 	Dots     int    `json:"dots"` // longest run of dots before looping
+	// Anim is typed out a character at a time in place of the dots; empty
+	// keeps the dots.
+	Anim  string `json:"anim"`
+	Fill  string `json:"fill"`  // stands in for characters not shown yet; empty adds nothing
+	Style string `json:"style"` // restart or bounce
+	Hold  int    `json:"hold"`  // extra steps the whole text stays up, 0-5
 }
 
 // AfkOptions controls the afk timer shown in the chatbox.
@@ -785,6 +791,10 @@ func DefaultConfig() Config {
 			RateMS:   1000,
 			ShowDots: true,
 			Dots:     6,
+			Anim:     "", // dots
+			Fill:     "",
+			Style:    loadingRestart,
+			Hold:     0,
 		},
 		AfkOptions: AfkOptions{
 			AutoDetect: true,
@@ -1385,13 +1395,7 @@ func clampInt(v, lo, hi int) int {
 // sanitize keeps stored values inside ranges the rest of the app can handle.
 func (c *Config) sanitize() {
 	c.TimeoutMS = int64(clampInt(int(c.TimeoutMS), 250, 15000))
-	// VRChat accepts roughly one chatbox update per second and silently drops
-	// the rest, so sending faster does not make the animation smoother: it makes
-	// the dots skip. One dot per second is the pace VRChat can actually show.
-	c.LoadingOptions.RateMS = clampInt(c.LoadingOptions.RateMS, 1000, 3000)
-	// The loading text is one chatbox line: no newlines, no runaway length.
-	trimmed := strings.Join(strings.Fields(c.LoadingOptions.Text), " ")
-	c.LoadingOptions.Text = RuneLimit(strings.TrimRight(trimmed, "."), 40)
+	sanitizeLoading(&c.LoadingOptions)
 	c.TextOptions.Speed = clampInt(c.TextOptions.Speed, 400, 60000)
 	// Always VRChat's own limits. The panel no longer offers these, so an old
 	// config with a lower value would otherwise cut the chatbox short for good.
@@ -1531,10 +1535,6 @@ func (c *Config) sanitize() {
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
 	c.NetworkOptions.Label = RuneLimit(strings.TrimSpace(c.NetworkOptions.Label), 16)
 	c.NetworkOptions.Adapter = RuneLimit(strings.TrimSpace(c.NetworkOptions.Adapter), 256)
-	if c.LoadingOptions.Dots == 0 {
-		c.LoadingOptions.Dots = 6
-	}
-	c.LoadingOptions.Dots = clampInt(c.LoadingOptions.Dots, 1, 6)
 	switch c.AfkOptions.TimerStyle {
 	case "full", "short", "minutes", "compact", "words":
 	default:
