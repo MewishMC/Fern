@@ -332,6 +332,9 @@ type AppOptions struct {
 	CloseToTray    bool   `json:"close_to_tray"`    // the X button hides the window
 	MinimizeToTray bool   `json:"minimize_to_tray"` // minimising hides the window
 	MicHotkey      string `json:"mic_hotkey"`       // global shortcut that toggles the VRChat mic; empty is off
+	// SetupDone is set once the first-run setup is finished or skipped. A
+	// config file from before the setup existed counts as done; see Load.
+	SetupDone bool `json:"setup_done"`
 }
 
 // BatteryOptions controls the SteamVR tracker battery line.
@@ -1027,6 +1030,8 @@ func Load() {
 		if err := json.Unmarshal(data, &loaded); err != nil {
 			fmt.Println("config: could not parse, using defaults:", err)
 			loaded = DefaultConfig()
+		} else {
+			keepSetupForOldConfig(data, &loaded)
 		}
 	} else if !os.IsNotExist(err) {
 		fmt.Println("config: could not read, using defaults:", err)
