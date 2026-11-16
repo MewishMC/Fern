@@ -163,6 +163,7 @@ func parseLogLine(line string) {
 		if liveLogLine(at) {
 			FireTrigger(TriggerPlayerJoined, playerEvent(name))
 			hapticPlayerJoined(playerEvent(name))
+			noteVRCEvent(EventJoin, playerEvent(name))
 		}
 	case strings.Contains(line, "] OnPlayerLeft ") && strings.Contains(line, "[Behaviour]"):
 		name := playerName(line, "OnPlayerLeft ")
@@ -180,6 +181,7 @@ func parseLogLine(line string) {
 		addActivityAt(at, EventLeave, name+" left")
 		if liveLogLine(at) {
 			FireTrigger(TriggerPlayerLeft, playerEvent(name))
+			noteVRCEvent(EventLeave, playerEvent(name))
 		}
 	}
 }

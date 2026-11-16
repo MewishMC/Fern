@@ -91,6 +91,7 @@ type uiState struct {
 	Sensors   sensorsState          `json:"sensors"`
 	System    systemState           `json:"system"`
 	Streaming modules.StreamingInfo `json:"streaming"`
+	Avatar    avatarState           `json:"avatar"`
 }
 
 type appState struct {
@@ -404,6 +405,8 @@ func handleCommand(cmd command) {
 		handleScheduleCommand(cmd)
 	case "sensors":
 		handleSensorsCommand(cmd)
+	case "avatar":
+		handleAvatarCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	case "vrInput":
@@ -631,6 +634,7 @@ func buildState() uiState {
 		Sensors:   currentSensors(cfg),
 		System:    currentSystem(),
 		Streaming: modules.CurrentStreaming(),
+		Avatar:    currentAvatar(),
 	}
 }
 

@@ -24,5 +24,6 @@ func StartWorkers() {
 	startRulesWorker()
 	startTallyWorker()
 	startStreamingWorkers()
+	startAvatarWorker()
 	go watchVRChatProcess()
 }

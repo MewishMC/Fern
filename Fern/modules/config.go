@@ -687,6 +687,8 @@ type Config struct {
 	PingOptions      PingOptions      `json:"PingOptions"`
 	DiskOptions      DiskOptions      `json:"DiskOptions"`
 	PCBatteryOptions PCBatteryOptions `json:"PCBatteryOptions"`
+	// Avatar automation; see avatar_config.go.
+	Avatar AvatarOptions `json:"Avatar"`
 }
 
 var (
@@ -966,6 +968,7 @@ func DefaultConfig() Config {
 		TikTokOptions:     defaultTikTokOptions(),
 		KickOptions:       defaultKickOptions(),
 		YouTubeOptions:    defaultYouTubeOptions(),
+		Avatar:            defaultAvatarOptions(),
 	}
 }
 
@@ -1495,6 +1498,7 @@ func (c *Config) sanitize() {
 	c.TimerOptions.sanitize()
 	c.CounterOptions.sanitize()
 	c.ScheduleOptions.sanitize()
+	c.Avatar.sanitize()
 }
 
 func scheduleSave() {

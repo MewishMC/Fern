@@ -227,7 +227,7 @@ func registerBuiltinTriggers() {
 	mustRegister(RegisterRuleTrigger(RuleTrigger{
 		ID: TriggerAvatar, Label: "Wearing an avatar", Category: "Avatar",
 		Description: "While you wear a matching avatar",
-		Fields:      []RuleField{match("avatar", "Avatar", "Name or avtr_ ID. Contains, or /regex/. Empty is any avatar.", "e.g. avtr_… or Fern")},
+		Fields:      []RuleField{withSource(match("avatar", "Avatar", "Name or avtr_ ID. Contains, or /regex/. Empty is any avatar.", "e.g. avtr_… or Fern"), SourceAvatars)},
 		Check: func(p RuleParams) bool {
 			id, name := ruleAvatar()
 			if id == "" && name == "" {
