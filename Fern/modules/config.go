@@ -625,6 +625,9 @@ type Config struct {
 	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
 	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
 
+	// Music services; see spotify.go.
+	SpotifyOptions SpotifyOptions `json:"SpotifyOptions"`
+
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
@@ -891,6 +894,8 @@ func DefaultConfig() Config {
 		STTOptions:    defaultSTTOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
+
+		SpotifyOptions: defaultSpotifyOptions(),
 	}
 }
 
@@ -1352,6 +1357,7 @@ func (c *Config) sanitize() {
 	c.sanitizeAssist()
 
 	c.sanitizeSocial()
+	sanitizeSpotify(&c.SpotifyOptions)
 
 	// VRChat drops chatbox messages sent faster than about one a second.
 	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)

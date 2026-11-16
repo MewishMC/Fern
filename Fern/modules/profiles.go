@@ -128,6 +128,8 @@ func keepMachineSettings(dst *Config, cur Config) {
 	dst.DiscordOptions.RedirectURI = cur.DiscordOptions.RedirectURI
 	dst.TwitchOptions.ClientID = cur.TwitchOptions.ClientID
 	dst.VoicemodOptions.Enabled = cur.VoicemodOptions.Enabled
+	dst.SpotifyOptions.ClientID = cur.SpotifyOptions.ClientID
+	dst.SpotifyOptions.RedirectPort = cur.SpotifyOptions.RedirectPort
 }
 
 // profileSettings is the snapshot a profile stores for c.

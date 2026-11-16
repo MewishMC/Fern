@@ -367,7 +367,8 @@ func mediaFitLine(cfg Config) FitLine {
 	if mediaHiddenByChange(cfg.MediaOptions, mediaChangedSince()) {
 		return FitLine{ID: ModuleMedia, Variants: []string{""}}
 	}
-	return mediaFit(CurrentMedia(), cfg.MediaOptions)
+	info := CurrentMedia()
+	return mediaFitExtras(info, cfg.MediaOptions, spotifyMediaExtras(cfg.SpotifyOptions, info))
 }
 
 // Playback states the media line tells apart.
@@ -397,6 +398,12 @@ func formatMediaLine(o MediaOptions, info MediaInfo) string {
 
 // mediaFit builds the media line and its shorter forms from a snapshot.
 func mediaFit(info MediaInfo, o MediaOptions) FitLine {
+	return mediaFitExtras(info, o, "")
+}
+
+// mediaFitExtras is mediaFit with extras (the Spotify marks) after the
+// track. They go once the bar has, before the time does.
+func mediaFitExtras(info MediaInfo, o MediaOptions, extras string) FitLine {
 	line := FitLine{ID: ModuleMedia, Variants: []string{""}}
 	if !info.Available {
 		return line
@@ -451,11 +458,12 @@ func mediaFit(info MediaInfo, o MediaOptions) FitLine {
 		}
 	}
 
-	compose := func(track, bar, clock string) string {
-		return joinNonEmpty(" ", lead, track, strings.TrimSpace(bar+" "+clock))
+	extras = strings.TrimSpace(extras)
+	compose := func(track, extras, bar, clock string) string {
+		return joinNonEmpty(" ", lead, track, extras, strings.TrimSpace(bar+" "+clock))
 	}
-	line.Variants = []string{compose(full, bar, clock)}
-	for _, v := range []string{compose(full, "", clock), compose(full, "", ""), compose(short, "", "")} {
+	line.Variants = []string{compose(full, extras, bar, clock)}
+	for _, v := range []string{compose(full, extras, "", clock), compose(full, "", "", clock), compose(full, "", "", ""), compose(short, "", "", "")} {
 		if v != line.Variants[len(line.Variants)-1] {
 			line.Variants = append(line.Variants, v)
 		}

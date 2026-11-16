@@ -16,6 +16,7 @@ func StartWorkers() {
 	startTwitchWorker()
 	startSoundpadWorker()
 	startVoicemodWorker()
+	startSpotifyWorker()
 	startNetworkWorker()
 	startGPUWorker()
 	startRulesWorker()
