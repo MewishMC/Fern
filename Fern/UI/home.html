@@ -54,6 +54,7 @@
                     <button class="nav-item active" data-page="live" data-label="Live"><i class="fa fa-comment-dots" aria-hidden="true"></i><span class="nav-label">Live</span></button>
                     <button class="nav-item" data-page="modules" data-label="Modules"><i class="fa fa-puzzle-piece" aria-hidden="true"></i><span class="nav-label">Modules</span><span class="nav-count" id="navModCount"></span></button>
                     <button class="nav-item" data-page="lines" data-label="Lines"><i class="fa fa-list" aria-hidden="true"></i><span class="nav-label">Lines</span></button>
+                    <button class="nav-item" data-page="profiles" data-label="Profiles"><i class="fa fa-layer-group" aria-hidden="true"></i><span class="nav-label">Profiles</span></button>
                     <button class="nav-item" data-page="assist" data-label="Assist"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i><span class="nav-label">Assist</span></button>
                 </div>
                 <div class="nav-group">
@@ -97,6 +98,7 @@
                         <p>Exactly what the chatbox shows right now</p>
                     </div>
                     <div class="head-actions">
+                        <select class="compact" id="liveProfile" title="Switch profile. While one is active, your changes are saved into it." aria-label="Profile" hidden></select>
                         <button class="btn ghost" id="btnAfk" title="Show the AFK line until you turn it off" aria-pressed="false"><i class="fa fa-moon" aria-hidden="true"></i><span>I'm AFK</span></button>
                         <button class="btn ghost" id="btnSkip">Next text</button>
                         <button class="btn" id="btnMaster">Display on</button>
@@ -322,6 +324,55 @@
                     </div>
                 </div>
 
+            </section>
+
+            <!-- ================= PROFILES ================= -->
+            <section class="page" id="page-profiles">
+                <div class="page-head">
+                    <div>
+                        <h2>Profiles</h2>
+                        <p>Named setups to switch between: which lines show, their order, every line's settings and your messages</p>
+                    </div>
+                    <div class="head-actions">
+                        <span class="badge" id="profActiveBadge">no profile</span>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Active profile</h3>
+                    </div>
+                    <div class="hint" style="margin-top:0" id="profActiveHint">No profile is active, so changes only change the current settings.</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>New profile</b>
+                            <span>Saves the current setup under a name and makes it the active profile</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="profNewName" maxlength="40" placeholder="e.g. Chill, Club, Stream" autocomplete="off" style="width:200px">
+                            <button class="btn" type="button" id="profCreate"><i class="fa fa-plus" aria-hidden="true"></i> Create</button>
+                        </div>
+                    </div>
+                    <div class="field" id="profStopField">
+                        <div class="field-label">
+                            <b>Stop saving to a profile</b>
+                            <span id="profStopDesc">The settings stay as they are; later changes no longer go into any profile</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost" type="button" id="profDeactivate">No profile</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Your profiles</h3>
+                        <span class="badge" id="profCount">0</span>
+                    </div>
+                    <div class="list" id="profList" style="margin-top:0"></div>
+                    <div class="hint">Switch here, from the quick switcher on the Live page, from the tray icon's menu, or with a profile's shortcut, which works in any app. <i class="fa fa-palette" aria-hidden="true"></i> stores the panel's current look (Appearance page) with a profile, so switching changes it too.</div>
+                    <div class="hint">Profiles leave out API keys and sign-ins, the window, tray and mic shortcut, where the chatbox is sent (Output), the Assist tools, the Display switch, tracker names and saved bar styles. Those stay as they are when you switch.</div>
+                </div>
             </section>
 
             <!-- ================= TEXT ================= -->
@@ -3948,6 +3999,34 @@
                     </div>
                     <div class="hint" id="steamvrInfo"></div>
                 </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head">
+                        <h3>Backup and restore</h3>
+                        <span class="badge" id="backupCount">0 backups</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Settings file</b>
+                            <span>Every setting and profile in one file, without API keys, tokens or sign-ins. Importing replaces the current settings and profiles; Fern backs them up first.</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost" type="button" id="backupExport"><i class="fa fa-file-export" aria-hidden="true"></i> Export</button>
+                            <button class="btn ghost" type="button" id="backupImport"><i class="fa fa-file-import" aria-hidden="true"></i> Import</button>
+                        </div>
+                    </div>
+                    <input type="file" id="backupFile" accept="application/json,.json" hidden>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Automatic backups</b>
+                            <span id="backupDesc">Made before each update is installed and before an import or restore. Fern keeps the last 10.</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost" type="button" id="backupNow"><i class="fa fa-box-archive" aria-hidden="true"></i> Back up now</button>
+                        </div>
+                    </div>
+                    <div class="list" id="backupList"></div>
+                </div>
             </section>
 
             <!-- ================= APPEARANCE ================= -->
@@ -4304,6 +4383,8 @@
             renderNetwork(st);
             renderGPU(st);
             renderApp(st);
+            renderProfiles(st);
+            renderBackups(st);
         }
 
         /* ---------------- app ---------------- */
@@ -4359,6 +4440,311 @@
         $("appMicClear").addEventListener("click", () => setMicHotkey(""));
         $("btnSteamVRAdd").addEventListener("click", () => { send({ type: "steamvr", action: "register" }); });
         $("btnSteamVRRemove").addEventListener("click", () => { send({ type: "steamvr", action: "unregister" }); });
+
+        /* ---------------- profiles ---------------- */
+        // Toasts an action's outcome once, never the one already showing when
+        // the panel connects.
+        function noticeToast(key, notice) {
+            const n = notice || {};
+            const prop = key + "NoticeSeq";
+            if (S[prop] !== undefined && n.seq !== S[prop] && n.text) toast(n.text, !!n.bad);
+            S[prop] = n.seq;
+        }
+
+        // Drops edits the panel is still replaying, so they do not land on
+        // settings a profile switch or an import just replaced.
+        function forgetPendingEdits() {
+            S.edits = [];
+            S.dirtyUntil = 0;
+            S.orderSig = "";
+            S.msgSig = "";
+            S.msgs = null;
+            S.msgsDirty = 0;
+        }
+
+        async function applyProfileLook(name) {
+            try {
+                const response = await fetch("/profiles/appearance?name=" + encodeURIComponent(name), { cache: "no-store" });
+                if (!response.ok) return;
+                const data = await response.json();
+                if (window.fernAppearance) await window.fernAppearance.applyAll(data);
+            } catch (e) {
+                toast("Couldn't apply the look saved with " + name, true);
+            }
+        }
+
+        function fmtWhen(ms) {
+            if (!ms) return "";
+            try {
+                return new Date(ms).toLocaleString([], { dateStyle: "medium", timeStyle: "short" });
+            } catch (e) {
+                return new Date(ms).toLocaleString();
+            }
+        }
+
+        function renderProfiles(st) {
+            const p = st.profiles || {};
+            const list = p.list || [];
+            const active = p.active || "";
+            // A switch from anywhere (here, the tray, a shortcut, an import)
+            // brings the profile's look along when it has one.
+            if (S.profSwitches !== undefined && p.switches !== S.profSwitches) {
+                forgetPendingEdits();
+                const current = list.find((x) => x.active);
+                if (current && current.hasAppearance) applyProfileLook(current.name);
+            }
+            S.profSwitches = p.switches;
+            noticeToast("prof", p.notice);
+
+            $("profActiveBadge").textContent = active ? "saving to " + active : "no profile";
+            $("profActiveBadge").classList.toggle("on", !!active);
+            $("profActiveHint").textContent = active
+                ? "Every change you make anywhere in Fern is saved into " + active + " as you go, so switching away and back brings back exactly what you left."
+                : list.length
+                    ? "No profile is active, so changes only change the current settings. Switch to a profile to save changes into it."
+                    : "No profiles yet. Set the chatbox up the way you like, then save it here under a name.";
+            $("profStopField").classList.toggle("inactive", !active);
+            $("profDeactivate").disabled = !active;
+            $("profStopDesc").textContent = active
+                ? "Stop saving into " + active + ". The settings stay as they are."
+                : "Nothing is being saved into a profile right now";
+            $("profCreate").disabled = list.length >= 30;
+            $("profCount").textContent = list.length;
+            renderLiveProfile(list, active);
+
+            const box = $("profList");
+            const focused = document.activeElement;
+            const sig = JSON.stringify([list, p.hotkeyErrs || {}]);
+            if (sig === S.profSig || (focused && focused.classList.contains("prof-key") && box.contains(focused))) return;
+            S.profSig = sig;
+            box.replaceChildren();
+            if (!list.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No profiles yet.";
+                box.appendChild(empty);
+                return;
+            }
+            list.forEach((x, index) => {
+                const err = (p.hotkeyErrs || {})[x.name] || "";
+                const row = document.createElement("div");
+                row.className = "row prof-row" + (x.active ? " current" : "");
+                row.style.flexWrap = "wrap";
+                row.dataset.name = x.name;
+                row.innerHTML =
+                    '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                    '<div class="row-actions">' +
+                    (x.active
+                        ? '<button class="btn small" type="button" disabled>Active</button>'
+                        : '<button class="btn small" type="button" data-prof="switch">Switch</button>' +
+                        '<button class="btn icon" type="button" data-prof="overwrite" title="Replace this profile with the current setup" aria-label="Replace with the current setup"><i class="fa fa-floppy-disk" aria-hidden="true"></i></button>') +
+                    '<input type="text" class="prof-key" placeholder="Shortcut" autocomplete="off" spellcheck="false" style="width:130px" title="A shortcut that switches to this profile from any app. Click, then press the keys; Backspace clears it." aria-label="Shortcut">' +
+                    '<button class="btn icon" type="button" data-prof="look" title="Save the panel\'s current look with this profile" aria-label="Save the current look"><i class="fa fa-palette" aria-hidden="true"></i></button>' +
+                    (x.hasAppearance ? '<button class="btn icon" type="button" data-prof="unlook" title="Forget the saved look" aria-label="Forget the saved look"><i class="fa fa-eraser" aria-hidden="true"></i></button>' : "") +
+                    '<button class="btn icon" type="button" data-prof="rename" title="Rename" aria-label="Rename"><i class="fa fa-pen" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-prof="duplicate" title="Duplicate" aria-label="Duplicate"><i class="fa fa-clone" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-prof="up" title="Move up" aria-label="Move up"' + (index === 0 ? " disabled" : "") + '><i class="fa fa-chevron-up" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-prof="down" title="Move down" aria-label="Move down"' + (index === list.length - 1 ? " disabled" : "") + '><i class="fa fa-chevron-down" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-prof="delete" title="Delete" aria-label="Delete"><i class="fa fa-trash" aria-hidden="true"></i></button>' +
+                    '</div>';
+                const name = row.querySelector(".row-name");
+                name.textContent = x.name;
+                const flag = (text) => {
+                    const f = document.createElement("span");
+                    f.className = "row-flag";
+                    f.textContent = text;
+                    name.appendChild(f);
+                };
+                if (x.active) flag("ACTIVE");
+                if (x.hasAppearance) flag("LOOK");
+                const desc = row.querySelector(".row-desc");
+                desc.textContent = err || [x.hotkey, x.updated ? "saved " + fmtWhen(x.updated) : ""].filter(Boolean).join(" · ");
+                if (err) desc.style.color = "var(--red)";
+                row.querySelector(".prof-key").value = x.hotkey || "";
+                box.appendChild(row);
+            });
+        }
+
+        function renderLiveProfile(list, active) {
+            const select = $("liveProfile");
+            select.hidden = !list.length;
+            const sig = JSON.stringify([list.map((x) => x.name), active]);
+            if (sig === S.liveProfSig || document.activeElement === select) return;
+            S.liveProfSig = sig;
+            select.replaceChildren(new Option("No profile", ""));
+            list.forEach((x) => select.add(new Option(x.name, x.name)));
+            select.value = active;
+        }
+        $("liveProfile").addEventListener("change", (ev) => {
+            const name = ev.target.value;
+            if (name) send({ type: "profile", action: "switch", module: name });
+            else send({ type: "profile", action: "deactivate" });
+            S.liveProfSig = "";
+            ev.target.blur();
+        });
+
+        function createProfile() {
+            const name = $("profNewName").value.trim();
+            if (!name) {
+                toast("Give the profile a name first", true);
+                $("profNewName").focus();
+                return;
+            }
+            if (send({ type: "profile", action: "create", text: name })) $("profNewName").value = "";
+        }
+        $("profCreate").addEventListener("click", createProfile);
+        $("profNewName").addEventListener("keydown", (ev) => { if (ev.key === "Enter") createProfile(); });
+        $("profDeactivate").addEventListener("click", () => { send({ type: "profile", action: "deactivate" }); });
+
+        $("profList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-prof]");
+            if (!button) return;
+            const name = button.closest(".prof-row").dataset.name;
+            const action = button.dataset.prof;
+            if (action === "overwrite" && !confirm("Replace what is saved in " + name + " with the current setup, and make it the active profile?")) return;
+            if (action === "delete" && !confirm("Delete the profile " + name + "? The current settings stay as they are.")) return;
+            if (action === "rename" || action === "duplicate") {
+                const next = prompt(action === "rename" ? "New name for " + name : "Name for the copy of " + name, action === "rename" ? name : name + " copy");
+                if (next === null || !next.trim()) return;
+                send({ type: "profile", action: action, module: name, text: next.trim() });
+                return;
+            }
+            if (action === "look") {
+                const look = window.fernAppearance && window.fernAppearance.snapshot();
+                if (look) send({ type: "profile", action: "appearance", module: name, config: look });
+                return;
+            }
+            if (action === "unlook") {
+                send({ type: "profile", action: "clearAppearance", module: name });
+                return;
+            }
+            send({ type: "profile", action: action, module: name });
+        });
+
+        // Profile shortcuts are picked like the mic shortcut: click, press.
+        $("profList").addEventListener("keydown", (ev) => {
+            const input = ev.target.closest(".prof-key");
+            if (!input || ev.key === "Tab") return;
+            ev.preventDefault();
+            const name = input.closest(".prof-row").dataset.name;
+            const setKey = (value) => {
+                input.value = value;
+                send({ type: "profile", action: "hotkey", module: name, text: value });
+                input.blur();
+            };
+            if (ev.key === "Escape") { input.blur(); return; }
+            if (ev.key === "Backspace" || ev.key === "Delete") { setKey(""); return; }
+            const mods = [ev.ctrlKey && "Ctrl", ev.altKey && "Alt", ev.shiftKey && "Shift", ev.metaKey && "Win"].filter(Boolean);
+            const code = ev.code || "";
+            let key = "";
+            if (/^Key[A-Z]$/.test(code)) key = code.slice(3);
+            else if (/^Digit\d$/.test(code)) key = code.slice(5);
+            else if (/^(F\d{1,2}|Numpad\d|Space|Insert|Home|End|PageUp|PageDown|Pause)$/.test(code)) key = code;
+            if (!key) { input.value = mods.length ? mods.join("+") + "+…" : ""; return; }
+            if (!mods.length && !HOTKEY_FREE.test(key)) {
+                toast(key + " needs Ctrl, Alt, Shift or Win with it", true);
+                return;
+            }
+            setKey(mods.concat(key).join("+"));
+        });
+        $("profList").addEventListener("focusout", (ev) => {
+            if (!ev.target.classList.contains("prof-key")) return;
+            S.profSig = "";
+            setTimeout(() => { if (S.state) renderProfiles(S.state); }, 0);
+        });
+
+        /* ---------------- backups ---------------- */
+        const BACKUP_REASON = {
+            update: "Before an update",
+            import: "Before an import",
+            restore: "Before a restore",
+            manual: "Made by hand",
+        };
+
+        function renderBackups(st) {
+            const b = st.backups || {};
+            const list = b.list || [];
+            noticeToast("backup", b.notice);
+            $("backupCount").textContent = list.length + (list.length === 1 ? " backup" : " backups");
+            $("backupDesc").textContent = "Made before each update is installed and before an import or restore. Fern keeps the last 10" + (b.dir ? ", in " + b.dir : "") + ".";
+            $("backupNow").disabled = !b.dir;
+            const sig = JSON.stringify(list);
+            if (sig === S.backupSig) return;
+            S.backupSig = sig;
+            const box = $("backupList");
+            box.replaceChildren();
+            if (!list.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No backups yet.";
+                box.appendChild(empty);
+                return;
+            }
+            list.forEach((x) => {
+                const row = document.createElement("div");
+                row.className = "row";
+                row.innerHTML =
+                    '<div class="row-main"><span class="row-name"></span><span class="row-desc"></span></div>' +
+                    '<div class="row-actions"><button class="btn ghost small" type="button"><i class="fa fa-rotate-left" aria-hidden="true"></i> Restore</button></div>';
+                row.querySelector(".row-name").textContent = fmtWhen(x.created);
+                row.querySelector(".row-desc").textContent = (BACKUP_REASON[x.reason] || x.reason) + " · " + Math.max(1, Math.round((x.size || 0) / 1024)) + " KB";
+                const button = row.querySelector("button");
+                button.dataset.restore = x.name;
+                button.dataset.when = fmtWhen(x.created);
+                box.appendChild(row);
+            });
+        }
+
+        $("backupList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-restore]");
+            if (!button) return;
+            if (!confirm("Restore the settings and profiles from " + button.dataset.when + "? The current ones are backed up first.")) return;
+            if (send({ type: "backup", action: "restore", text: button.dataset.restore })) forgetPendingEdits();
+        });
+        $("backupNow").addEventListener("click", () => { send({ type: "backup", action: "now" }); });
+
+        $("backupExport").addEventListener("click", async () => {
+            try {
+                const response = await fetch("/backup/export", { cache: "no-store" });
+                if (!response.ok) throw new Error(String(response.status));
+                const url = URL.createObjectURL(await response.blob());
+                const d = new Date();
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "fern-backup-" + d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0") + ".json";
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 2000);
+                toast("Exported " + link.download + " to your Downloads folder");
+            } catch (e) {
+                toast("Couldn't export the settings", true);
+            }
+        });
+
+        const backupFile = $("backupFile");
+        $("backupImport").addEventListener("click", () => backupFile.click());
+        backupFile.addEventListener("change", () => {
+            const file = backupFile.files && backupFile.files[0];
+            backupFile.value = "";
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                let data;
+                try {
+                    data = JSON.parse(reader.result);
+                } catch (e) {
+                    data = null;
+                }
+                if (!data || typeof data !== "object" || Array.isArray(data)) {
+                    toast("That file is not a Fern backup", true);
+                    return;
+                }
+                if (!confirm("Replace the current settings and profiles with " + file.name + "? Fern backs up the current ones first.")) return;
+                if (send({ type: "backup", action: "import", config: data })) forgetPendingEdits();
+            };
+            reader.readAsText(file);
+        });
 
         /* ---------------- gpu ---------------- */
         function renderGPU(st) {
