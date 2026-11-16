@@ -625,6 +625,16 @@
                     .av-row-ctl { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
                     .av-row-ctl select { width: 170px; }
                     .av-row-ctl input[type="text"] { width: 140px; }
+                    .av-browser { margin: 4px 0 10px; }
+                    .av-browser input[type="text"] { width: 100%; }
+                    .av-cand { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; font: inherit; font-size: .75rem; padding: 5px 6px; border: 0; border-radius: 6px; background: none; color: var(--text-secondary); cursor: pointer; }
+                    .av-cand:hover, .av-cand.sel { background: var(--bg-input); }
+                    .av-cand .av-val { margin-left: auto; overflow: hidden; text-overflow: ellipsis; }
+                    .av-pick label { display: flex; align-items: center; gap: 8px; min-width: 0; cursor: pointer; }
+                    .av-pick .av-edit { display: flex; align-items: center; gap: 6px; margin-left: auto; }
+                    .av-pick .av-edit input[type="number"] { width: 78px; padding: .2rem .4rem; }
+                    .av-pick .av-edit .av-val { margin-left: 0; }
+                    .av-ro { font-size: .65rem; color: var(--text-dim); border: 1px solid var(--border-subtle); border-radius: 4px; padding: 0 4px; }
                 </style>
                 <div class="page-head">
                     <div>
@@ -661,7 +671,7 @@
                     </div>
                     <div class="section-title">Recent avatars <span class="count" id="avRecentCount"></span></div>
                     <div class="list" id="avList" style="margin-top:0"></div>
-                    <div class="hint" id="avProfileHint">VRChat tells Fern the avatar's ID over OSC; the name comes from VRChat's log. Type a name of your own to keep it.</div>
+                    <div class="hint" id="avProfileHint">VRChat tells Fern the avatar's ID over OSC; the name comes from VRChat's OSC config for it, or its log. Type a name of your own to keep it. Click an avatar to see its parameters below.</div>
                 </div>
 
                 <div class="card" style="margin-bottom:12px">
@@ -690,6 +700,40 @@
                     </div>
                     <div id="avSyncBox">
                         <div class="section-title">This avatar <span class="count" id="avSyncName"></span></div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Avatar</b>
+                                <span id="avSelDesc">The one you wear</span>
+                            </div>
+                            <div class="field-control">
+                                <button class="btn ghost" type="button" id="avSelOpen" data-av-always><i class="fa fa-magnifying-glass" aria-hidden="true"></i> Pick an avatar</button>
+                                <button class="btn ghost" type="button" id="avSelWorn" data-av-always hidden>The one I wear</button>
+                            </div>
+                        </div>
+                        <div class="av-browser" id="avBrowser" hidden>
+                            <input type="text" id="avBrowseQuery" placeholder="Search by name or avtr_ ID" maxlength="100" autocomplete="off" spellcheck="false" aria-label="Search avatars" data-av-always>
+                            <div class="av-picks" id="avBrowseList"></div>
+                            <div class="hint" id="avBrowseHint" style="margin-top:0"></div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Name</b>
+                                <span>Type your own to keep it; empty uses the name VRChat gives</span>
+                            </div>
+                            <div class="field-control">
+                                <input type="text" id="avSelName" maxlength="60" autocomplete="off" spellcheck="false" placeholder="Name" aria-label="Name of this avatar" style="width:200px">
+                                <button class="btn icon" type="button" id="avSelForget" title="Forget" aria-label="Forget this avatar"><i class="fa fa-trash" aria-hidden="true"></i></button>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="field-label">
+                                <b>Profile</b>
+                                <span>Switched to when you change into it, with Switch profile with the avatar on</span>
+                            </div>
+                            <div class="field-control">
+                                <select id="avSelProfile" style="width:200px" aria-label="Profile for this avatar"></select>
+                            </div>
+                        </div>
                         <div class="field">
                             <div class="field-label">
                                 <b>Keep up to date</b>
@@ -739,7 +783,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="hint" id="avSyncHint">Put on an avatar in VRChat to pick its parameters. Saved values are kept in avatars.json next to config.json.</div>
+                    <div class="hint" id="avSyncHint">Put on an avatar in VRChat, or pick one, to see its parameters. Saved values are kept in avatars.json next to config.json.</div>
                 </div>
 
                 <div class="card" style="margin-bottom:12px">
@@ -15391,7 +15435,7 @@
         /* ---------------- avatar: profiles per avatar, saved values, parameters ----------------
            Its own block: it reads the shared state and talks to Fern through
            send() and pushConfig() like the rest of the page. */
-        const AV = { listSig: "", pickSig: "", tableSig: "", filter: "" };
+        const AV = { listSig: "", pickSig: "", tableSig: "", filter: "", browseSig: "", query: "", queryTimer: 0, filterTimer: 0 };
 
         // The parameters Fern uses, grouped as the table shows them. Each row
         // is [field, "reads" | "sends", type, what it is]; the name lives at
@@ -15648,6 +15692,12 @@
             if (ev.target.classList.contains("av-rename")) avSend("rename", { module: row.dataset.id, text: ev.target.value });
         });
         $("avList").addEventListener("click", (ev) => {
+            const main = ev.target.closest(".row-main");
+            if (main && S.state) {
+                avSelect(main.closest(".row").dataset.id);
+                $("avSyncBox").scrollIntoView({ behavior: "smooth", block: "start" });
+                return;
+            }
             const b = ev.target.closest("[data-av]");
             if (!b) return;
             const row = b.closest(".row");
@@ -15656,17 +15706,115 @@
             }
         });
 
+        // The avatar "This avatar" shows: the one picked, else the one worn.
+        function avSel(st) {
+            return (st && st.avatar && st.avatar.selected) || { id: "", params: [] };
+        }
+        function avSelId() {
+            return S.state ? avSel(S.state).id : "";
+        }
+        // avSelect shows an avatar in "This avatar"; the worn one is picked
+        // as "", so changing avatar in VRChat moves the section along.
+        function avSelect(id) {
+            if (S.state && id === S.state.avatar.current.id) id = "";
+            AV.filter = "";
+            $("avPickFilter").value = "";
+            avSend("select", { module: id });
+        }
+
+        // The picker: every avatar Fern knows or VRChat has an OSC config for.
+        function avRenderBrowser(st) {
+            const a = st.avatar || {};
+            const box = $("avBrowseList");
+            if ($("avBrowser").hidden) return;
+            const list = a.catalog || [];
+            const selId = avSel(st).id;
+            const sig = JSON.stringify([list, selId]);
+            if (sig !== AV.browseSig) {
+                AV.browseSig = sig;
+                box.innerHTML = list.length ? list.map((x) => {
+                    const bits = [];
+                    if (x.worn) bits.push("wearing");
+                    if (x.known) bits.push("in Fern");
+                    if (!x.config) bits.push("no OSC config");
+                    return '<button type="button" class="av-cand' + (x.id === selId ? " sel" : "") + '" data-av-pick="' + avEsc(x.id) + '" title="' + avEsc(x.id) + '">' +
+                        "<span>" + avEsc(x.name || x.id) + "</span>" +
+                        (x.worn ? '<span class="row-flag">WEARING</span>' : "") +
+                        '<span class="av-val">' + avEsc(bits.filter((b) => b !== "wearing").join(" · ") || x.id) + "</span></button>";
+                }).join("") : '<div class="log-empty">' + (AV.query ? "No avatar matches." : "No avatars yet. Wear one in VRChat with OSC on.") + "</div>";
+            }
+            const total = a.catalogTotal || 0;
+            $("avBrowseHint").textContent = total > list.length
+                ? "Showing " + list.length + " of " + total + "; search to find the rest."
+                : "From VRChat's OSC configs (one per avatar you wore with OSC on) and the avatars Fern knows.";
+        }
+        function avBrowse(open) {
+            $("avBrowser").hidden = !open;
+            AV.browseSig = "";
+            avSend("browse", { config: { open: open, query: AV.query } });
+            if (open) $("avBrowseQuery").focus();
+        }
+        $("avSelOpen").addEventListener("click", () => avBrowse($("avBrowser").hidden));
+        $("avSelWorn").addEventListener("click", () => { avSelect(""); avBrowse(false); });
+        $("avBrowseQuery").addEventListener("input", (ev) => {
+            AV.query = ev.target.value;
+            clearTimeout(AV.queryTimer);
+            AV.queryTimer = setTimeout(() => avSend("browse", { config: { open: true, query: AV.query } }), 150);
+        });
+        $("avBrowseQuery").addEventListener("keydown", (ev) => { if (ev.key === "Escape") avBrowse(false); });
+        $("avBrowseList").addEventListener("click", (ev) => {
+            const b = ev.target.closest("[data-av-pick]");
+            if (!b || !S.state) return;
+            avSelect(b.dataset.avPick);
+            avBrowse(false);
+        });
+
+        // Value controls: bools a checkbox, ints 0-255, floats -1 to 1.
+        function avValueControl(p, value, canSend) {
+            const n = avEsc(p.name);
+            const dis = canSend ? "" : " disabled";
+            if (p.type === "bool") {
+                return '<input type="checkbox" data-av-value="' + n + '" data-av-type="bool"' + (value ? " checked" : "") + dis + ' aria-label="' + n + ' value">';
+            }
+            const range = p.type === "int" ? ' min="0" max="255" step="1"' : ' min="-1" max="1" step="0.01"';
+            const v = typeof value === "number" ? String(p.type === "int" ? Math.round(value) : Math.round(value * 1e4) / 1e4) : "";
+            return '<input type="number" data-av-value="' + n + '" data-av-type="' + avEsc(p.type) + '"' + range + ' value="' + v + '" placeholder="—"' + dis + ' aria-label="' + n + ' value">';
+        }
+        function avControlValue(el) {
+            if (el.dataset.avType === "bool") return el.checked ? 1 : 0;
+            let v = Number(el.value);
+            if (el.value === "" || !Number.isFinite(v)) return null;
+            if (el.dataset.avType === "int") v = Math.max(0, Math.min(255, Math.round(v)));
+            else v = Math.max(-1, Math.min(1, v));
+            return v;
+        }
+
         function avRenderSync(st) {
             const a = st.avatar || {};
-            const id = a.current.id;
+            const sel = avSel(st);
+            const id = sel.id;
+            const worn = !!sel.worn;
             const e = avEntry(st, id) || { params: [], values: {} };
             const has = !!id;
             const box = $("avSyncBox");
             box.querySelectorAll(".field").forEach((f) => {
+                if (f.querySelector("[data-av-always]")) return;
                 f.classList.toggle("inactive", !has);
                 f.querySelectorAll("input, select, button").forEach((el) => { el.disabled = !has; });
             });
-            $("avSyncName").textContent = has ? avLabel(e) || a.current.name || id : "";
+            const name = sel.name || id;
+            $("avSyncName").textContent = has ? name + (worn ? " · wearing" : " · not worn") : "";
+            $("avSelDesc").textContent = !has ? "Wear one in VRChat or pick one"
+                : (worn ? "The one you wear" : "Not the one you wear; values are saved, not sent") + (sel.known ? "" : " · Fern keeps it once you change something");
+            $("avSelDesc").title = id;
+            $("avSelWorn").hidden = worn || !a.current.id;
+            $("avSelForget").hidden = !sel.known;
+            const nameIn = $("avSelName");
+            if (document.activeElement !== nameIn) {
+                nameIn.value = e.nameSet ? e.name : "";
+                nameIn.placeholder = (!e.nameSet && name !== id && name) || "Name";
+            }
+            avProfileOptions(st, $("avSelProfile"), "No profile", e.profile);
             $("avSyncHint").hidden = has;
             const saved = Object.keys(e.values || {}).length;
             $("avSyncBadge").textContent = has ? (saved ? saved + " saved" : "nothing saved") : "no avatar yet";
@@ -15675,9 +15823,10 @@
             if (document.activeElement !== $("avRestoreOne")) $("avRestoreOne").checked = !!e.restore;
             const restoreOn = !!st.config.Avatar.sync.restore;
             $("avRestoreOneField").classList.toggle("inactive", !has || !restoreOn);
-            $("avSavedAt").textContent = e.savedAt ? "Saved " + fmtWhen(e.savedAt) + (a.auto && a.auto.restoredAt ? " · put back " + a.auto.restored + " at " + fmtAgo(a.auto.restoredAt) : "") : "Nothing saved yet";
-            $("avSaveNow").disabled = !has || !(e.params || []).length;
-            $("avRestoreNow").disabled = !has || !saved;
+            $("avSavedAt").textContent = (e.savedAt ? "Saved " + fmtWhen(e.savedAt) + (worn && a.auto && a.auto.restoredAt ? " · put back " + a.auto.restored + " at " + fmtAgo(a.auto.restoredAt) : "") : "Nothing saved yet") +
+                (has && !worn ? " · put it on to save or send its live values" : "");
+            $("avSaveNow").disabled = !worn || !(e.params || []).length;
+            $("avRestoreNow").disabled = !worn || !saved;
             $("avCopy").disabled = !has || !saved;
 
             // Copy targets: every other avatar.
@@ -15690,54 +15839,101 @@
                     : '<option value="">No other avatars yet</option>';
             }
 
-            // The picker: the avatar's parameters plus picks VRChat hasn't sent.
-            const params = (a.params || []).slice();
-            (e.params || []).forEach((n) => { if (!params.find((p) => p.name === n)) params.push({ name: n, type: (e.values[n] || {}).type || "", value: undefined }); });
+            // The parameters: the avatar's OSC config (filtered by Fern), plus
+            // ticked ones it doesn't list.
+            const params = (sel.params || []).slice();
             const q = AV.filter.trim().toLowerCase();
-            const shown = params.filter((p) => !q || p.name.toLowerCase().includes(q));
+            (e.params || []).forEach((n) => {
+                if (!params.find((p) => p.name === n) && (!q || n.toLowerCase().includes(q))) {
+                    params.push({ name: n, type: (e.values[n] || {}).type || "", input: true, extra: true });
+                }
+            });
             const picks = $("avPicks");
-            const psig = JSON.stringify([id, shown.map((p) => p.name), e.params]);
+            const psig = JSON.stringify([id, worn, params.map((p) => [p.name, p.type, p.input]), e.params]);
             if (psig !== AV.pickSig && !picks.contains(document.activeElement)) {
                 AV.pickSig = psig;
-                picks.innerHTML = shown.length ? shown.map((p) =>
-                    '<label class="av-pick"><input type="checkbox" data-av-param="' + avEsc(p.name) + '"' + ((e.params || []).includes(p.name) ? " checked" : "") + (has ? "" : " disabled") + "> " +
-                    '<span class="av-fixed">' + avEsc(p.name) + '</span> <span class="av-type">' + avEsc(p.type) + '</span><span class="av-val" data-av-live="' + avEsc(p.name) + '"></span></label>').join("")
-                    : '<div class="log-empty">' + (has ? "VRChat hasn't sent this avatar's parameters yet." : "No avatar yet.") + "</div>";
+                picks.innerHTML = params.length ? params.map((p) => {
+                    const s = e.values && e.values[p.name];
+                    const value = worn && p.value !== undefined ? p.value : s ? (s.type === "bool" ? !!s.value : s.value) : undefined;
+                    const canEdit = has && p.input && !!p.type;
+                    return '<div class="av-pick" data-av-row="' + avEsc(p.name) + '">' +
+                        '<label><input type="checkbox" data-av-param="' + avEsc(p.name) + '"' + ((e.params || []).includes(p.name) ? " checked" : "") + (has ? "" : " disabled") + ' title="Save this parameter"> ' +
+                        '<span class="av-fixed">' + avEsc(p.name) + '</span> <span class="av-type">' + avEsc(p.type) + "</span>" +
+                        (p.input || !p.type ? "" : ' <span class="av-ro" title="VRChat doesn\'t take it over OSC">read-only</span>') + "</label>" +
+                        '<span class="av-edit"><span class="av-val" data-av-live="' + avEsc(p.name) + '"></span>' +
+                        (p.type ? avValueControl(p, value, canEdit) +
+                            '<button class="btn icon" type="button" data-av-savev="' + avEsc(p.name) + '" title="Save this value; it\'s put back when you change into the avatar" aria-label="Save ' + avEsc(p.name) + '"' + (canEdit ? "" : " disabled") + '><i class="fa fa-floppy-disk" aria-hidden="true"></i></button>' : "") +
+                        "</span></div>";
+                }).join("")
+                    : '<div class="log-empty">' + (!has ? "No avatar yet." : q ? "No parameter matches." : worn ? "VRChat hasn't sent this avatar's parameters yet." : "VRChat has no OSC config for this avatar.") + "</div>";
             }
-            picks.querySelectorAll("[data-av-live]").forEach((el) => {
-                const p = params.find((x) => x.name === el.dataset.avLive);
-                const v = p && p.value !== undefined ? p.value : undefined;
-                const s = e.values && e.values[el.dataset.avLive];
-                el.textContent = avFmt(v) + (s ? " · saved " + avFmt(s.type === "bool" ? !!s.value : s.value) : "");
+            picks.querySelectorAll(".av-pick[data-av-row]").forEach((row) => {
+                const pname = row.dataset.avRow;
+                const p = params.find((x) => x.name === pname);
+                const s = e.values && e.values[pname];
+                const live = worn && p && p.value !== undefined ? p.value : undefined;
+                const label = row.querySelector("[data-av-live]");
+                if (label) label.textContent = s ? "saved " + avFmt(s.type === "bool" ? !!s.value : s.value) : "";
+                const ctl = row.querySelector("[data-av-value]");
+                if (ctl && ctl !== document.activeElement && live !== undefined) {
+                    if (ctl.type === "checkbox") ctl.checked = !!live;
+                    else ctl.value = String(ctl.dataset.avType === "int" ? Math.round(live) : Math.round(live * 1e4) / 1e4);
+                }
             });
-            $("avPickDesc").textContent = (e.params || []).length + " of up to " + ((a.limits || {}).params || 64) + " ticked; like outfit toggles and colours";
+            const total = sel.paramTotal || 0;
+            const shown = (sel.params || []).length;
+            $("avPickDesc").textContent = (e.params || []).length + " of up to " + ((a.limits || {}).params || 64) + " ticked to save" +
+                (sel.paramCount ? " · " + sel.paramCount + " parameters" + (total > shown ? ", showing " + shown + " of " + total + "; filter to find the rest" : "") : "") +
+                (worn ? " · changing a value sends it now" : "");
         }
         $("avPickFilter").addEventListener("input", (ev) => {
             AV.filter = ev.target.value;
+            clearTimeout(AV.filterTimer);
+            AV.filterTimer = setTimeout(() => avSend("paramFilter", { text: AV.filter }), 150);
             if (S.state) avRenderSync(S.state);
         });
         $("avPicks").addEventListener("change", (ev) => {
-            const name = ev.target.dataset.avParam;
             const st = S.state;
-            if (!name || !st) return;
-            const id = st.avatar.current.id;
+            if (!st) return;
+            const id = avSelId();
+            const el = ev.target;
+            if (el.dataset.avValue !== undefined) {
+                // Live edit: only for the avatar you wear.
+                const v = avControlValue(el);
+                if (v !== null && avSel(st).worn) avSend("send", { module: id, config: { name: el.dataset.avValue, type: el.dataset.avType, value: v } });
+                return;
+            }
+            const name = el.dataset.avParam;
+            if (!name) return;
             const e = avEntry(st, id) || { params: [] };
             let list = (e.params || []).filter((n) => n !== name);
-            if (ev.target.checked) list.push(name);
+            if (el.checked) list.push(name);
             avSend("params", { module: id, config: list });
+        });
+        $("avPicks").addEventListener("click", (ev) => {
+            const b = ev.target.closest("[data-av-savev]");
+            if (!b) return;
+            const ctl = b.closest(".av-pick").querySelector("[data-av-value]");
+            const v = ctl ? avControlValue(ctl) : null;
+            if (v === null) { toast("Type a value first", true); return; }
+            avSend("saveValue", { module: avSelId(), config: { name: b.dataset.avSavev, type: ctl.dataset.avType, value: v } });
+        });
+        $("avSelName").addEventListener("change", (ev) => { if (avSelId()) avSend("rename", { module: avSelId(), text: ev.target.value }); });
+        $("avSelProfile").addEventListener("change", (ev) => { if (avSelId()) avSend("profile", { module: avSelId(), text: ev.target.value }); });
+        $("avSelForget").addEventListener("click", () => {
+            if (avSelId() && confirm("Forget this avatar, its profile and its saved values?")) avSend("forget", { module: avSelId() });
         });
         ["avAutoSave", "avRestoreOne"].forEach((elId) => {
             $(elId).addEventListener("change", () => {
-                const st = S.state;
-                if (!st) return;
-                avSend("flags", { module: st.avatar.current.id, config: { autoSave: $("avAutoSave").checked, restore: $("avRestoreOne").checked } });
+                if (!avSelId()) return;
+                avSend("flags", { module: avSelId(), config: { autoSave: $("avAutoSave").checked, restore: $("avRestoreOne").checked } });
             });
         });
-        $("avSaveNow").addEventListener("click", () => { if (S.state) avSend("save", { module: S.state.avatar.current.id }); });
-        $("avRestoreNow").addEventListener("click", () => { if (S.state) avSend("restore", { module: S.state.avatar.current.id }); });
+        $("avSaveNow").addEventListener("click", () => { if (avSelId()) avSend("save", { module: avSelId() }); });
+        $("avRestoreNow").addEventListener("click", () => { if (avSelId()) avSend("restore", { module: avSelId() }); });
         $("avCopy").addEventListener("click", () => {
-            if (!S.state || !$("avCopyTo").value) return;
-            avSend("copy", { module: S.state.avatar.current.id, text: $("avCopyTo").value });
+            if (!avSelId() || !$("avCopyTo").value) return;
+            avSend("copy", { module: avSelId(), text: $("avCopyTo").value });
         });
 
         $("avAutoProfile").addEventListener("change", (ev) => pushConfigNow((c) => { c.Avatar.auto_profile = ev.target.checked; }));
@@ -15779,6 +15975,12 @@
             const a = st.avatar;
             const c = st.config.Avatar;
             noticeToast("avatar", a.notice);
+            if (!AV.synced) {
+                // A reloaded page starts with the picker closed and no filter.
+                AV.synced = true;
+                avSend("browse", { config: { open: false, query: "" } });
+                avSend("paramFilter", { text: "" });
+            }
             const cur = avEntry(st, a.current.id);
             const label = a.current.id ? (avLabel(cur) || a.current.name || a.current.id) : "";
             $("avBadge").textContent = label || "no avatar yet";
@@ -15796,7 +15998,7 @@
             $("avProfileHint").textContent = auto.profileErr
                 ? "Couldn't switch to " + auto.profile + ": " + auto.profileErr
                 : (auto.profileAt ? "Switched to " + auto.profile + " at " + fmtAgo(auto.profileAt) + ". " : "") +
-                "VRChat tells Fern the avatar's ID over OSC; the name comes from VRChat's log. Type a name of your own to keep it.";
+                "VRChat tells Fern the avatar's ID over OSC; the name comes from VRChat's OSC config for it, or its log. Type a name of your own to keep it. Click an avatar to see its parameters below.";
             $("avProfileHint").classList.toggle("bad", !!auto.profileErr);
 
             if (typing !== $("avRestoreAll")) $("avRestoreAll").checked = !!c.sync.restore;
@@ -15807,6 +16009,7 @@
 
             avRenderList(st);
             avRenderSync(st);
+            avRenderBrowser(st);
             avBuildTable(st);
             avSyncTable(st);
             const sent = Object.keys(a.sent || {}).length;

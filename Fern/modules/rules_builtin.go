@@ -78,6 +78,14 @@ func CurrentAvatarName() string {
 	return selfAvatar
 }
 
+// CurrentUserID is the usr_ id of the account logged in to VRChat, as its
+// log last said, or "".
+func CurrentUserID() string {
+	logMu.Lock()
+	defer logMu.Unlock()
+	return selfID
+}
+
 // liveLogLine reports whether a log line was written just now, so old lines
 // read when Fern starts do not fire rules.
 func liveLogLine(at time.Time) bool {
@@ -183,7 +191,13 @@ var (
 	ruleVRFn   = InVR
 	ruleFgFn   = func() foreground { return currentForeground() }
 	ruleWorld  = CurrentWorld
-	ruleAvatar = func() (id, name string) { return CurrentAvatarID(), CurrentAvatarName() }
+	ruleAvatar = func() (id, name string) {
+		id, name = CurrentAvatarID(), CurrentAvatarName()
+		if name == "" && id != "" {
+			name = OSCAvatarName(id)
+		}
+		return id, name
+	}
 )
 
 func init() {

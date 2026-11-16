@@ -38,6 +38,7 @@ type SessionStats struct {
 // Everything below is guarded by logMu (see logs.go).
 var (
 	selfName     string
+	selfID       string // usr_ id of the local user
 	world        WorldInfo
 	inWorld      bool
 	roomName     string // last "Entering Room" name, which can come before or after "Joining"
@@ -140,7 +141,7 @@ func parseInstance(loc string) (worldID, access, region string) {
 // user. It reports whether the line was one of them.
 func parseWorldLine(line string, at time.Time) bool {
 	if rest, ok := after(line, "[Behaviour] User Authenticated: "); ok {
-		selfName, _ = splitUser(rest)
+		selfName, selfID = splitUser(rest)
 		return true
 	}
 	if rest, ok := after(line, "[Behaviour] Switching "); ok {

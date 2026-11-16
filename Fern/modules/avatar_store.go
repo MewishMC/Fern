@@ -286,13 +286,17 @@ func editAvatar(id string, create bool, fn func(e *AvatarEntry) error) error {
 }
 
 // AvatarEntries lists the avatars Fern knows, most recently worn first.
+// Name is the name to show: one typed by hand, else the one in VRChat's OSC
+// config, else the one from VRChat's log.
 func AvatarEntries() []AvatarEntry {
+	names := oscAvatarNames()
 	avatarsMu.Lock()
 	defer avatarsMu.Unlock()
 	loadAvatarsLocked()
 	out := make([]AvatarEntry, len(avatarList))
 	for i, e := range avatarList {
 		out[i] = e.clone()
+		out[i].Name = avatarName(e, names[e.ID])
 	}
 	return out
 }
@@ -344,11 +348,11 @@ func noteAvatarName(id, name string) {
 	})
 }
 
-// RenameAvatar names an avatar by hand. An empty name lets VRChat's log name
-// it again.
+// RenameAvatar names an avatar by hand. An empty name lets VRChat name it
+// again. Naming an avatar Fern has no entry for makes one.
 func RenameAvatar(id, name string) error {
-	return editAvatar(id, false, func(e *AvatarEntry) error {
-		name = cleanAvatarName(name)
+	name = cleanAvatarName(name)
+	return editAvatar(id, name != "", func(e *AvatarEntry) error {
 		e.NameSet = name != ""
 		if name != "" {
 			e.Name = name
