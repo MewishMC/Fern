@@ -84,6 +84,7 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+	Setup    setupState    `json:"setup"`
 }
 
 type appState struct {
@@ -220,6 +221,7 @@ func StartServer(listener net.Listener) {
 	mux.HandleFunc("/ws", handleSocket)
 	mux.HandleFunc("/backup/export", handleBackupExport)
 	mux.HandleFunc("/profiles/appearance", handleProfileAppearance)
+	mux.HandleFunc("/export/session", handleSessionExport)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
 	}
@@ -322,6 +324,9 @@ func handleCommand(cmd command) {
 			// carries them back.
 			next.Rules = cur.Rules
 			next.DND.On = cur.DND.On
+			// Finishing the setup is its own action; a push made before it
+			// arrived must not bring the setup back.
+			next.AppOptions.SetupDone = next.AppOptions.SetupDone || cur.AppOptions.SetupDone
 			modules.SetConfig(next)
 		}
 	case "send":
@@ -386,6 +391,8 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "setup":
+		handleSetupCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -582,6 +589,7 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+		Setup:    currentSetup(),
 	}
 }
 
