@@ -10,7 +10,7 @@ import (
 var DefaultDropOrder = []string{
 	ModuleTime, ModuleWeather, ModuleNetwork, ModuleCPU, ModuleGPU, ModuleMemory, ModuleVRPerf, ModuleBattery,
 	ModuleWindow, ModuleLogs, ModuleWorld, ModuleLoading, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
-	ModuleDiscord, ModuleLyrics, ModuleHeart, ModuleAFK, ModuleMedia, ModuleText,
+	ModuleDiscord, ModuleLastFM, ModuleLyrics, ModuleHeart, ModuleAFK, ModuleMedia, ModuleText,
 }
 
 // Ellipsis marks a line that had to be cut.

@@ -17,6 +17,7 @@ func StartWorkers() {
 	startSoundpadWorker()
 	startVoicemodWorker()
 	startSpotifyWorker()
+	startLastFMWorker()
 	startNetworkWorker()
 	startGPUWorker()
 	startRulesWorker()
