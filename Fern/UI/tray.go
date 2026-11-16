@@ -50,6 +50,9 @@ var OnExtraHotkey func(id string)
 var (
 	TrayItems  func() (title string, items []TrayItem)
 	OnTrayItem func(id string)
+	// TrayToggles, when set, adds entries to the tray menu itself (not a
+	// submenu), such as do not disturb. Picking one calls OnTrayItem too.
+	TrayToggles func() []TrayItem
 )
 
 var (
@@ -174,6 +177,8 @@ const (
 	menuQuit = 2
 	// menuExtra + i is entry i of TrayItems.
 	menuExtra = 100
+	// menuToggle + i is entry i of TrayToggles.
+	menuToggle = 1000
 
 	// extraHotkeyID + i is Behaviour.Extra[i].
 	extraHotkeyID = 100
@@ -428,6 +433,21 @@ func trayMenu() {
 			}
 		}
 	}
+	var toggles []TrayItem
+	if TrayToggles != nil {
+		toggles = TrayToggles()
+		for i, item := range toggles {
+			flags := uintptr(mfString)
+			if item.Checked {
+				flags |= mfChecked
+			}
+			label, _ := syscall.UTF16PtrFromString(menuLabel(item.Label))
+			_, _, _ = procAppendMenuW.Call(menu, flags, uintptr(menuToggle+i), uintptr(unsafe.Pointer(label)))
+		}
+		if len(toggles) > 0 {
+			_, _, _ = procAppendMenuW.Call(menu, mfSeparator, 0, 0)
+		}
+	}
 	_, _, _ = procAppendMenuW.Call(menu, mfString, menuQuit, uintptr(unsafe.Pointer(quit)))
 	_, _, _ = procSetMenuDefaultItem.Call(menu, menuShow, 0)
 	var pt struct{ X, Y int32 }
@@ -443,7 +463,9 @@ func trayMenu() {
 	case menuQuit:
 		mainView.Terminate()
 	default:
-		if i := int(cmd) - menuExtra; i >= 0 && i < len(extra) && OnTrayItem != nil {
+		if i := int(cmd) - menuToggle; i >= 0 && i < len(toggles) && OnTrayItem != nil {
+			go OnTrayItem(toggles[i].ID)
+		} else if i := int(cmd) - menuExtra; i >= 0 && i < len(extra) && OnTrayItem != nil {
 			go OnTrayItem(extra[i].ID)
 		}
 	}

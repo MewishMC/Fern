@@ -160,6 +160,9 @@ func parseLogLine(line string) {
 		joined[name] = ev
 		act := addActivityAt(at, EventJoin, name+" joined")
 		act.Again = ev.Again
+		if liveLogLine(at) {
+			FireTrigger(TriggerPlayerJoined, playerEvent(name))
+		}
 	case strings.Contains(line, "] OnPlayerLeft ") && strings.Contains(line, "[Behaviour]"):
 		name := playerName(line, "OnPlayerLeft ")
 		if name == "" {
@@ -174,6 +177,9 @@ func parseLogLine(line string) {
 			}
 		}
 		addActivityAt(at, EventLeave, name+" left")
+		if liveLogLine(at) {
+			FireTrigger(TriggerPlayerLeft, playerEvent(name))
+		}
 	}
 }
 

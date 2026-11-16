@@ -18,5 +18,6 @@ func StartWorkers() {
 	startVoicemodWorker()
 	startNetworkWorker()
 	startGPUWorker()
+	startRulesWorker()
 	go watchVRChatProcess()
 }
