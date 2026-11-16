@@ -8,6 +8,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+	"unicode"
+	"unicode/utf8"
 )
 
 var (
@@ -34,19 +36,142 @@ func AdvanceLoading(paceMS int) {
 	}
 }
 
-// Loading renders a growing run of dots: ".", "..", "..." and so on, looping
-// back to a single dot after the configured longest run. A custom loading text
-// is shown in front of the dots, so "brb" reads "brb", "brb.", "brb.." and so
-// on; with no text set the line is just the dots.
+// Loading renders the loading animation: by default a growing run of dots,
+// ".", "..", "..." and so on, looping back to a single dot after the
+// configured longest run. An animation text replaces the dots and is typed
+// out a character at a time instead, so "test" reads "t", "te", "tes",
+// "test". A custom loading text is shown in front, so "brb" reads "brb.",
+// "brb.." and so on; with the animation off the line is just that text.
 func Loading() string {
 	o := GetConfig().LoadingOptions
 	text := strings.TrimRight(strings.TrimSpace(o.Text), ".")
 	if !o.ShowDots {
 		return text
 	}
-	// sanitize keeps Dots between 1 and 6.
-	n := int(loadingStep.Load())%o.Dots + 1
-	return text + strings.Repeat(".", n)
+	frames := loadingFrames(o)
+	return text + frames[int(loadingStep.Load())%len(frames)]
+}
+
+// Loading animation styles.
+const (
+	loadingRestart = "restart" // type out, then start again from one character
+	loadingBounce  = "bounce"  // type out, then erase back to one character
+)
+
+// loadingFrames lists every step of the animation once, in order. There is
+// always at least one frame.
+func loadingFrames(o LoadingOptions) []string {
+	units := textUnits(o.Anim)
+	if len(units) == 0 {
+		// sanitize keeps Dots between 1 and 6; the guard is for raw values.
+		units = textUnits(strings.Repeat(".", max(o.Dots, 1)))
+	}
+	n := len(units)
+	frame := func(k int) string {
+		return strings.Join(units[:k], "") + strings.Repeat(o.Fill, n-k)
+	}
+	frames := make([]string, 0, 2*n+o.Hold)
+	for k := 1; k <= n; k++ {
+		frames = append(frames, frame(k))
+	}
+	for i := 0; i < o.Hold; i++ {
+		frames = append(frames, frame(n))
+	}
+	if o.Style == loadingBounce {
+		for k := n - 1; k >= 2; k-- {
+			frames = append(frames, frame(k))
+		}
+	}
+	return frames
+}
+
+// textUnits splits s into the characters a reader sees, so an animation never
+// shows half of one. It is a close approximation of grapheme clusters, not
+// the full Unicode rules: combining marks, variation selectors, skin tones,
+// emoji tags and keycaps stay with the character before them, a zero width
+// joiner glues the next character on, and flags stay in pairs.
+func textUnits(s string) []string {
+	var units []string
+	var cur []rune
+	join := false // the last rune was a zero width joiner
+	for _, r := range s {
+		attach := len(cur) > 0 && (join || extendsUnit(r) ||
+			(isRegionalIndicator(r) && len(cur) == 1 && isRegionalIndicator(cur[0])))
+		if !attach && len(cur) > 0 {
+			units = append(units, string(cur))
+			cur = cur[:0]
+		}
+		cur = append(cur, r)
+		join = r == '\u200d'
+	}
+	if len(cur) > 0 {
+		units = append(units, string(cur))
+	}
+	return units
+}
+
+// extendsUnit reports whether r belongs to the character before it.
+func extendsUnit(r rune) bool {
+	switch {
+	case r == '\u200d', // zero width joiner
+		r >= 0xFE00 && r <= 0xFE0F,   // variation selectors
+		r >= 0xE0100 && r <= 0xE01EF, // more variation selectors
+		r >= 0x1F3FB && r <= 0x1F3FF, // skin tones
+		r >= 0xE0020 && r <= 0xE007F: // emoji tags
+		return true
+	}
+	return unicode.In(r, unicode.Mn, unicode.Me, unicode.Mc)
+}
+
+func isRegionalIndicator(r rune) bool { return r >= 0x1F1E6 && r <= 0x1F1FF }
+
+// unitLimit shortens s to whole characters of at most n runes in total.
+func unitLimit(s string, n int) string {
+	var b strings.Builder
+	used := 0
+	for _, u := range textUnits(s) {
+		c := utf8.RuneCountInString(u)
+		if used+c > n {
+			break
+		}
+		used += c
+		b.WriteString(u)
+	}
+	return b.String()
+}
+
+// sanitizeLoading keeps the loading options in range. Old configs have no
+// animation text, fill, style or hold, which gives exactly the old dots.
+func sanitizeLoading(o *LoadingOptions) {
+	// VRChat accepts roughly one chatbox update per second and silently drops
+	// the rest, so sending faster does not make the animation smoother: it makes
+	// the dots skip. One dot per second is the pace VRChat can actually show.
+	o.RateMS = clampInt(o.RateMS, 1000, 3000)
+	// The loading text is one chatbox line: no newlines, no runaway length.
+	trimmed := strings.Join(strings.Fields(o.Text), " ")
+	o.Text = RuneLimit(strings.TrimRight(trimmed, "."), 40)
+	if o.Dots == 0 {
+		o.Dots = 6
+	}
+	o.Dots = clampInt(o.Dots, 1, 6)
+	o.Anim = unitLimit(strings.Join(strings.Fields(o.Anim), " "), 40)
+	// The fill is one character, spaces included: a blank is the point.
+	// Line breaks and other control characters are dropped.
+	fill := strings.Map(func(r rune) rune {
+		if unicode.IsControl(r) {
+			return -1
+		}
+		return r
+	}, o.Fill)
+	if units := textUnits(fill); len(units) > 0 && utf8.RuneCountInString(units[0]) <= 8 {
+		o.Fill = units[0]
+	} else {
+		o.Fill = ""
+	}
+	if o.Style != loadingBounce {
+		o.Style = loadingRestart
+	}
+	o.Hold = clampInt(o.Hold, 0, 5)
 }
 
 // TextMessage is one custom message. On is the heart: only messages that are
