@@ -162,6 +162,7 @@ func parseLogLine(line string) {
 		act.Again = ev.Again
 		if liveLogLine(at) {
 			FireTrigger(TriggerPlayerJoined, playerEvent(name))
+			noteVRCEvent(EventJoin, playerEvent(name))
 		}
 	case strings.Contains(line, "] OnPlayerLeft ") && strings.Contains(line, "[Behaviour]"):
 		name := playerName(line, "OnPlayerLeft ")
@@ -179,6 +180,7 @@ func parseLogLine(line string) {
 		addActivityAt(at, EventLeave, name+" left")
 		if liveLogLine(at) {
 			FireTrigger(TriggerPlayerLeft, playerEvent(name))
+			noteVRCEvent(EventLeave, playerEvent(name))
 		}
 	}
 }

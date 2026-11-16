@@ -169,6 +169,9 @@ func parseWorldLine(line string, at time.Time) bool {
 	}
 	if _, ok := after(line, "[VRC Camera] Took screenshot to: "); ok {
 		addActivityAt(at, EventScreenshot, "Took a screenshot")
+		if liveLogLine(at) {
+			noteVRCEvent(EventScreenshot, nil)
+		}
 		return true
 	}
 	return false
@@ -241,6 +244,9 @@ func finishLoading(at time.Time) {
 		}
 	}
 	addActivityAt(at, EventLoaded, text)
+	if liveLogLine(at) {
+		noteVRCEvent(EventLoaded, nil)
+	}
 }
 
 func shortDuration(secs int) string {
