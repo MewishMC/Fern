@@ -35,9 +35,14 @@ const (
 	ModuleGPU      = "gpu"
 	ModuleWorld    = "world"
 
-	ModuleTimer    = "timer"
-	ModuleCounter  = "counter"
-	ModuleSchedule = "schedule"
+	ModuleTimer     = "timer"
+	ModuleCounter   = "counter"
+	ModuleSchedule  = "schedule"
+	ModuleSensors   = "sensors"
+	ModuleUptime    = "uptime"
+	ModulePing      = "ping"
+	ModuleDisk      = "disk"
+	ModulePCBattery = "pcbattery"
 )
 
 // DefaultOrder is the order used before the user picks one.
@@ -49,6 +54,7 @@ var DefaultOrder = []string{
 	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 	ModuleNetwork, ModuleGPU, ModuleWorld,
 	ModuleTimer, ModuleCounter, ModuleSchedule,
+	ModuleSensors, ModulePing, ModuleDisk, ModuleUptime, ModulePCBattery,
 }
 
 var knownModules = func() map[string]bool {
@@ -86,6 +92,11 @@ type DisplayOptions struct {
 	Timer        bool     `json:"timer"`
 	Counter      bool     `json:"counter"`
 	Schedule     bool     `json:"schedule"`
+	Sensors      bool     `json:"sensors"`
+	Uptime       bool     `json:"uptime"`
+	Ping         bool     `json:"ping"`
+	Disk         bool     `json:"disk"`
+	PCBattery    bool     `json:"pc_battery"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -277,6 +288,13 @@ type CPUOptions struct {
 	ShowCores  bool   `json:"show_cores"`
 	ShowUsage  bool   `json:"show_usage"`
 	Decimals   int    `json:"decimals"`
+	// Read from HWiNFO or LibreHardwareMonitor; see sensors.go.
+	ShowTemp   bool    `json:"show_temp"`
+	ShowPower  bool    `json:"show_power"`
+	ShowClock  bool    `json:"show_clock"`
+	ShowFan    bool    `json:"show_fan"`
+	Fahrenheit bool    `json:"fahrenheit"`
+	Sensors    HWPicks `json:"sensors"`
 }
 
 // GPUOptions controls the graphics card line.
@@ -288,8 +306,13 @@ type GPUOptions struct {
 	ShowUsage     bool   `json:"show_usage"`
 	ShowVRAM      bool   `json:"show_vram"`
 	ShowVRAMTotal bool   `json:"show_vram_total"`
-	ShowTemp      bool   `json:"show_temp"` // NVIDIA only, through the driver's nvml.dll
+	ShowTemp      bool   `json:"show_temp"` // NVIDIA through nvml.dll, any card through a sensor app
 	Fahrenheit    bool   `json:"fahrenheit"`
+	// Read from HWiNFO or LibreHardwareMonitor; see sensors.go.
+	ShowPower bool    `json:"show_power"`
+	ShowClock bool    `json:"show_clock"`
+	ShowFan   bool    `json:"show_fan"`
+	Sensors   HWPicks `json:"sensors"`
 }
 
 // NetworkOptions controls the network traffic line.
@@ -647,6 +670,12 @@ type Config struct {
 	TimerOptions    TimerOptions    `json:"TimerOptions"`
 	CounterOptions  CounterOptions  `json:"CounterOptions"`
 	ScheduleOptions ScheduleOptions `json:"ScheduleOptions"`
+	// Hardware sensors and system lines; see sensors_config.go.
+	SensorOptions    SensorOptions    `json:"SensorOptions"`
+	UptimeOptions    UptimeOptions    `json:"UptimeOptions"`
+	PingOptions      PingOptions      `json:"PingOptions"`
+	DiskOptions      DiskOptions      `json:"DiskOptions"`
+	PCBatteryOptions PCBatteryOptions `json:"PCBatteryOptions"`
 }
 
 var (
@@ -778,6 +807,11 @@ func DefaultConfig() Config {
 			ShowVRAM:      true,
 			ShowVRAMTotal: true,
 		},
+		SensorOptions:    defaultSensorOptions(),
+		UptimeOptions:    defaultUptimeOptions(),
+		PingOptions:      defaultPingOptions(),
+		DiskOptions:      defaultDiskOptions(),
+		PCBatteryOptions: defaultPCBatteryOptions(),
 		NetworkOptions: NetworkOptions{
 			ShowDown:    true,
 			ShowUp:      true,
@@ -943,6 +977,8 @@ func (c Config) clone() Config {
 	out.TextFilter = c.TextFilter.clone()
 	out.CounterOptions = c.CounterOptions.clone()
 	out.ScheduleOptions = c.ScheduleOptions.clone()
+	out.SensorOptions.Picks = append([]SensorPick{}, c.SensorOptions.Picks...)
+	out.DiskOptions.Drives = append([]string{}, c.DiskOptions.Drives...)
 	return out
 }
 
@@ -1145,6 +1181,16 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.Counter
 	case ModuleSchedule:
 		return &d.Schedule
+	case ModuleSensors:
+		return &d.Sensors
+	case ModuleUptime:
+		return &d.Uptime
+	case ModulePing:
+		return &d.Ping
+	case ModuleDisk:
+		return &d.Disk
+	case ModulePCBattery:
+		return &d.PCBattery
 	}
 	return nil
 }
@@ -1413,6 +1459,7 @@ func (c *Config) sanitize() {
 	}
 	c.OSCOptions.Extra = extra
 	c.OSCOptions.sanitizeForward()
+	c.sanitizeSystemLines()
 
 	sanitizeTexts(c)
 	c.Rules.sanitize()

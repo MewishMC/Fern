@@ -105,6 +105,10 @@ func cpuLine(cfg Config) string {
 	if o.ShowUsage {
 		parts = append(parts, fmt.Sprintf("%.*f%%", o.Decimals, usage))
 	}
+	if o.ShowTemp || o.ShowPower || o.ShowClock || o.ShowFan {
+		r := cpuReadings(Sensors(), o.Sensors)
+		parts = append(parts, hwParts(r, o.ShowTemp, o.ShowPower, o.ShowClock, o.ShowFan, o.Fahrenheit)...)
+	}
 	return strings.Join(parts, " · ")
 }
 

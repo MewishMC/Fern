@@ -329,7 +329,28 @@ func gpuLine(cfg Config) string {
 	gpuMu.RLock()
 	sampled := gpuSampled
 	gpuMu.RUnlock()
-	return formatGPU(cfg.GPUOptions, g, sampled)
+	return formatGPUWithSensors(cfg.GPUOptions, g, sampled, Sensors())
+}
+
+// formatGPUWithSensors adds what HWiNFO or LibreHardwareMonitor report for
+// the card: its temperature when the driver gives none (AMD, Intel) or a
+// sensor was picked for it, then power, clock and fan.
+func formatGPUWithSensors(o GPUOptions, g GPUInfo, sampled bool, list []Sensor) string {
+	o2 := o
+	if !(o.ShowTemp || o.ShowPower || o.ShowClock || o.ShowFan) || len(list) == 0 {
+		return formatGPU(o, g, sampled)
+	}
+	r := gpuReadings(list, g.Name, o.Sensors)
+	sensorTemp := o.ShowTemp && r.Temp != nil && (!g.HasTemp || o.Sensors.Temp != "")
+	if sensorTemp {
+		o2.ShowTemp = false
+	}
+	parts := []string{}
+	if line := formatGPU(o2, g, sampled); line != "" {
+		parts = append(parts, line)
+	}
+	parts = append(parts, hwParts(r, sensorTemp, o.ShowPower, o.ShowClock, o.ShowFan, o.Fahrenheit)...)
+	return strings.Join(parts, " · ")
 }
 
 func formatGPU(o GPUOptions, g GPUInfo, sampled bool) string {

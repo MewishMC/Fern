@@ -144,6 +144,16 @@ func moduleText(id string, cfg Config) string {
 		return counterLine(cfg)
 	case ModuleSchedule:
 		return scheduleLine(cfg)
+	case ModuleSensors:
+		return sensorsLine(cfg)
+	case ModuleUptime:
+		return uptimeLine(cfg)
+	case ModulePing:
+		return pingLine(cfg)
+	case ModuleDisk:
+		return diskLine(cfg)
+	case ModulePCBattery:
+		return pcBatteryLine(cfg)
 	}
 	return ""
 }

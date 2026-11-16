@@ -9,6 +9,7 @@ import (
 // the clock first, your own text last.
 var DefaultDropOrder = []string{
 	ModuleTime, ModuleWeather, ModuleNetwork, ModuleCPU, ModuleGPU, ModuleMemory, ModuleVRPerf, ModuleBattery,
+	ModuleDisk, ModuleUptime, ModuleSensors, ModulePing, ModulePCBattery,
 	ModuleWindow, ModuleLogs, ModuleWorld, ModuleCounter, ModuleLoading, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 	ModuleDiscord, ModuleLyrics, ModuleHeart, ModuleTimer, ModuleAFK, ModuleMedia, ModuleSchedule, ModuleText,
 }

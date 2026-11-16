@@ -19,6 +19,8 @@ func StartWorkers() {
 	startVoicemodWorker()
 	startNetworkWorker()
 	startGPUWorker()
+	startSensorWorker()
+	startPingWorker()
 	startRulesWorker()
 	startTallyWorker()
 	go watchVRChatProcess()
