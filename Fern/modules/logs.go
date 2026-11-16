@@ -158,8 +158,7 @@ func parseLogLine(line string) {
 		order = append(order, name)
 		ev.Again = notePlayerJoined(name, at)
 		joined[name] = ev
-		act := addActivityAt(at, EventJoin, name+" joined")
-		act.Again = ev.Again
+		addActivity(LogEvent{Time: at.UnixMilli(), Text: name + " joined", Kind: EventJoin, Again: ev.Again})
 		if liveLogLine(at) {
 			FireTrigger(TriggerPlayerJoined, playerEvent(name))
 		}
@@ -185,7 +184,14 @@ func parseLogLine(line string) {
 
 // addActivityAt appends an event to the feed and returns it for small edits.
 func addActivityAt(at time.Time, kind, text string) *LogEvent {
-	activity = append(activity, LogEvent{Time: at.UnixMilli(), Text: text, Kind: kind})
+	return addActivity(LogEvent{Time: at.UnixMilli(), Text: text, Kind: kind})
+}
+
+// addActivity appends ev to the feed and to the session archive that the
+// panel can export.
+func addActivity(ev LogEvent) *LogEvent {
+	archiveActivity(ev)
+	activity = append(activity, ev)
 	if len(activity) > maxActivitySize {
 		activity = activity[len(activity)-maxActivitySize:]
 	}
@@ -331,6 +337,7 @@ func AddHistory(text string) {
 	}
 	lastHistoryAt = now
 	history = append(history, LogEvent{Time: now, Text: text})
+	archiveChatbox(history[len(history)-1])
 	if len(history) > maxHistorySize {
 		history = history[len(history)-maxHistorySize:]
 	}
