@@ -689,6 +689,9 @@ type Config struct {
 	PCBatteryOptions PCBatteryOptions `json:"PCBatteryOptions"`
 	// Avatar automation; see avatar_config.go.
 	Avatar AvatarOptions `json:"Avatar"`
+	// Chatbox animation and blocked worlds; see motion.go and worldblock.go.
+	Motion     MotionOptions     `json:"Motion"`
+	WorldBlock WorldBlockOptions `json:"WorldBlock"`
 }
 
 var (
@@ -969,6 +972,8 @@ func DefaultConfig() Config {
 		KickOptions:       defaultKickOptions(),
 		YouTubeOptions:    defaultYouTubeOptions(),
 		Avatar:            defaultAvatarOptions(),
+		Motion:            defaultMotionOptions(),
+		WorldBlock:        defaultWorldBlockOptions(),
 	}
 }
 
@@ -999,6 +1004,8 @@ func (c Config) clone() Config {
 	out.SensorOptions.Picks = append([]SensorPick{}, c.SensorOptions.Picks...)
 	out.DiskOptions.Drives = append([]string{}, c.DiskOptions.Drives...)
 	out.TwitchChatOptions = c.TwitchChatOptions.clone()
+	out.Motion = c.Motion.clone()
+	out.WorldBlock = c.WorldBlock.clone()
 	return out
 }
 
@@ -1255,6 +1262,9 @@ func EffectiveRateMS(cfg Config) int64 {
 			rate = fast
 		}
 	}
+	if m := motionRateMS(cfg); m > 0 && m < rate {
+		rate = m
+	}
 	return rate
 }
 
@@ -1499,6 +1509,8 @@ func (c *Config) sanitize() {
 	c.CounterOptions.sanitize()
 	c.ScheduleOptions.sanitize()
 	c.Avatar.sanitize()
+	c.Motion.sanitize()
+	c.WorldBlock.sanitize()
 }
 
 func scheduleSave() {

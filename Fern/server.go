@@ -85,13 +85,14 @@ type uiState struct {
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
 
-	VRInput   modules.VRInputStatus `json:"vrInput"`
-	Voice     voiceState            `json:"voice"`
-	Tally     tallyState            `json:"tally"`
-	Sensors   sensorsState          `json:"sensors"`
-	System    systemState           `json:"system"`
-	Streaming modules.StreamingInfo `json:"streaming"`
-	Avatar    avatarState           `json:"avatar"`
+	VRInput    modules.VRInputStatus `json:"vrInput"`
+	Voice      voiceState            `json:"voice"`
+	Tally      tallyState            `json:"tally"`
+	Sensors    sensorsState          `json:"sensors"`
+	System     systemState           `json:"system"`
+	Streaming  modules.StreamingInfo `json:"streaming"`
+	Avatar     avatarState           `json:"avatar"`
+	WorldBlock worldBlockState       `json:"worldBlock"`
 }
 
 type appState struct {
@@ -407,6 +408,10 @@ func handleCommand(cmd command) {
 		handleSensorsCommand(cmd)
 	case "avatar":
 		handleAvatarCommand(cmd)
+	case "page":
+		handlePageCommand(cmd)
+	case "worldblock":
+		handleWorldBlockCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	case "vrInput":
@@ -628,13 +633,14 @@ func buildState() uiState {
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
 
-		VRInput:   modules.CurrentVRInput(),
-		Voice:     currentVoice(cfg),
-		Tally:     currentTally(),
-		Sensors:   currentSensors(cfg),
-		System:    currentSystem(),
-		Streaming: modules.CurrentStreaming(),
-		Avatar:    currentAvatar(),
+		VRInput:    modules.CurrentVRInput(),
+		Voice:      currentVoice(cfg),
+		Tally:      currentTally(),
+		Sensors:    currentSensors(cfg),
+		System:     currentSystem(),
+		Streaming:  modules.CurrentStreaming(),
+		Avatar:     currentAvatar(),
+		WorldBlock: currentWorldBlock(cfg),
 	}
 }
 

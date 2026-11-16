@@ -46,6 +46,10 @@
                     <span id="holdInfo"></span>
                 </div>
                 <div class="fit-info" id="fitInfo" hidden></div>
+                <div class="block-info" id="blockInfo" hidden>
+                    <span id="blockText"></span>
+                    <button class="btn ghost small" type="button" id="blockToggle">Show anyway</button>
+                </div>
             </div>
 
             <nav id="nav">
@@ -382,6 +386,95 @@
                             <input type="text" id="dndHotkey" placeholder="none" autocomplete="off" spellcheck="false" style="width:150px" aria-label="Do not disturb shortcut">
                         </div>
                     </div>
+                </div>
+
+                <div class="section-title">Motion</div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Step length</b>
+                            <span id="motionFrameDesc">How long each step of a moving line stays up, in seconds. VRChat drops chatbox updates sent faster than about one a second, so a step is never shorter than that. While something moves, the chatbox is sent once per step.</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="motionFrame" min="1" max="5" step="0.5" style="width:90px" aria-label="Step length in seconds"></div>
+                    </div>
+                    <div class="hint" style="margin-top:0">Scroll shows a window of a long line that moves along. Typewriter types a line out when it changes, starting from the part that changed. Blink shows a line every other step. Effects run before the fit, so a scrolling line takes up only its window.</div>
+                    <div class="list" id="motionList"></div>
+                </div>
+
+                <div class="section-title">Pages</div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Take turns</b>
+                            <span id="pagesDesc">Shows one page of lines at a time, each for its own time, then the next. Lines in no page show on every page. A page with nothing to show is skipped.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="pagesOn" aria-label="Take turns between pages"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="list" id="pageList"></div>
+                    <div class="send-row" style="margin-top:10px">
+                        <button class="btn ghost small" type="button" id="pageAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add page</button>
+                        <button class="btn ghost small" type="button" id="pageNext">Next page now</button>
+                    </div>
+                </div>
+
+                <div class="section-title">Blocked worlds</div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Pause in blocked worlds</b>
+                            <span>Clubs and events often ask for no chatbox. In a blocked world Fern only shows the lines below and messages you send yourself. Like VRCOSC, this is on unless you turn it off.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="wbOn" aria-label="Pause in blocked worlds"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Community list</b>
+                            <span id="wbCommunityDesc">The list VRCOSC uses, kept by club owners on GitHub. Fern downloads it once a day; nothing is sent.</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost small" type="button" id="wbRefresh">Update now</button>
+                            <label class="switch"><input type="checkbox" id="wbCommunity" aria-label="Use the community list"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field" style="flex-wrap:wrap">
+                        <div class="field-label">
+                            <b>Still show</b>
+                            <span>Lines that stay in a blocked world. Heart rate stays by default, as in VRCOSC.</span>
+                        </div>
+                        <div class="field-control rule-multi" id="wbAllow"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>This world</b>
+                            <span id="wbWorldDesc">Not in a world</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn ghost small" type="button" id="wbOverride" hidden>Show anyway</button>
+                            <button class="btn ghost small" type="button" id="wbBlock" disabled>Block</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Your blocked worlds</b>
+                            <span>Blocked even with the community list off. Paste a world id (wrld_…), or use Block above while you are there.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="wbAddId" placeholder="wrld_…" autocomplete="off" spellcheck="false" style="width:220px" aria-label="World id to block">
+                            <button class="btn ghost small" type="button" id="wbAdd">Add</button>
+                        </div>
+                    </div>
+                    <div class="list" id="wbList" style="margin-top:0"></div>
+                    <div class="field" id="wbExemptField" hidden>
+                        <div class="field-label">
+                            <b>Never blocked</b>
+                            <span>Community worlds you unblocked. The chatbox shows there as usual.</span>
+                        </div>
+                    </div>
+                    <div class="list" id="wbExempt" style="margin-top:0"></div>
                 </div>
             </section>
 
@@ -6840,6 +6933,8 @@
             if (typeof renderTally === "function") renderTally(st);
             renderStreaming(st);
             if (typeof renderAvatar === "function") renderAvatar(st);
+            if (typeof renderMotion === "function") renderMotion(st);
+            if (typeof renderWorldBlock === "function") renderWorldBlock(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -7483,6 +7578,7 @@
             if (fit.shrunk && fit.shrunk.length) parts.push((fit.cut ? "Cut: " : "Shortened: ") + names(fit.shrunk));
             if (fit.hidden && fit.hidden.length) parts.push((st.inVR ? "Hidden in VR: " : "Hidden on desktop: ") + names(fit.hidden));
             if (fit.dnd) parts.push("Do not disturb" + (fit.quiet && fit.quiet.length ? ", hiding " + names(fit.quiet) : ""));
+            if (fit.pages && fit.pages.page && !fit.hold) parts.push("Page " + fit.pages.page + " (" + (fit.pages.index + 1) + " of " + fit.pages.count + ")");
             const text = parts.join(" · ");
             const el = $("fitInfo");
             if (el.textContent !== text) el.textContent = text;
@@ -8020,6 +8116,8 @@
             const fit = st.fit || {};
             if (!st.modules || !st.modules[id] || fit.hold) return "";
             if ((fit.hidden || []).includes(id)) return ' <span class="row-flag">' + (st.inVR ? "hidden in VR" : "hidden on desktop") + "</span>";
+            if ((fit.paused || []).includes(id)) return ' <span class="row-flag warn">paused in this world</span>';
+            if (((fit.pages || {}).paged || []).includes(id)) return ' <span class="row-flag">on another page</span>';
             if ((fit.dropped || []).includes(id)) return ' <span class="row-flag warn">dropped to fit</span>';
             if ((fit.shrunk || []).includes(id)) return ' <span class="row-flag">' + (fit.cut ? "cut to fit" : "shortened") + "</span>";
             return "";
@@ -8027,7 +8125,7 @@
 
         function fitFlagSig(st) {
             const fit = st.fit || {};
-            return JSON.stringify([fit.dropped, fit.shrunk, fit.cut, fit.hold, fit.hidden, st.inVR]);
+            return JSON.stringify([fit.dropped, fit.shrunk, fit.cut, fit.hold, fit.hidden, st.inVR, fit.paused, (fit.pages || {}).paged]);
         }
 
         // Per line: show always, only in VR or only on desktop.
@@ -13573,6 +13671,440 @@
             avDatalist($("avParamList"), (a.params || []).map((p) => p.name));
             avDatalist($("avAppList"), (st.windowApps || []).map((x) => x.app));
         }
+    </script>
+    <script>
+        /* ---------------- motion, pages and blocked worlds ---------------- */
+        const MOTION = { effectSig: "", pageSig: "", allowSig: "", listSig: "" };
+        const MOTION_EFFECTS = [["", "Still"], ["scroll", "Scroll"], ["typewriter", "Typewriter"], ["blink", "Blink"]];
+        const MAX_PAGES = 12;
+        const WORLD_ID = /^wrld_[A-Za-z0-9-]{1,64}$/;
+
+        function motionLines(st) {
+            return (st.config.display_options.order || []).filter((id) => MODULE_NAME[id]);
+        }
+
+        function focusedIn(el) {
+            const a = document.activeElement;
+            return !!(a && a !== document.body && el.contains(a));
+        }
+
+        function dimField(el, off) {
+            const row = el.closest(".field");
+            row.classList.toggle("inactive", off);
+            row.querySelectorAll("input, select, button").forEach((c) => { c.disabled = off; });
+        }
+
+        function motionDesc(e) {
+            if (e.effect === "scroll") return "Scrolls when longer than " + e.width + " characters, " + e.step + " per step";
+            if (e.effect === "typewriter") return "Types out changes, " + e.step + " characters per step";
+            if (e.effect === "blink") return "Shows every other step";
+            return "Stands still";
+        }
+
+        function motionNum(key, value, min, max, label, on) {
+            return '<label class="motion-num' + (on ? "" : " inactive") + '" title="' + label + '">' + label +
+                ' <input type="number" data-motion="' + key + '" min="' + min + '" max="' + max + '" step="1" value="' + value + '"' +
+                (on ? "" : " disabled") + ' aria-label="' + label + '"></label>';
+        }
+
+        function renderMotion(st) {
+            const m = st.config.Motion || {};
+            const effects = m.effects || {};
+            const order = motionLines(st);
+            const moving = order.some((id) => st.modules[id] && effects[id] && effects[id].effect);
+            const pages = m.pages || [];
+            const pagesActive = !!m.pages_on && pages.some((p) => (p.lines || []).length);
+
+            const frame = $("motionFrame");
+            if (document.activeElement !== frame) frame.value = String((m.frame_ms || 1500) / 1000);
+            dimField(frame, !moving && !pagesActive);
+
+            const list = $("motionList");
+            const sig = JSON.stringify([order, effects, st.modules]);
+            if (sig !== MOTION.effectSig && !focusedIn(list)) {
+                MOTION.effectSig = sig;
+                list.replaceChildren();
+                order.forEach((id) => {
+                    const e = Object.assign({ effect: "", width: 30, step: 3 }, effects[id] || {});
+                    const row = document.createElement("div");
+                    row.className = "row" + (st.modules[id] ? "" : " off");
+                    row.dataset.id = id;
+                    row.innerHTML =
+                        '<div class="row-main"><div class="row-name">' + MODULE_NAME[id] + '</div><span class="row-desc">' +
+                        (st.modules[id] ? motionDesc(e) : "off") + "</span></div>" +
+                        '<div class="row-actions">' +
+                        motionNum("width", e.width, 8, 140, "width", e.effect === "scroll") +
+                        motionNum("step", e.step, 1, 40, "step", e.effect === "scroll" || e.effect === "typewriter") +
+                        '<select class="compact" data-motion="effect" aria-label="' + MODULE_NAME[id] + ' effect">' +
+                        MOTION_EFFECTS.map(([v, label]) => '<option value="' + v + '"' + (e.effect === v ? " selected" : "") + ">" + label + "</option>").join("") +
+                        "</select></div>";
+                    list.appendChild(row);
+                });
+            }
+            renderPages(st, pagesActive);
+        }
+
+        $("motionFrame").addEventListener("change", (ev) => {
+            const sec = Math.min(5, Math.max(1, Number(ev.target.value) || 1.5));
+            ev.target.value = String(sec);
+            if (pushConfigNow((c) => { c.Motion.frame_ms = Math.round(sec * 1000); })) toast("Each step stays " + sec + "s");
+        });
+
+        $("motionList").addEventListener("change", (ev) => {
+            const row = ev.target.closest(".row");
+            if (!row) return;
+            const id = row.dataset.id;
+            const get = (k) => row.querySelector('[data-motion="' + k + '"]');
+            const effect = get("effect").value;
+            const width = Math.min(140, Math.max(8, Math.round(Number(get("width").value) || 30)));
+            const step = Math.min(40, Math.max(1, Math.round(Number(get("step").value) || 3)));
+            const ok = pushConfigNow((c) => {
+                const fx = Object.assign({}, c.Motion.effects || {});
+                if (effect) fx[id] = { effect, width, step }; else delete fx[id];
+                c.Motion.effects = fx;
+            });
+            if (!ok) return;
+            MOTION.effectSig = "";
+            if (ev.target.tagName === "SELECT") {
+                ev.target.blur();
+                toast(MODULE_NAME[id] + ": " + motionDesc({ effect, width, step }).toLowerCase());
+            }
+        });
+
+        function renderPages(st, active) {
+            const m = st.config.Motion || {};
+            const pages = m.pages || [];
+            const ps = (st.fit && st.fit.pages) || {};
+            if (document.activeElement !== $("pagesOn")) $("pagesOn").checked = !!m.pages_on;
+            let desc = "Shows one page of lines at a time, each for its own time, then the next. Lines in no page show on every page. A page with nothing to show is skipped.";
+            if (m.pages_on && !active) desc = "On, but no page has a line yet. Add lines to a page below.";
+            else if (active && ps.page) {
+                const left = Math.max(0, Math.round((ps.until - Date.now()) / 1000));
+                desc = "Showing " + ps.page + " (" + (ps.index + 1) + " of " + ps.count + "), next in " + left + "s.";
+            }
+            if ($("pagesDesc").textContent !== desc) $("pagesDesc").textContent = desc;
+            $("pageAdd").disabled = pages.length >= MAX_PAGES;
+            $("pageNext").disabled = !active;
+
+            const list = $("pageList");
+            const order = motionLines(st);
+            const sig = JSON.stringify([pages, order, active && ps.page]);
+            if (sig === MOTION.pageSig || focusedIn(list)) return;
+            MOTION.pageSig = sig;
+            list.replaceChildren();
+            if (!pages.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No pages yet. Add one, then tick the lines it shows.";
+                list.appendChild(empty);
+                return;
+            }
+            pages.forEach((p, i) => {
+                const row = document.createElement("div");
+                row.className = "row page-row" + (active && ps.page === p.name ? " current" : "");
+                row.dataset.index = String(i);
+                const top = document.createElement("div");
+                top.className = "page-row-top";
+                const name = document.createElement("input");
+                name.type = "text";
+                name.maxLength = 24;
+                name.value = p.name;
+                name.dataset.page = "name";
+                name.setAttribute("aria-label", "Page name");
+                const secs = document.createElement("input");
+                secs.type = "number";
+                secs.min = "3";
+                secs.max = "600";
+                secs.step = "1";
+                secs.value = String(p.seconds);
+                secs.dataset.page = "seconds";
+                secs.title = "Seconds this page shows";
+                secs.setAttribute("aria-label", "Seconds " + p.name + " shows");
+                const unit = document.createElement("span");
+                unit.className = "row-desc";
+                unit.textContent = "seconds";
+                top.append(name, secs, unit);
+                [["show", "Show now", "fa-eye", false], ["up", "Move up", "fa-chevron-up", i === 0], ["down", "Move down", "fa-chevron-down", i === pages.length - 1], ["delete", "Delete", "fa-trash", false]].forEach(([act, label, icon, off]) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "chev";
+                    b.dataset.pageAct = act;
+                    b.title = label;
+                    b.setAttribute("aria-label", label + " " + p.name);
+                    b.disabled = off || (act === "show" && !active);
+                    b.innerHTML = '<i class="fa ' + icon + '" aria-hidden="true"></i>';
+                    top.appendChild(b);
+                });
+                const chips = document.createElement("div");
+                chips.className = "rule-multi";
+                order.forEach((id) => {
+                    const chip = document.createElement("label");
+                    chip.className = "rule-chip";
+                    const check = document.createElement("input");
+                    check.type = "checkbox";
+                    check.value = id;
+                    check.dataset.page = "line";
+                    check.checked = (p.lines || []).includes(id);
+                    chip.append(check, document.createTextNode(MODULE_NAME[id]));
+                    chips.appendChild(chip);
+                });
+                row.append(top, chips);
+                list.appendChild(row);
+            });
+        }
+
+        function editPage(i, fn, now) {
+            const run = (c) => {
+                const pages = (c.Motion.pages || []).map((p) => Object.assign({}, p, { lines: (p.lines || []).slice() }));
+                if (i >= 0 && i >= pages.length) return;
+                fn(pages);
+                c.Motion.pages = pages;
+            };
+            return now ? pushConfigNow(run) : pushConfig(run);
+        }
+
+        $("pagesOn").addEventListener("change", (ev) => {
+            const on = ev.target.checked;
+            if (pushConfigNow((c) => { c.Motion.pages_on = on; })) toast(on ? "Pages take turns" : "Pages off: every line shows");
+        });
+        $("pageAdd").addEventListener("click", () => {
+            const pages = (config() && config().Motion.pages) || [];
+            if (pages.length >= MAX_PAGES) return;
+            MOTION.pageSig = "";
+            editPage(-1, (list) => { list.push({ name: "Page " + (list.length + 1), lines: [], seconds: 10 }); }, true);
+        });
+        $("pageNext").addEventListener("click", () => { send({ type: "page", text: "" }); });
+        $("pageList").addEventListener("input", (ev) => {
+            if (ev.target.dataset.page !== "name") return;
+            const i = Number(ev.target.closest(".row").dataset.index);
+            const v = Array.from(ev.target.value).slice(0, 24).join("");
+            editPage(i, (pages) => { pages[i].name = v; }, false);
+        });
+        $("pageList").addEventListener("change", (ev) => {
+            const row = ev.target.closest(".row");
+            if (!row) return;
+            const i = Number(row.dataset.index);
+            if (ev.target.dataset.page === "seconds") {
+                const v = Math.min(600, Math.max(3, Math.round(Number(ev.target.value) || 10)));
+                ev.target.value = String(v);
+                editPage(i, (pages) => { pages[i].seconds = v; }, true);
+            } else if (ev.target.dataset.page === "line") {
+                const lines = Array.from(row.querySelectorAll('input[data-page="line"]')).filter((c) => c.checked).map((c) => c.value);
+                editPage(i, (pages) => { pages[i].lines = lines; }, true);
+            }
+        });
+        $("pageList").addEventListener("focusout", () => {
+            // Let the list redraw once editing is over.
+            setTimeout(() => { if (!focusedIn($("pageList"))) MOTION.pageSig = ""; }, 0);
+        });
+        $("motionList").addEventListener("focusout", () => {
+            setTimeout(() => { if (!focusedIn($("motionList"))) MOTION.effectSig = ""; }, 0);
+        });
+        $("pageList").addEventListener("click", (ev) => {
+            const b = ev.target.closest("button[data-page-act]");
+            if (!b) return;
+            const i = Number(b.closest(".row").dataset.index);
+            const pages = (config() && config().Motion.pages) || [];
+            const page = pages[i];
+            if (!page) return;
+            const act = b.dataset.pageAct;
+            if (act === "show") {
+                if (send({ type: "page", text: page.name })) toast("Showing " + page.name);
+                return;
+            }
+            if (act === "delete" && !confirm("Delete the page " + page.name + "? Its lines then show on every page.")) return;
+            b.blur();
+            MOTION.pageSig = "";
+            editPage(i, (list) => {
+                if (act === "delete") list.splice(i, 1);
+                else {
+                    const j = act === "up" ? i - 1 : i + 1;
+                    if (j < 0 || j >= list.length) return;
+                    [list[i], list[j]] = [list[j], list[i]];
+                }
+            }, true);
+        });
+
+        /* blocked worlds */
+        function worldLabel(w) {
+            return w.name ? w.name : w.id;
+        }
+
+        function renderWorldList(box, list, key) {
+            box.replaceChildren();
+            list.forEach((w, i) => {
+                const row = document.createElement("div");
+                row.className = "row";
+                const main = document.createElement("div");
+                main.className = "row-main";
+                const name = document.createElement("div");
+                name.className = "row-name";
+                name.textContent = worldLabel(w);
+                const id = document.createElement("span");
+                id.className = "row-desc";
+                id.textContent = w.name ? w.id : "";
+                main.append(name, id);
+                const actions = document.createElement("div");
+                actions.className = "row-actions";
+                const del = document.createElement("button");
+                del.type = "button";
+                del.className = "chev";
+                del.dataset.wbRemove = key;
+                del.dataset.index = String(i);
+                del.title = "Remove";
+                del.setAttribute("aria-label", "Remove " + worldLabel(w));
+                del.innerHTML = '<i class="fa fa-xmark" aria-hidden="true"></i>';
+                actions.appendChild(del);
+                row.append(main, actions);
+                box.appendChild(row);
+            });
+        }
+
+        function renderWorldBlock(st) {
+            const o = st.config.WorldBlock || {};
+            const w = st.worldBlock || {};
+            noticeToast("worldBlock", w.notice);
+            const off = !o.enabled;
+            if (document.activeElement !== $("wbOn")) $("wbOn").checked = !!o.enabled;
+            if (document.activeElement !== $("wbCommunity")) $("wbCommunity").checked = !!o.community;
+            dimField($("wbCommunity"), off);
+            let desc = "The list VRCOSC uses, kept by club owners on GitHub. Fern downloads it once a day; nothing is sent.";
+            if (o.community) {
+                desc = w.community ? w.community + " club and event worlds" + (w.fetched ? ", updated " + new Date(w.fetched).toLocaleString() : "") + "." : "Not downloaded yet.";
+                desc += " The list VRCOSC uses, kept by club owners on GitHub; Fern downloads it once a day.";
+            }
+            if (w.error) desc = w.error + (w.community ? " Still using the " + w.community + " worlds Fern had." : "");
+            const descEl = $("wbCommunityDesc");
+            if (descEl.textContent !== desc) descEl.textContent = desc;
+            descEl.classList.toggle("bad", !!w.error);
+            descEl.title = w.source || "";
+            $("wbRefresh").disabled = off || !o.community || !!w.busy;
+            $("wbRefresh").textContent = w.busy ? "Updating…" : "Update now";
+
+            const allow = o.allow || [];
+            const order = motionLines(st);
+            const allowSig = JSON.stringify([order, allow]);
+            if (allowSig !== MOTION.allowSig) {
+                MOTION.allowSig = allowSig;
+                const box = $("wbAllow");
+                box.replaceChildren();
+                order.forEach((id) => {
+                    const chip = document.createElement("label");
+                    chip.className = "rule-chip";
+                    const check = document.createElement("input");
+                    check.type = "checkbox";
+                    check.value = id;
+                    check.checked = allow.includes(id);
+                    chip.append(check, document.createTextNode(MODULE_NAME[id]));
+                    box.appendChild(chip);
+                });
+            }
+            dimField($("wbAllow"), off);
+
+            const mine = (o.worlds || []).some((x) => w.worldId && x.id.toLowerCase() === w.worldId.toLowerCase());
+            let here = "Not in a world";
+            if (w.worldId) {
+                const name = w.world || w.worldId;
+                if (off) here = name + ". Blocking is off.";
+                else if (w.blocked) here = name + ": paused, it is on " + (w.by === "yours" ? "your list" : "the community list") + ".";
+                else if (w.override) here = name + ": on " + (w.by === "yours" ? "your list" : "the community list") + ", showing anyway until Fern closes.";
+                else here = name + ": not blocked.";
+            }
+            if ($("wbWorldDesc").textContent !== here) $("wbWorldDesc").textContent = here;
+            const block = $("wbBlock");
+            const unblock = mine || (w.listed && w.by === "community");
+            block.disabled = !w.worldId;
+            block.textContent = unblock ? "Unblock" : "Block";
+            block.dataset.action = unblock ? "unblock" : "block";
+            const over = $("wbOverride");
+            over.hidden = !w.listed;
+            over.textContent = w.blocked ? "Show anyway" : "Pause again";
+            over.dataset.action = w.blocked ? "show" : "pause";
+
+            const listSig = JSON.stringify([o.worlds, o.exempt]);
+            if (listSig !== MOTION.listSig) {
+                MOTION.listSig = listSig;
+                renderWorldList($("wbList"), o.worlds || [], "worlds");
+                renderWorldList($("wbExempt"), o.exempt || [], "exempt");
+                $("wbExemptField").hidden = !(o.exempt || []).length;
+            }
+
+            // The note under the preview, on every page.
+            const info = $("blockInfo");
+            const fit = st.fit || {};
+            let text = "";
+            if (fit.blocked) {
+                const paused = (fit.paused || []).length;
+                text = "Paused in " + fit.blocked + ", a blocked world" + (paused ? " (" + paused + (paused === 1 ? " line" : " lines") + " hidden)" : "");
+                $("blockToggle").textContent = "Show anyway";
+                $("blockToggle").dataset.action = "show";
+            } else if (w.override && !off) {
+                text = "Showing in " + (w.world || w.worldId) + " although it is blocked";
+                $("blockToggle").textContent = "Pause";
+                $("blockToggle").dataset.action = "pause";
+            }
+            if ($("blockText").textContent !== text) $("blockText").textContent = text;
+            info.title = text;
+            info.hidden = !text;
+        }
+
+        $("wbOn").addEventListener("change", (ev) => {
+            const on = ev.target.checked;
+            if (pushConfigNow((c) => { c.WorldBlock.enabled = on; })) toast(on ? "The chatbox pauses in blocked worlds" : "Blocked worlds off");
+        });
+        $("wbCommunity").addEventListener("change", (ev) => {
+            const on = ev.target.checked;
+            if (pushConfigNow((c) => { c.WorldBlock.community = on; })) {
+                if (on) send({ type: "worldblock", action: "refresh" });
+                toast(on ? "Using the community list" : "Only your own list blocks worlds");
+            }
+        });
+        $("wbRefresh").addEventListener("click", () => { send({ type: "worldblock", action: "refresh" }); });
+        $("wbAllow").addEventListener("change", () => {
+            const ids = Array.from($("wbAllow").querySelectorAll("input")).filter((c) => c.checked).map((c) => c.value);
+            pushConfigNow((c) => { c.WorldBlock.allow = ids; });
+        });
+        [$("wbBlock"), $("wbOverride"), $("blockToggle")].forEach((b) => {
+            b.addEventListener("click", () => {
+                if (b.dataset.action) send({ type: "worldblock", action: b.dataset.action });
+                b.blur();
+            });
+        });
+        function addBlockedWorld() {
+            const input = $("wbAddId");
+            const id = input.value.trim();
+            if (!WORLD_ID.test(id)) {
+                toast("A world id looks like wrld_ followed by letters, digits and dashes", true);
+                return;
+            }
+            const list = (config() && config().WorldBlock.worlds) || [];
+            if (list.some((w) => w.id.toLowerCase() === id.toLowerCase())) {
+                toast("That world is already on your list", true);
+                return;
+            }
+            if (list.length >= 200) {
+                toast("Your list is full (200 worlds)", true);
+                return;
+            }
+            if (pushConfigNow((c) => { c.WorldBlock.worlds = (c.WorldBlock.worlds || []).concat([{ id, name: "" }]); })) {
+                input.value = "";
+                toast("Blocked " + id);
+            }
+        }
+        $("wbAdd").addEventListener("click", addBlockedWorld);
+        $("wbAddId").addEventListener("keydown", (ev) => { if (ev.key === "Enter") addBlockedWorld(); });
+        [$("wbList"), $("wbExempt")].forEach((box) => {
+            box.addEventListener("click", (ev) => {
+                const b = ev.target.closest("button[data-wb-remove]");
+                if (!b) return;
+                const key = b.dataset.wbRemove, i = Number(b.dataset.index);
+                pushConfigNow((c) => {
+                    const list = (c.WorldBlock[key] || []).slice();
+                    list.splice(i, 1);
+                    c.WorldBlock[key] = list;
+                });
+            });
+        });
     </script>
     <script>
         /* Accent hue: one value drives every accent colour in the theme. */

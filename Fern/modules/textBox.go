@@ -206,8 +206,9 @@ func lineVisible(id string, d DisplayOptions, vr bool) bool {
 func buildLines(cfg Config, vr bool) (lines []FitLine, hidden []string) {
 	d := cfg.DisplayOptions
 	lines = make([]FitLine, 0, len(d.Order))
+	blocked := worldBlockFor(cfg)
 	for _, id := range d.Order {
-		if !ModuleEnabled(id, d) || dndHides(cfg.DND, id) {
+		if !ModuleEnabled(id, d) || dndHides(cfg.DND, id) || blocked.hides(id) {
 			continue
 		}
 		if !lineVisible(id, d, vr) {
@@ -240,6 +241,12 @@ type Chatbox struct {
 	Live   bool     `json:"live"`   // the held message is still being typed
 	DND    bool     `json:"dnd"`    // do not disturb is on
 	Quiet  []string `json:"quiet"`  // enabled lines do not disturb is hiding
+
+	// Blocked is the name (or id) of the blocked world pausing the chatbox,
+	// and Paused the enabled lines it is hiding.
+	Blocked string    `json:"blocked"`
+	Paused  []string  `json:"paused"`
+	Pages   PageState `json:"pages"` // which page is up; see motion.go
 }
 
 // sendLimit is the longest text Fern sends. VRChat takes 144 characters and
@@ -269,9 +276,18 @@ func ComposeChatbox() Chatbox {
 		vr = InVR()
 	}
 	lines, hidden := buildLines(cfg, vr)
+	lines, pages := applyMotion(cfg.Motion, lines)
 	fit := FitLines(lines, d.DropOrder, d.Separator, d.LinePrefix, d.LineSuffix, sendLimit(d), d.MaxLines)
 	fit.Text = strings.TrimSpace(fit.Text)
-	return Chatbox{Fit: fit, Hidden: hidden, DND: cfg.DND.On, Quiet: dndQuieted(cfg)}
+	box := Chatbox{Fit: fit, Hidden: hidden, DND: cfg.DND.On, Quiet: dndQuieted(cfg), Pages: pages}
+	if b := worldBlockFor(cfg); b.On {
+		box.Blocked = b.Name
+		if box.Blocked == "" {
+			box.Blocked = b.ID
+		}
+		box.Paused = worldBlockQuieted(cfg, b)
+	}
+	return box
 }
 
 // PreviewText is what the chatbox will show, without VRChat's marker.

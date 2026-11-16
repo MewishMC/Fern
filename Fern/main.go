@@ -130,6 +130,7 @@ func sendLoop() {
 			if cfg.DisplayOptions.Loading {
 				modules.AdvanceLoading(int(modules.EffectiveRateMS(cfg)))
 			}
+			modules.AdvanceMotion()
 			box := modules.ComposeChatbox()
 			body, payload := modules.PayloadFor(box)
 			// Typed messages come in bursts. Keep them to VRChat's pace so none
@@ -137,6 +138,13 @@ func sendLoop() {
 			if wait := sendGap(cfg.ChatOptions, box, body, lastBody, lastSend); wait > 0 {
 				time.Sleep(wait)
 				continue
+			}
+			if clearsChatbox(box, body, lastBody) {
+				// A blocked world paused the chatbox: take the last text down
+				// instead of leaving it up until VRChat times it out.
+				if sendOSC(cfg.OSCOptions, osc.NewMessage("/chatbox/input", "", true, false)) > 0 {
+					lastBody = ""
+				}
 			}
 			if body != "" {
 				notify := shouldNotify(cfg.ChatOptions, box, body, lastBody, lastSeq)
