@@ -10,6 +10,14 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+### Changed
+- Tracks that only have plain lyrics now show them anyway: Fern spreads the lines over the
+  track's length and follows the playback position. Plain .lrc files without timestamps work
+  the same way. Use the lyrics offset if the lines run early or late.
+
+### Fixed
+- The "plain" text style could turn a small-caps "ᴋ" into "+".
+
 ## v2.3 - All the lines
 
 ### Added
