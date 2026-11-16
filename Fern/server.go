@@ -102,6 +102,7 @@ type uiState struct {
 	Calendar     modules.CalendarStatus `json:"calendar"`
 	Prices       modules.PricesStatus   `json:"prices"`
 	Steam        modules.SteamStatus    `json:"steam"`
+	Setup        setupState             `json:"setup"`
 }
 
 type appState struct {
@@ -242,6 +243,7 @@ func StartServer(listener net.Listener) {
 	mux.HandleFunc("/overlay/text", handleOverlayText)
 	mux.HandleFunc("/overlay/stream", handleOverlayStream)
 	setOverlayBase(listener)
+	mux.HandleFunc("/export/session", handleSessionExport)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
 	}
@@ -344,6 +346,9 @@ func handleCommand(cmd command) {
 			// carries them back.
 			next.Rules = cur.Rules
 			next.DND.On = cur.DND.On
+			// Finishing the setup is its own action; a push made before it
+			// arrived must not bring the setup back.
+			next.AppOptions.SetupDone = next.AppOptions.SetupDone || cur.AppOptions.SetupDone
 			modules.SetConfig(next)
 		}
 	case "send":
@@ -439,6 +444,8 @@ func handleCommand(cmd command) {
 		handleOBSCommand(cmd)
 	case "calendar", "prices", "steam":
 		handleWebLinesCommand(cmd)
+	case "setup":
+		handleSetupCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	case "vrInput":
@@ -685,6 +692,7 @@ func buildState() uiState {
 		Calendar:     modules.CurrentCalendarStatus(),
 		Prices:       modules.CurrentPricesStatus(),
 		Steam:        modules.CurrentSteamStatus(),
+		Setup:        currentSetup(),
 	}
 }
 

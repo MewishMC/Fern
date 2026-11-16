@@ -35,6 +35,7 @@ func AddChatHistory(text string) {
 	if !cfg.ChatOptions.KeepHistory {
 		return
 	}
+	noteSentMessage(text, time.Now())
 	if len(cfg.ChatOptions.History) > 0 && cfg.ChatOptions.History[0] == text {
 		return
 	}
@@ -45,6 +46,7 @@ func AddChatHistory(text string) {
 
 // ClearChatHistory forgets every remembered message.
 func ClearChatHistory() {
+	clearSentArchive()
 	UpdateConfig(func(c *Config) { c.ChatOptions.History = []string{} })
 }
 

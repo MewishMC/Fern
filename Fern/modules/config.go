@@ -379,6 +379,9 @@ type AppOptions struct {
 	CloseToTray    bool   `json:"close_to_tray"`    // the X button hides the window
 	MinimizeToTray bool   `json:"minimize_to_tray"` // minimising hides the window
 	MicHotkey      string `json:"mic_hotkey"`       // global shortcut that toggles the VRChat mic; empty is off
+	// SetupDone is set once the first-run setup is finished or skipped. A
+	// config file from before the setup existed counts as done; see Load.
+	SetupDone bool `json:"setup_done"`
 }
 
 // BatteryOptions controls the SteamVR tracker battery line.
@@ -641,6 +644,10 @@ type ChatOptions struct {
 	History      []string `json:"history"`
 	KeepHistory  bool     `json:"keep_history"`
 	Autocomplete bool     `json:"autocomplete"` // suggest whole earlier messages while typing
+	// EmojiRecent and EmojiFavorites are the emoji picker's lists, newest
+	// first; see cleanEmojiList.
+	EmojiRecent    []string `json:"emoji_recent"`
+	EmojiFavorites []string `json:"emoji_favorites"`
 }
 
 // Config is the persisted application configuration.
@@ -986,6 +993,8 @@ func DefaultConfig() Config {
 			History:         []string{},
 			KeepHistory:     true,
 			Autocomplete:    true,
+			EmojiRecent:     []string{},
+			EmojiFavorites:  []string{},
 		},
 		OBSOptions:    defaultOBSOptions(),
 		TimeoutMS:     2500,
@@ -1035,6 +1044,8 @@ func (c Config) clone() Config {
 	out.OSCOptions.Extra = append([]OSCTarget{}, c.OSCOptions.Extra...)
 	out.OSCOptions.Forward = append([]OSCForward{}, c.OSCOptions.Forward...)
 	out.ChatOptions.History = append([]string{}, c.ChatOptions.History...)
+	out.ChatOptions.EmojiRecent = append([]string{}, c.ChatOptions.EmojiRecent...)
+	out.ChatOptions.EmojiFavorites = append([]string{}, c.ChatOptions.EmojiFavorites...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	out.BatteryOptions.Devices = append([]BatteryDevice{}, c.BatteryOptions.Devices...)
@@ -1158,6 +1169,8 @@ func Load() {
 		if err := json.Unmarshal(data, &loaded); err != nil {
 			fmt.Println("config: could not parse, using defaults:", err)
 			loaded = DefaultConfig()
+		} else {
+			keepSetupForOldConfig(data, &loaded)
 		}
 	} else if !os.IsNotExist(err) {
 		fmt.Println("config: could not read, using defaults:", err)
@@ -1542,6 +1555,8 @@ func (c *Config) sanitize() {
 	// VRChat drops chatbox messages sent faster than about one a second.
 	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)
 	c.ChatOptions.History = cleanChatHistory(c.ChatOptions.History, c.ChatOptions.KeepHistory)
+	c.ChatOptions.EmojiRecent = cleanEmojiList(c.ChatOptions.EmojiRecent, EmojiRecentLimit)
+	c.ChatOptions.EmojiFavorites = cleanEmojiList(c.ChatOptions.EmojiFavorites, EmojiFavoriteLimit)
 
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"

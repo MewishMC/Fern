@@ -120,6 +120,8 @@ func keepMachineSettings(dst *Config, cur Config) {
 
 	dst.DisplayOptions.Show = cur.DisplayOptions.Show
 	dst.ChatOptions.History = append([]string(nil), cur.ChatOptions.History...)
+	dst.ChatOptions.EmojiRecent = append([]string(nil), cur.ChatOptions.EmojiRecent...)
+	dst.ChatOptions.EmojiFavorites = append([]string(nil), cur.ChatOptions.EmojiFavorites...)
 	dst.AfkOptions.Manual = cur.AfkOptions.Manual
 	dst.AfkOptions.ManualSince = cur.AfkOptions.ManualSince
 	dst.BatteryOptions.Devices = append([]BatteryDevice(nil), cur.BatteryOptions.Devices...)
