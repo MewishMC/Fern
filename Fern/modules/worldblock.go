@@ -391,7 +391,7 @@ func setWorldBlockOverride(id string, show bool) {
 func SetWorldBlockOverride(show bool) error {
 	id := currentBlockWorldID()
 	if id == "" {
-		return errors.New("you are not in a world")
+		return errors.New("You are not in a world")
 	}
 	setWorldBlockOverride(id, show)
 	return nil
@@ -402,7 +402,7 @@ func SetWorldBlockOverride(show bool) error {
 func BlockCurrentWorld(block bool) error {
 	w, ok := blockWorldFn()
 	if !ok || w.ID == "" {
-		return errors.New("you are not in a world")
+		return errors.New("You are not in a world")
 	}
 	var err error
 	UpdateConfig(func(c *Config) {
@@ -411,7 +411,7 @@ func BlockCurrentWorld(block bool) error {
 		o.Exempt = slices.DeleteFunc(o.Exempt, func(b BlockedWorld) bool { return strings.EqualFold(b.ID, w.ID) })
 		if block {
 			if len(o.Worlds) >= MaxBlockedWorlds {
-				err = fmt.Errorf("your list is full (%d worlds)", MaxBlockedWorlds)
+				err = fmt.Errorf("Your list is full (%d worlds)", MaxBlockedWorlds)
 				return
 			}
 			o.Worlds = append(o.Worlds, BlockedWorld{ID: w.ID, Name: w.Name})
