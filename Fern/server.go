@@ -93,6 +93,7 @@ type uiState struct {
 	Streaming  modules.StreamingInfo `json:"streaming"`
 	Avatar     avatarState           `json:"avatar"`
 	WorldBlock worldBlockState       `json:"worldBlock"`
+	Music      musicState            `json:"music"`
 }
 
 type appState struct {
@@ -388,6 +389,10 @@ func handleCommand(cmd command) {
 		modules.StreamCommand(cmd.Module, cmd.Action)
 	case "voicemod":
 		modules.VoicemodCommand(cmd.Action, cmd.Text)
+	case "spotify":
+		handleSpotifyCommand(cmd)
+	case "lastfm":
+		handleLastFMCommand(cmd)
 	case "heartReset":
 		modules.ResetHeartStats()
 	case "profile":
@@ -574,6 +579,7 @@ func buildState() uiState {
 			modules.ModuleTikTok:     d.TikTok,
 			modules.ModuleKick:       d.Kick,
 			modules.ModuleYouTube:    d.YouTube,
+			modules.ModuleLastFM:     d.LastFM,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -641,6 +647,7 @@ func buildState() uiState {
 		Streaming:  modules.CurrentStreaming(),
 		Avatar:     currentAvatar(),
 		WorldBlock: currentWorldBlock(cfg),
+		Music:      currentMusic(cfg),
 	}
 }
 

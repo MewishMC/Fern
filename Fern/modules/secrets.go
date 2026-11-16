@@ -29,6 +29,8 @@ var panelSecrets = map[string]bool{
 	SecretDiscordClientSecret: true,
 	SecretTwitchToken:         true,
 	SecretVoicemodKey:         true,
+	SecretLastFMUser:          true,
+	SecretLastFMKey:           true,
 }
 
 var (
@@ -125,6 +127,9 @@ func SetPanelSecret(name, value string) error {
 	}
 	if name == SecretVoicemodKey {
 		voicemodKick()
+	}
+	if name == SecretLastFMUser || name == SecretLastFMKey {
+		defer LastFMRefreshNow()
 	}
 	return SetSecret(name, value)
 }

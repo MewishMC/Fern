@@ -12,7 +12,7 @@ var DefaultDropOrder = []string{
 	ModuleDisk, ModuleUptime, ModuleSensors, ModulePing, ModulePCBattery,
 	ModuleWindow, ModuleLogs, ModuleWorld, ModuleCounter, ModuleLoading, ModuleKick, ModuleYouTube, ModuleTikTok, ModuleTwitch,
 	ModuleTwitchChat, ModuleSoundpad, ModuleVoicemod,
-	ModuleDiscord, ModuleLyrics, ModuleHeart, ModuleTimer, ModuleAFK, ModuleMedia, ModuleSchedule, ModuleText,
+	ModuleDiscord, ModuleLastFM, ModuleLyrics, ModuleHeart, ModuleTimer, ModuleAFK, ModuleMedia, ModuleSchedule, ModuleText,
 }
 
 // Ellipsis marks a line that had to be cut.

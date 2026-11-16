@@ -162,6 +162,8 @@ func moduleText(id string, cfg Config) string {
 		return kickLine(cfg)
 	case ModuleYouTube:
 		return youtubeLine(cfg)
+	case ModuleLastFM:
+		return lastfmLine(cfg)
 	}
 	return ""
 }
