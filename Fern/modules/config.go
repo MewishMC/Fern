@@ -624,6 +624,10 @@ type Config struct {
 	TwitchOptions   TwitchOptions   `json:"TwitchOptions"`
 	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
 	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
+
+	// Rules and do not disturb; see rules.go and dnd.go.
+	Rules RulesOptions `json:"Rules"`
+	DND   DNDOptions   `json:"DND"`
 }
 
 var (
@@ -885,6 +889,8 @@ func DefaultConfig() Config {
 		AssistOptions: defaultAssistOptions(),
 		TTSOptions:    defaultTTSOptions(),
 		STTOptions:    defaultSTTOptions(),
+		Rules:         defaultRulesOptions(),
+		DND:           defaultDNDOptions(),
 	}
 }
 
@@ -907,6 +913,8 @@ func (c Config) clone() Config {
 	out.BatteryOptions.Devices = append([]BatteryDevice{}, c.BatteryOptions.Devices...)
 	out.MediaOptions.BarPresets = append([]BarPreset{}, c.MediaOptions.BarPresets...)
 	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
+	out.Rules = c.Rules.clone()
+	out.DND = c.DND.clone()
 	return out
 }
 
@@ -1373,6 +1381,8 @@ func (c *Config) sanitize() {
 	c.OSCOptions.sanitizeForward()
 
 	sanitizeTexts(c)
+	c.Rules.sanitize()
+	c.DND.sanitize()
 }
 
 func scheduleSave() {

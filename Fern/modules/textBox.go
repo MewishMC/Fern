@@ -183,7 +183,7 @@ func buildLines(cfg Config, vr bool) (lines []FitLine, hidden []string) {
 	d := cfg.DisplayOptions
 	lines = make([]FitLine, 0, len(d.Order))
 	for _, id := range d.Order {
-		if !ModuleEnabled(id, d) {
+		if !ModuleEnabled(id, d) || dndHides(cfg.DND, id) {
 			continue
 		}
 		if !lineVisible(id, d, vr) {
@@ -214,6 +214,8 @@ type Chatbox struct {
 	Hidden []string `json:"hidden"` // enabled lines hidden by their VR / desktop setting
 	Seq    uint64   `json:"-"`      // changes with every new held message
 	Live   bool     `json:"live"`   // the held message is still being typed
+	DND    bool     `json:"dnd"`    // do not disturb is on
+	Quiet  []string `json:"quiet"`  // enabled lines do not disturb is hiding
 }
 
 // sendLimit is the longest text Fern sends. VRChat takes 144 characters and
@@ -245,7 +247,7 @@ func ComposeChatbox() Chatbox {
 	lines, hidden := buildLines(cfg, vr)
 	fit := FitLines(lines, d.DropOrder, d.Separator, d.LinePrefix, d.LineSuffix, sendLimit(d), d.MaxLines)
 	fit.Text = strings.TrimSpace(fit.Text)
-	return Chatbox{Fit: fit, Hidden: hidden}
+	return Chatbox{Fit: fit, Hidden: hidden, DND: cfg.DND.On, Quiet: dndQuieted(cfg)}
 }
 
 // PreviewText is what the chatbox will show, without VRChat's marker.

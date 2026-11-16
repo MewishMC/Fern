@@ -99,7 +99,7 @@ var (
 
 // profileSkipSections are the top-level config sections a profile never
 // stores. Their contents come from the current config when one is applied.
-var profileSkipSections = []string{"AppOptions", "OSC", "AssistOptions", "TTSOptions", "STTOptions"}
+var profileSkipSections = []string{"AppOptions", "OSC", "AssistOptions", "TTSOptions", "STTOptions", "Rules", "DND"}
 
 // keepMachineSettings copies the parts of a config that are not part of a
 // profile from cur into dst. With a zero cur it clears them.
@@ -110,6 +110,8 @@ func keepMachineSettings(dst *Config, cur Config) {
 	dst.AssistOptions = cur.AssistOptions
 	dst.TTSOptions = cur.TTSOptions
 	dst.STTOptions = cur.STTOptions
+	dst.Rules = cur.Rules.clone()
+	dst.DND = cur.DND.clone()
 
 	dst.DisplayOptions.Show = cur.DisplayOptions.Show
 	dst.ChatOptions.History = append([]string(nil), cur.ChatOptions.History...)

@@ -143,6 +143,10 @@ func parseWorldLine(line string, at time.Time) bool {
 		selfName, _ = splitUser(rest)
 		return true
 	}
+	if rest, ok := after(line, "[Behaviour] Switching "); ok {
+		noteAvatarSwitch(rest)
+		return true
+	}
 	if rest, ok := after(line, "[Behaviour] Entering Room: "); ok {
 		noteRoomName(rest, at)
 		return true
