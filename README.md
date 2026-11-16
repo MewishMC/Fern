@@ -9,42 +9,99 @@ the whole interface is served by the same executable with its fonts and icons em
 
 ## Features
 
-- **Nine chatbox lines** — AFK, loading, time, text, memory, CPU, media, active window and
-  VRChat logs. Each one can be switched on or off and dragged into any order.
+- **Forty-one chatbox lines** — VRChat, music, system, SteamVR, streaming and app lines, plus
+  three custom lines of your own (see [Modules](#modules)). Each one can be switched on or
+  off, dragged into any order, given a drop priority for when the chatbox is too long, and
+  shown always, only in VR or only on desktop.
 - **Per-line settings** — every module has its own label, visibility and formatting options:
-  decimal places for memory and CPU, which parts of the track to show, timer style, dot
-  count, character limits and more.
+  templates and placeholders, which parts of the track to show, timer and AFK styles, Unicode
+  lettering, character limits and more.
+- **Chatbox motion and pages** — scroll, typewriter or blink effects per line, and named
+  pages of lines that take turns, all kept to VRChat's rate limit.
 - **Now playing from Windows** — reads the same media sessions the Windows volume flyout
-  uses, so Spotify, Chrome, VLC and friends show up with title, artist, album, elapsed time
-  and track length. An app picker pins the line to one player instead of following whichever
-  session is current, and a keyword filter narrows it further.
-- **Send a message right now** — type in the panel and push it to the chatbox for a set
-  number of seconds, or pin it until you clear it.
-- **Text rotation** — add, edit, delete and reorder messages, choose how long each stays up
-  and optionally shuffle them.
-- **AFK detection** — watches VRChat's outgoing OSC (movement and voice) plus foreground
-  window changes, with a configurable threshold, label and timer format.
-- **VRChat logs** — joins, leaves, an activity feed and a history of everything Fern sent,
-  tailed incrementally instead of re-read every tick.
+  uses, so Spotify, Chrome, VLC and friends show up with title, artist, album, progress bar
+  and synced lyrics. Optional Spotify and Last.fm sign-ins add liked songs, shuffle, devices,
+  play counts and controls.
+- **Send a message right now** — type in the panel and push it to the chatbox, with live
+  typing, history, an emoji picker, AI rewrite and translate tools, dictation, text to speech
+  and a word filter. A global shortcut sends whatever you copied.
+- **Text rotation** — add, edit, delete and reorder messages, group them, heart the ones in
+  the rotation, and shuffle them. Scheduled messages go out at a set time or every few
+  minutes.
+- **Profiles** — save the whole chatbox setup under a name and switch from the panel, the
+  tray, a global shortcut, a rule or the avatar you change into.
+- **Rules** — "when this happens, do that": worlds, avatars, avatar parameters, time of day,
+  AFK, players, timers, sensors, stream events, voice commands and more can switch profiles
+  and lines, send messages, set parameters, press keys, open apps or drive OBS, Spotify and
+  Voicemod. Do not disturb hides everything but the lines you allow.
+- **Avatar automation** — profiles and saved parameters per avatar, media keys, VRChat
+  events, time and PC load as parameters, timer and counter parameters (headpats, boops),
+  controller input and haptics, all on one Avatar page with live values.
+- **OSC done properly** — OSCQuery so other OSC apps keep port 9001, forwarding of what VRChat
+  sends to up to eight other apps, up to two extra chatbox outputs, and a pause in club and
+  event worlds on the community blocklist.
+- **Streaming tools** — Twitch chat and alerts, TikTok Live, Kick, YouTube and OBS lines, OBS
+  controls, and a chatbox overlay for an OBS Browser source.
+- **Control API** — drive Fern from a Stream Deck, Touch Portal, Streamer.bot, PowerShell or
+  curl over HTTP or a WebSocket, with a token and answers only for programs on this PC.
+- **AFK detection** — watches VRChat's outgoing OSC (movement and voice), other OSC, window
+  changes and optionally keyboard and mouse, with a configurable threshold, style and timer
+  format.
+- **VRChat logs** — joins, leaves, screenshots, world loads, the current world and session
+  stats, and a history of everything Fern sent that can be saved as .txt or .csv, tailed
+  incrementally instead of re-read every tick.
 - **Settings that stick** — everything is written to `%LOCALAPPDATA%\Fern\config.json`,
   so it survives updates and moving the executable, and old config files pick up new
-  options with sensible defaults.
-- **Self-contained UI** — no CDN, no web fonts, no framework; the stylesheet and fonts are
-  embedded in the binary.
+  options with sensible defaults. Backups (automatic before updates and imports, or by hand)
+  leave out API keys and tokens, which are stored encrypted in `secrets.dat`.
+- **First-run setup** — checks that VRChat's OSC is on, sends a test message and turns on a
+  starter set of lines.
+- **Self-contained UI** — no CDN, no web fonts, no framework; the stylesheet, fonts, icons
+  and emoji are embedded in the binary.
 
 ## Modules
 
 | Module | Shows |
 | --- | --- |
 | AFK | Time since you were last active, or just a label |
-| Loading | Growing dots (`.`, `..`, `...`) with optional text in front |
-| Time | Clock, 12/24h, optional seconds and label |
+| VRChat log | Last join, leave, screenshot or world load |
+| VRChat world | World name, players and peak, instance type, region and time in the instance |
+| Heart rate | Live BPM from Pulsoid, HypeRate or any JSON source, with zones and trend |
+| Counters | Headpats, boops or anything an avatar parameter counts, per session and all time |
+| Media | Track, artist, album, progress bar and `elapsed/total`, plus Spotify extras |
+| Lyrics | The line being sung, from LRCLIB or your own `.lrc` files |
+| Last.fm | What you are scrobbling, with play count and loved mark |
 | Text | Your rotating messages |
+| Loading | Growing dots (`.`, `..`, `...`) with optional text in front |
+| Timer | Countdown, stopwatch or Pomodoro |
+| Scheduled messages | Messages at a set time or every few minutes |
+| Time | Clock, 12/24h, any time zone, a second clock and countdowns to dates |
+| Weather | Conditions, temperature, humidity and wind from Open-Meteo |
+| Calendar | Your next or current event from iCal links or `.ics` files |
+| Prices | Exchange rates and crypto prices for up to 8 pairs |
 | Memory | RAM used, total and percentage |
-| CPU | CPU name, core count and usage |
-| Media | Track, artist, album, progress bar and `elapsed/total` |
-| Active window | Title of the focused window |
-| VRChat log | Last join or leave |
+| CPU | CPU name, core count, usage, and temperature, power, clock and fan from sensors |
+| GPU | Load and video memory, and temperature, power, clock and fan from sensors |
+| Network | Download and upload speed, peak and totals |
+| Sensors | Temperatures, power, clocks and fans you pick from HWiNFO or LibreHardwareMonitor |
+| Ping | Round trip, average and packet loss to a host you choose |
+| Disk usage | Used, size, free and percent for the drives you pick |
+| Uptime | How long the PC and Fern have been running |
+| PC battery | Laptop charge, charging mark and time left |
+| Active window | The focused app or window title, renamed or hidden per app |
+| Tracker battery | Headset, controller and tracker charge from SteamVR |
+| VR performance | Frame rate, reprojection, dropped frames and frame times from SteamVR |
+| Discord | Voice channel, who is talking and your mute state |
+| Twitch | Live or offline, viewers, game, title and followers |
+| Twitch chat | Your newest chat message and stream alerts |
+| TikTok Live | Viewers, likes, follows and gifts via TikFinity or TikTok-Live-Connector |
+| Kick | Live status, viewers and followers |
+| YouTube | Live status, viewers and subscribers |
+| OBS | Live and recording time and the current scene |
+| Soundpad | The sound you just played |
+| Voicemod | Active voice, last sound, and when you're muted |
+| Steam | The game you're playing and for how long |
+| Custom line 1–3 | Text from the control API, a rule, a command or script, or a web address |
 
 ## Download
 
