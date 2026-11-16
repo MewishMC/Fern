@@ -175,6 +175,7 @@ func (c *Config) sanitizeSocial() {
 	v.SoundSec = clampInt(v.SoundSec, 2, 30)
 	v.SoundIcon = trim(v.SoundIcon, 4)
 	v.VoiceIcon = trim(v.VoiceIcon, 4)
+	v.sanitizeMic()
 }
 
 // onlyRunes keeps the characters of s found in allowed, up to n of them.

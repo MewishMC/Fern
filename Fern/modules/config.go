@@ -544,6 +544,12 @@ type VoicemodOptions struct {
 	AnnounceVoice  bool   `json:"announce_voice"`
 	SoundIcon      string `json:"sound_icon"`
 	VoiceIcon      string `json:"voice_icon"`
+	// Microphone controls; see voicemod_mic.go. The shortcuts are per PC.
+	AnnounceMute bool   `json:"announce_mute"`
+	MuteText     string `json:"mute_text"`
+	MuteHotkey   string `json:"mute_hotkey"`
+	BleepHotkey  string `json:"bleep_hotkey"` // held down to bleep
+	BleepMaxSec  int    `json:"bleep_max_sec"`
 }
 
 // OSCOptions is where chatbox messages are sent.
@@ -870,6 +876,8 @@ func DefaultConfig() Config {
 			AnnounceVoice:  true,
 			SoundIcon:      "🎶",
 			VoiceIcon:      "🎙️",
+			MuteText:       "🔇 Muted",
+			BleepMaxSec:    10,
 		},
 		OSCOptions: OSCOptions{
 			Host:  "127.0.0.1",

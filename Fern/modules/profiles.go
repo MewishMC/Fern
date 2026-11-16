@@ -128,6 +128,8 @@ func keepMachineSettings(dst *Config, cur Config) {
 	dst.DiscordOptions.RedirectURI = cur.DiscordOptions.RedirectURI
 	dst.TwitchOptions.ClientID = cur.TwitchOptions.ClientID
 	dst.VoicemodOptions.Enabled = cur.VoicemodOptions.Enabled
+	dst.VoicemodOptions.MuteHotkey = cur.VoicemodOptions.MuteHotkey
+	dst.VoicemodOptions.BleepHotkey = cur.VoicemodOptions.BleepHotkey
 	dst.OBSOptions.Enabled = cur.OBSOptions.Enabled
 	dst.OBSOptions.Host, dst.OBSOptions.Port = cur.OBSOptions.Host, cur.OBSOptions.Port
 }
