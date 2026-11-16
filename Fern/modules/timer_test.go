@@ -296,6 +296,28 @@ func TestTimerControlParamsAndAvatarInput(t *testing.T) {
 	}
 }
 
+func TestTimerTickStopsARunOfAnotherMode(t *testing.T) {
+	t.Cleanup(func() {
+		timerMu.Lock()
+		timer = timerRun{}
+		timerMu.Unlock()
+	})
+	o := timerOpts(nil)
+	timerMu.Lock()
+	timer = timerRun{}
+	timer.start(o, time.Now())
+	timerMu.Unlock()
+	timerTick(o, OSCOptions{})
+	if !TimerRunning() {
+		t.Fatal("a tick of the same mode must keep the run")
+	}
+	o.Mode = TimerPomodoro
+	timerTick(o, OSCOptions{})
+	if TimerRunning() {
+		t.Error("switching the mode in the settings should stop the old run")
+	}
+}
+
 func TestTimerRuleAction(t *testing.T) {
 	useTestConfig(t, DefaultConfig())
 	t.Cleanup(func() {

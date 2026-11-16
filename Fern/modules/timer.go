@@ -575,11 +575,19 @@ func TimerRunning() bool {
 	return timer.active && timer.running
 }
 
-// timerTick moves the run on and sends the avatar parameters.
+// timerTick moves the run on and sends the avatar parameters. A run of
+// another mode than the one now set is stopped: it belongs to old settings.
 func timerTick(o TimerOptions, osc OSCOptions) {
 	timerMu.Lock()
+	changed := timer.active && timer.mode != o.Mode
+	if changed {
+		timer.reset()
+	}
 	events := timer.advance(o, timerNow())
 	timerMu.Unlock()
+	if changed {
+		NotifyChange()
+	}
 	if len(events) > 0 {
 		afterTimerChange(o, events)
 		return
