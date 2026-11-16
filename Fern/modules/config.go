@@ -556,6 +556,8 @@ type OSCOptions struct {
 	// OSCQuery, leaving 9001 to other apps. Off, or if it fails, Fern
 	// listens on 9001.
 	OSCQuery bool `json:"oscquery"`
+	// Forward passes received OSC on to other apps; see oscrouter.go.
+	Forward []OSCForward `json:"forward"`
 }
 
 // OSCTarget is one more OSC destination.
@@ -869,6 +871,7 @@ func DefaultConfig() Config {
 			Extra: []OSCTarget{defaultExtraOutput(0), defaultExtraOutput(1)},
 
 			OSCQuery: true,
+			Forward:  []OSCForward{},
 		},
 		ChatOptions: ChatOptions{
 			NotifySend:      true,
@@ -897,6 +900,7 @@ func (c Config) clone() Config {
 		out.DisplayOptions.Visibility[id] = v
 	}
 	out.OSCOptions.Extra = append([]OSCTarget{}, c.OSCOptions.Extra...)
+	out.OSCOptions.Forward = append([]OSCForward{}, c.OSCOptions.Forward...)
 	out.ChatOptions.History = append([]string{}, c.ChatOptions.History...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
@@ -1366,6 +1370,7 @@ func (c *Config) sanitize() {
 		}
 	}
 	c.OSCOptions.Extra = extra
+	c.OSCOptions.sanitizeForward()
 
 	sanitizeTexts(c)
 }

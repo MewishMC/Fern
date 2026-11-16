@@ -9,8 +9,6 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
-
-	"github.com/hypebeast/go-osc/osc"
 )
 
 // OSCFixedPort is where VRChat sends OSC when nobody asks it otherwise.
@@ -309,7 +307,3 @@ func readOSC(conn *net.UDPConn) {
 		receiveOSC(buf[:n])
 	}
 }
-
-func refreshRouter(opts OSCOptions, listenPort int) {}
-
-func routeOSC(data []byte, msgs []*osc.Message) {}
