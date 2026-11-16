@@ -84,6 +84,8 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	Music musicState `json:"music"`
 }
 
 type appState struct {
@@ -376,6 +378,10 @@ func handleCommand(cmd command) {
 		}
 	case "voicemod":
 		modules.VoicemodCommand(cmd.Action, cmd.Text)
+	case "spotify":
+		handleSpotifyCommand(cmd)
+	case "lastfm":
+		handleLastFMCommand(cmd)
 	case "heartReset":
 		modules.ResetHeartStats()
 	case "profile":
@@ -524,6 +530,7 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+			modules.ModuleLastFM:   d.LastFM,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -582,6 +589,8 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		Music: currentMusic(cfg),
 	}
 }
 
