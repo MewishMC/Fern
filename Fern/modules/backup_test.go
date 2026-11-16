@@ -152,3 +152,24 @@ func TestAutoBackupKeepsTen(t *testing.T) {
 		t.Error("an unknown reason was accepted")
 	}
 }
+
+func TestImportKeepsLocalSTTServer(t *testing.T) {
+	useTempProfiles(t)
+	UpdateConfig(func(c *Config) {
+		c.STTOptions.ServerLaunch, c.STTOptions.ServerExe, c.STTOptions.ServerArgs = true, `C:\evil.exe`, "--bad"
+	})
+	data, err := ExportBackup()
+	if err != nil {
+		t.Fatal(err)
+	}
+	UpdateConfig(func(c *Config) {
+		c.STTOptions.ServerLaunch, c.STTOptions.ServerExe, c.STTOptions.ServerArgs = false, `C:\whisper\server.exe`, "-m base"
+	})
+	if err := ImportBackup(data); err != nil {
+		t.Fatal(err)
+	}
+	s := GetConfig().STTOptions
+	if s.ServerLaunch || s.ServerExe != `C:\whisper\server.exe` || s.ServerArgs != "-m base" {
+		t.Errorf("import brought in the whisper server program: %+v", s)
+	}
+}

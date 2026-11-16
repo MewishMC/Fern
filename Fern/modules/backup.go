@@ -168,6 +168,8 @@ func importBackup(data []byte, reason string) error {
 		h.PulsoidToken, h.HypeRateKey, h.HypeRateID, h.CustomURL = ch.PulsoidToken, ch.HypeRateKey, ch.HypeRateID, ch.CustomURL
 		// A backup from elsewhere never brings a program for Fern to run.
 		next.CustomLines.keepCommands(cur.CustomLines)
+		s, cs := &next.STTOptions, cur.STTOptions
+		s.ServerLaunch, s.ServerExe, s.ServerArgs = cs.ServerLaunch, cs.ServerExe, cs.ServerArgs
 		SetConfig(next) // keeps the sealed API keys
 		if store != nil {
 			profiles = *store
