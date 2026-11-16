@@ -17,6 +17,10 @@ type ttsJob struct {
 	text  string
 	stop  bool
 	force bool // a preview from the panel: speak even when speaking sent messages is off
+	// audio is speech a cloud engine already made (see tts_cloud.go); it is
+	// played instead of reading text.
+	audio *pcmAudio
+	purge bool // with audio: stop what is being read first
 }
 
 // TTSStatus is what the panel shows about text to speech.
@@ -26,6 +30,12 @@ type TTSStatus struct {
 	Voices   []SpeechToken `json:"voices"`
 	Outputs  []SpeechToken `json:"outputs"`
 	Muted    *bool         `json:"muted"` // VRChat's MuteSelf, nil until VRChat reports it
+
+	// Cloud engines: whether a message is being made, and the voices the
+	// current engine lists.
+	Synthesizing      bool          `json:"synthesizing"`
+	EngineVoices      []SpeechToken `json:"engineVoices"`
+	EngineVoicesError string        `json:"engineVoicesError"`
 }
 
 var (
@@ -72,6 +82,11 @@ func CurrentTTS() TTSStatus {
 		out.Muted = &m
 	}
 	muteMu.Unlock()
+	out.Synthesizing = synthesizing()
+	out.EngineVoices, out.EngineVoicesError = CurrentEngineVoices()
+	if out.EngineVoices == nil {
+		out.EngineVoices = []SpeechToken{}
+	}
 	return out
 }
 
@@ -87,13 +102,24 @@ func SpeakSent(text string) {
 func SpeakPreview(text string) { queueTTS(ttsJob{text: text, force: true}) }
 
 // StopSpeaking cuts off whatever is being read.
-func StopSpeaking() { queueTTS(ttsJob{stop: true}) }
+func StopSpeaking() {
+	cancelSynth()
+	queueTTS(ttsJob{stop: true})
+}
 
 func queueTTS(job ttsJob) {
 	startTTS()
-	job.text = strings.TrimSpace(job.text)
-	if !job.stop && job.text == "" {
-		return
+	if job.audio == nil {
+		job.text = strings.TrimSpace(FilterText(SurfaceSpeech, job.text))
+		if !job.stop && job.text == "" {
+			return
+		}
+	}
+	if !job.stop && job.audio == nil {
+		if o := GetConfig().TTSOptions; o.Engine != TTSEngineSAPI {
+			queueSynth(job, o.CutOff)
+			return
+		}
 	}
 	select {
 	case ttsJobs <- job:
@@ -158,7 +184,15 @@ func ttsWorker() {
 			if err := applyVoiceSettings(voice, &current, opts); err != nil {
 				setTTSError(err.Error())
 			}
-			if err := voice.speak(job.text, opts.CutOff, true); err != nil {
+			var err error
+			if job.audio != nil {
+				// The volume is already in the samples.
+				voice.setVolume(100)
+				err = voice.speakPCM(*job.audio, job.purge)
+			} else {
+				err = voice.speak(job.text, opts.CutOff, true)
+			}
+			if err != nil {
 				setTTSError(err.Error())
 				continue
 			}

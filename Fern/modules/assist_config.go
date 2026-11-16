@@ -41,6 +41,18 @@ type TTSOptions struct {
 	CutOff    bool   `json:"cut_off"`    // a new message stops the one being read
 	Unmute    bool   `json:"unmute"`     // open the VRChat mic while speaking
 	VoiceMode string `json:"voice_mode"` // toggle or ptt, matching VRChat's mic setting
+
+	// Engine picks who speaks: sapi (the Windows voices above), openai,
+	// elevenlabs or azure; see tts_engines.go. Their keys are in secrets.dat.
+	Engine             string `json:"engine"`
+	OpenAIBaseURL      string `json:"openai_base_url"` // empty uses the Assist OpenAI-compatible base URL
+	OpenAIModel        string `json:"openai_model"`
+	OpenAIVoice        string `json:"openai_voice"`
+	OpenAIInstructions string `json:"openai_instructions"` // tone, for models that take it
+	ElevenVoice        string `json:"eleven_voice"`        // voice ID
+	ElevenModel        string `json:"eleven_model"`
+	AzureRegion        string `json:"azure_region"`
+	AzureVoice         string `json:"azure_voice"` // short name, e.g. en-US-AvaNeural
 }
 
 // STTOptions configures speech to text.
@@ -75,7 +87,14 @@ func defaultAssistOptions() AssistOptions {
 }
 
 func defaultTTSOptions() TTSOptions {
-	return TTSOptions{Rate: 0, Volume: 60, CutOff: true, VoiceMode: "toggle"}
+	return TTSOptions{
+		Rate: 0, Volume: 60, CutOff: true, VoiceMode: "toggle",
+		Engine:      TTSEngineSAPI,
+		OpenAIModel: defaultTTSOpenAIModel,
+		OpenAIVoice: defaultTTSOpenAIVoice,
+		ElevenModel: defaultElevenModel,
+		AzureVoice:  defaultAzureVoice,
+	}
 }
 
 func defaultSTTOptions() STTOptions {
@@ -151,6 +170,7 @@ func (c *Config) sanitizeAssist() {
 	if t.VoiceMode != "ptt" {
 		t.VoiceMode = "toggle"
 	}
+	t.sanitizeEngine()
 
 	sdef := defaultSTTOptions()
 	s := &c.STTOptions
