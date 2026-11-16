@@ -216,6 +216,11 @@ type ChatOptions struct {
 	LiveRateMS int  `json:"live_rate_ms"`
 	// TypingIndicator shows VRChat's typing bubble while composing.
 	TypingIndicator bool `json:"typing_indicator"`
+	// History holds the last messages sent from the Live page, newest first,
+	// for resending and autocomplete. Empty and not kept while KeepHistory is off.
+	History      []string `json:"history"`
+	KeepHistory  bool     `json:"keep_history"`
+	Autocomplete bool     `json:"autocomplete"` // suggest whole earlier messages while typing
 }
 
 // Config is the persisted application configuration.
@@ -343,6 +348,9 @@ func DefaultConfig() Config {
 			NotifySend:      true,
 			LiveRateMS:      1500,
 			TypingIndicator: true,
+			History:         []string{},
+			KeepHistory:     true,
+			Autocomplete:    true,
 		},
 		TimeoutMS: 2500,
 	}
@@ -358,6 +366,7 @@ func (c Config) clone() Config {
 	}
 	out.TextMessages = append([]string{}, c.TextMessages...)
 	out.OSCOptions.Extra = append([]OSCTarget{}, c.OSCOptions.Extra...)
+	out.ChatOptions.History = append([]string{}, c.ChatOptions.History...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	return out
@@ -728,6 +737,7 @@ func (c *Config) sanitize() {
 
 	// VRChat drops chatbox messages sent faster than about one a second.
 	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)
+	c.ChatOptions.History = cleanChatHistory(c.ChatOptions.History, c.ChatOptions.KeepHistory)
 
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"

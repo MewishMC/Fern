@@ -135,6 +135,7 @@
                             <span class="badge" id="sendBadge">hold 10s</span>
                         </div>
                         <textarea id="sendText" placeholder="Type a message to push to the chatbox…"></textarea>
+                        <button type="button" class="suggest" id="sendSuggest" hidden title="Use this earlier message"></button>
                         <div class="send-row">
                             <select id="sendHold">
                                 <option value="5">Hold 5 seconds</option>
@@ -151,6 +152,13 @@
                             <span><b>Live typing</b> &middot; <span id="liveHint">the chatbox follows as you type</span></span>
                         </div>
                         <div class="hint">Overrides the rotation for a while, then Fern goes back to normal. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> also sends.</div>
+                        <div class="recent" id="recentBox" hidden>
+                            <div class="recent-head">
+                                <span>Recent <span class="count" id="recentCount">0</span></span>
+                                <button type="button" class="btn ghost small" id="btnClearRecent">Clear</button>
+                            </div>
+                            <div class="recent-list" id="recentList"></div>
+                        </div>
                     </div>
 
                     <div class="card">
@@ -1164,6 +1172,20 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Remember sent messages</b>
+                            <span>Keep the last 20 messages from &ldquo;Send now&rdquo; to resend with a click. Turning this off forgets them.</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="keepHistory"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Autocomplete</b>
+                            <span>Suggest a whole earlier message as you type it; <kbd>Tab</kbd> takes it</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="chatAutocomplete"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Sound for sent messages</b>
                             <span>VRChat plays its chatbox sound once for each message from &ldquo;Send now&rdquo;</span>
                         </div>
@@ -1496,6 +1518,7 @@
             syncControls(st);
             renderOrder(st);
             renderDropOrder(st);
+            renderRecent(st);
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
@@ -2119,6 +2142,8 @@
             ["notifyAuto", ["ChatOptions", "notify_auto"]],
             ["liveTyping", ["ChatOptions", "live_typing"]],
             ["typingIndicator", ["ChatOptions", "typing_indicator"]],
+            ["keepHistory", ["ChatOptions", "keep_history"]],
+            ["chatAutocomplete", ["ChatOptions", "autocomplete"]],
             ["spinFast", ["LoadingOptions", "fast"]],
             ["loadDots", ["LoadingOptions", "show_dots"]],
             ["cycleSwitch", ["TextOptions", "cycle"]],
@@ -2193,6 +2218,7 @@
         // [control id, is it in effect for this config].
         const DEPENDS = [
             ["liveRate", (c) => c.ChatOptions.live_typing],
+            ["chatAutocomplete", (c) => c.ChatOptions.keep_history],
             ["clockNoAmPm", (c) => !c.TimeOptions.use_24h],
             ["loadDotsRange", (c) => c.LoadingOptions.show_dots],
             ["spinRate", (c) => c.LoadingOptions.fast],
@@ -2482,6 +2508,7 @@
             const text = $("sendText").value;
             if (chatOptions().live_typing) scheduleLive();
             setTyping(text.trim() !== "");
+            updateSuggestion();
         }
 
         // After a send: the next keystroke starts a new message.
@@ -2489,10 +2516,100 @@
             clearTimeout(compose.liveTimer);
             compose.liveSent = "";
             setTyping(false);
+            updateSuggestion();
         }
 
         $("sendText").addEventListener("input", composeChanged);
         $("sendText").addEventListener("blur", () => setTyping(false));
+
+        /* ---------------- message history ---------------- */
+        // The newest earlier message that starts with what is typed so far.
+        function suggestionFor(typed) {
+            const opts = chatOptions();
+            if (!opts.autocomplete || typed.trim().length < 2) return "";
+            const lower = typed.toLowerCase();
+            return (opts.history || []).find((m) => m.length > typed.length && m.toLowerCase().startsWith(lower)) || "";
+        }
+
+        function updateSuggestion() {
+            const typed = $("sendText").value;
+            const match = suggestionFor(typed);
+            const el = $("sendSuggest");
+            el.hidden = !match;
+            el.dataset.text = match;
+            if (!match) return;
+            el.innerHTML = "";
+            const key = document.createElement("kbd");
+            key.textContent = "Tab";
+            const done = document.createElement("span");
+            done.className = "suggest-typed";
+            done.textContent = match.slice(0, typed.length);
+            const rest = document.createElement("span");
+            rest.textContent = match.slice(typed.length);
+            el.append(key, done, rest);
+        }
+
+        function acceptSuggestion() {
+            const text = $("sendSuggest").dataset.text;
+            if (!text) return false;
+            const box = $("sendText");
+            box.value = text;
+            box.focus();
+            box.setSelectionRange(text.length, text.length);
+            composeChanged();
+            return true;
+        }
+
+        $("sendText").addEventListener("keydown", (ev) => {
+            if (ev.key === "Tab" && !ev.shiftKey && !$("sendSuggest").hidden && acceptSuggestion()) ev.preventDefault();
+            if (ev.key === "Escape" && !$("sendSuggest").hidden) {
+                ev.preventDefault();
+                $("sendSuggest").hidden = true;
+            }
+        });
+        $("sendSuggest").addEventListener("mousedown", (ev) => ev.preventDefault());
+        $("sendSuggest").addEventListener("click", acceptSuggestion);
+
+        function renderRecent(st) {
+            const history = (st.config.ChatOptions && st.config.ChatOptions.history) || [];
+            const sig = history.join("\u0001");
+            if (sig === S.recentSig) return;
+            S.recentSig = sig;
+            $("recentBox").hidden = !history.length;
+            $("recentCount").textContent = history.length;
+            const list = $("recentList");
+            list.innerHTML = "";
+            history.forEach((text) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "recent-item";
+                item.dataset.text = text;
+                item.title = "Send again · Shift+click to edit";
+                item.textContent = text;
+                list.appendChild(item);
+            });
+            if (document.activeElement === $("sendText")) updateSuggestion();
+        }
+
+        $("recentList").addEventListener("click", (ev) => {
+            const item = ev.target.closest(".recent-item");
+            if (!item) return;
+            const text = item.dataset.text;
+            if (ev.shiftKey) {
+                $("sendText").value = text;
+                $("sendText").focus();
+                composeChanged();
+                return;
+            }
+            const hold = num($("sendHold").value, 10);
+            if (send({ type: "send", text: text, hold: hold })) toast("Sent again · " + (hold === 0 ? "pinned" : "holding " + hold + "s"));
+        });
+
+        $("btnClearRecent").addEventListener("click", () => {
+            const history = chatOptions().history || [];
+            if (!history.length || !send({ type: "clearChatHistory" })) return;
+            toast("Recent messages cleared");
+        });
 
         $("btnClearHold").addEventListener("click", () => {
             if (send({ type: "clearHold" })) {

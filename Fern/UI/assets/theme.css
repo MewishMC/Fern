@@ -1119,6 +1119,93 @@ select option {
     font-weight: 600;
 }
 
+.suggest {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 5px 9px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: .75rem;
+    text-align: left;
+    cursor: pointer;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggest[hidden] {
+    display: none;
+}
+
+.suggest:hover {
+    border-color: var(--accent-border);
+}
+
+.suggest kbd {
+    margin-right: 8px;
+}
+
+.suggest-typed {
+    color: var(--text-primary);
+}
+
+.recent {
+    margin-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 10px;
+}
+
+.recent-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .62rem;
+    font-weight: 600;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.recent-head .count {
+    margin-left: 4px;
+    text-transform: none;
+}
+
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    max-height: 168px;
+    overflow-y: auto;
+}
+
+.recent-item {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: .75rem;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 0 0 auto;
+}
+
+.recent-item:hover {
+    border-color: var(--accent-border);
+    color: var(--text-primary);
+}
+
 /* Extra OSC outputs: host, port and a switch on one row. */
 .out-control {
     display: flex;

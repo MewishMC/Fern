@@ -265,11 +265,17 @@ func handleCommand(cmd command) {
 	case "config":
 		var next modules.Config
 		if err := json.Unmarshal(cmd.Config, &next); err == nil {
+			// The panel's copy of the message history can be a send behind;
+			// Fern's own copy is the one that counts.
+			next.ChatOptions.History = modules.GetConfig().ChatOptions.History
 			modules.SetConfig(next)
 		}
 	case "send":
 		hold := time.Duration(cmd.Hold) * time.Second
 		modules.SetHold(cmd.Text, hold)
+		modules.AddChatHistory(cmd.Text)
+	case "clearChatHistory":
+		modules.ClearChatHistory()
 	case "live":
 		modules.SetLive(cmd.Text, time.Duration(cmd.Hold)*time.Second)
 	case "typing":
