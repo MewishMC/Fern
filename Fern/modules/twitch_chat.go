@@ -377,7 +377,8 @@ func noteTwitchAlert(cfg Config, a twitchAlert, source string) {
 		tchatAlerts.push(text, time.Duration(o.AlertSec)*time.Second)
 		tchatRecent.add(a.Kind, text)
 	} else if a.Kind != twitchGifted {
-		tchatRecent.add(a.Kind, a.Name+" "+a.Kind)
+		// Still listed on the page, worded plainly, while its alert is off.
+		tchatRecent.add(a.Kind, alertText(defaultTwitchChatOptions(), a))
 	}
 }
 
