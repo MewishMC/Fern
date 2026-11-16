@@ -3861,6 +3861,39 @@
                     </div>
                 </div>
 
+                <div class="section-title">Receiving</div>
+                <div class="card" id="oscInCard">
+                    <div class="card-head">
+                        <h3>From VRChat</h3>
+                        <span class="badge" id="oscInBadge">starting</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>OSCQuery</b>
+                            <span>Listen on a free port and let VRChat find it over OSCQuery, so other OSC apps can keep port 9001. Off, Fern listens on 9001 itself.</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="oscQuery"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Status</b>
+                            <span id="oscInStatus"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" id="fwdCard">
+                    <div class="card-head">
+                        <h3>Forward received OSC</h3>
+                        <span class="badge" id="fwdBadge">off</span>
+                    </div>
+                    <div class="hint" style="margin-top:0">Pass what VRChat sends Fern on to other OSC apps, up to eight. Leave the filter empty to forward everything, or give the start of the addresses to pass on, like <code>/avatar/parameters/</code>.</div>
+                    <div id="fwdList"></div>
+                    <div class="window-add">
+                        <button class="btn" type="button" id="fwdAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add target</button>
+                    </div>
+                </div>
+
                 <div class="hint">Every change is saved to <code>%LOCALAPPDATA%\Fern\config.json</code> as you make it.</div>
             </section>
 
@@ -4304,7 +4337,147 @@
             renderNetwork(st);
             renderGPU(st);
             renderApp(st);
+            renderOSCIn(st);
         }
+
+        /* ---------------- receiving OSC ---------------- */
+        const FWD_MAX = 8;
+        function renderOSCIn(st, force) {
+            const o = st.oscIn || {};
+            const wantQuery = !!st.config.OSC.oscquery;
+            let badge, text, bad = false;
+            if (o.oscquery) {
+                badge = "OSCQuery";
+                text = "Listening on port " + o.port + ", advertised as " + o.service + ". " +
+                    (o.queriedMs ? "An OSC app, normally VRChat, looked Fern up at " + fmtAgo(o.queriedMs) + "."
+                        : "Waiting for VRChat to look Fern up. If it never does, Fern goes back to port 9001 by itself.");
+            } else if (o.port) {
+                badge = "port " + o.port;
+                text = wantQuery ? "OSCQuery isn't working, so Fern listens on port 9001. " + (o.error || "")
+                    : "Listening on port 9001, where VRChat sends by default.";
+                bad = wantQuery;
+            } else if (o.error) {
+                badge = "not listening";
+                text = "Fern can't hear VRChat: " + o.error + (wantQuery ? "" : ". Turning on OSCQuery lets Fern share with the app that holds 9001.");
+                bad = true;
+            } else {
+                badge = "starting";
+                text = "";
+            }
+            $("oscInBadge").textContent = badge;
+            $("oscInBadge").classList.toggle("on", !!o.port);
+            $("oscInStatus").textContent = text;
+            $("oscInStatus").classList.toggle("bad", bad);
+
+            const list = (lockForms() && S.fwd) || st.config.OSC.forward || [];
+            const on = list.filter((f) => f.enabled).length;
+            $("fwdBadge").textContent = on ? on + " on" : "off";
+            $("fwdBadge").classList.toggle("on", on > 0);
+            $("fwdAdd").disabled = list.length >= FWD_MAX;
+            const box = $("fwdList");
+            const sig = JSON.stringify(list);
+            if (force || (sig !== S.fwdSig && !box.contains(document.activeElement))) {
+                S.fwdSig = sig;
+                box.replaceChildren();
+                list.forEach((f, index) => {
+                    const row = document.createElement("div");
+                    row.className = "field fwd-row";
+                    row.dataset.index = String(index);
+                    row.innerHTML =
+                        '<div class="field-label"><b></b><span class="fwd-status"></span></div>' +
+                        '<div class="field-control out-control">' +
+                        '<input type="text" class="fwd-host" autocomplete="off" aria-label="Host" placeholder="127.0.0.1">' +
+                        '<input type="number" class="fwd-port" min="1" max="65535" aria-label="Port">' +
+                        '<input type="text" class="fwd-prefix" autocomplete="off" maxlength="128" aria-label="Address filter" placeholder="everything">' +
+                        '<label class="switch" title="Forward to this target"><input type="checkbox" class="fwd-on" aria-label="Forward to this target"><span></span></label>' +
+                        '<button class="mini-x" type="button" title="Remove" aria-label="Remove">✕</button>' +
+                        '</div>';
+                    row.querySelector("b").textContent = "Target " + (index + 1);
+                    row.querySelector(".fwd-host").value = f.host || "";
+                    row.querySelector(".fwd-port").value = f.port || "";
+                    row.querySelector(".fwd-prefix").value = f.prefix || "";
+                    row.querySelector(".fwd-on").checked = !!f.enabled;
+                    box.appendChild(row);
+                });
+            }
+            const states = o.forward || [];
+            box.querySelectorAll(".fwd-row").forEach((row) => {
+                const index = +row.dataset.index;
+                const f = list[index] || {};
+                const s = states[index] || {};
+                const status = row.querySelector(".fwd-status");
+                let line = f.enabled ? (s.sent ? s.sent + " packets passed on" : "Nothing passed on yet") : "Off";
+                if (f.enabled && s.error) line = s.error;
+                status.textContent = line;
+                status.classList.toggle("bad", !!(f.enabled && s.error));
+            });
+        }
+        function editForwards(mutate) {
+            if (!S.state) return false;
+            const current = (lockForms() && S.fwd) || S.state.config.OSC.forward || [];
+            const next = current.map((f) => Object.assign({}, f));
+            mutate(next);
+            const ok = pushConfigNow((c) => { c.OSC.forward = next.map((f) => Object.assign({}, f)); });
+            if (!ok) return false;
+            S.fwd = next;
+            renderOSCIn(S.state, true);
+            return true;
+        }
+        $("fwdAdd").addEventListener("click", () => {
+            if (editForwards((list) => { if (list.length < FWD_MAX) list.push({ enabled: true, host: "127.0.0.1", port: 9010, prefix: "" }); })) {
+                const rows = $("fwdList").querySelectorAll(".fwd-port");
+                if (rows.length) rows[rows.length - 1].focus();
+            }
+        });
+        // Fields apply once left, like the outputs above, so typing a port
+        // does not forward to every number on the way.
+        $("fwdList").addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter" && ev.target.matches("input[type=text], input[type=number]")) ev.target.blur();
+        });
+        $("fwdList").addEventListener("change", (ev) => {
+            const row = ev.target.closest(".fwd-row");
+            if (!row) return;
+            const index = +row.dataset.index;
+            const el = ev.target;
+            let apply;
+            if (el.classList.contains("fwd-host")) {
+                const host = el.value.trim();
+                if (!host) { toast("Target " + (index + 1) + " host can't be empty", true); renderOSCIn(S.state, true); return; }
+                apply = (f) => { f.host = host; };
+            } else if (el.classList.contains("fwd-port")) {
+                const n = Number(el.value);
+                if (!Number.isInteger(n) || n < 1 || n > 65535) {
+                    toast("Target " + (index + 1) + " port must be a whole number from 1 to 65535", true);
+                    renderOSCIn(S.state, true);
+                    return;
+                }
+                apply = (f) => { f.port = n; };
+            } else if (el.classList.contains("fwd-prefix")) {
+                let prefix = el.value.replace(/\s+/g, "");
+                if (prefix && !prefix.startsWith("/")) prefix = "/" + prefix;
+                apply = (f) => { f.prefix = prefix; };
+            } else if (el.classList.contains("fwd-on")) {
+                const on = el.checked;
+                apply = (f) => { f.enabled = on; };
+            } else {
+                return;
+            }
+            editForwards((list) => { if (list[index]) apply(list[index]); });
+        });
+        $("fwdList").addEventListener("click", (ev) => {
+            const button = ev.target.closest(".mini-x");
+            if (!button) return;
+            const index = +button.closest(".fwd-row").dataset.index;
+            const list = (lockForms() && S.fwd) || S.state.config.OSC.forward || [];
+            const removed = list[index];
+            if (!removed) return;
+            if (editForwards((l) => { l.splice(index, 1); })) {
+                toast("Removed target " + (index + 1), false, {
+                    label: "Undo",
+                    run: () => editForwards((l) => { if (l.length < FWD_MAX) l.splice(Math.min(index, l.length), 0, removed); }),
+                });
+            }
+        });
 
         /* ---------------- app ---------------- */
         function renderApp(st) {
@@ -5372,6 +5545,7 @@
             ["masterSwitch", ["display_options", "show"]],
             ["out0On", ["OSC", "extra", 0, "enabled"]],
             ["out1On", ["OSC", "extra", 1, "enabled"]],
+            ["oscQuery", ["OSC", "oscquery"]],
             ["notifySend", ["ChatOptions", "notify_send"]],
             ["notifyAuto", ["ChatOptions", "notify_auto"]],
             ["liveTyping", ["ChatOptions", "live_typing"]],
