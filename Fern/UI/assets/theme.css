@@ -3293,3 +3293,61 @@ input[type="password"]:focus {
     gap: 8px;
     margin-top: 12px;
 }
+
+/* Chatbox motion, pages and blocked worlds */
+.block-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--amber);
+}
+
+.block-info span {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.motion-num {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .7rem;
+    color: var(--text-dim);
+}
+
+.motion-num input {
+    width: 58px;
+    padding: .25rem .4rem;
+    font-size: .72rem;
+}
+
+.motion-num.inactive {
+    opacity: .45;
+}
+
+.row.page-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.page-row-top {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.page-row-top input[type="text"] {
+    flex: 1 1 140px;
+    min-width: 0;
+}
+
+.page-row-top input[type="number"] {
+    width: 70px;
+}
