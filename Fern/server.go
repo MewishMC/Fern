@@ -84,6 +84,7 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+	Tally    tallyState    `json:"tally"`
 }
 
 type appState struct {
@@ -386,6 +387,12 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "timer":
+		handleTimerCommand(cmd)
+	case "counter":
+		handleCounterCommand(cmd)
+	case "schedule":
+		handleScheduleCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -524,6 +531,10 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+
+			modules.ModuleTimer:    d.Timer,
+			modules.ModuleCounter:  d.Counter,
+			modules.ModuleSchedule: d.Schedule,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -582,6 +593,7 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+		Tally:    currentTally(),
 	}
 }
 
