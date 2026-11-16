@@ -531,6 +531,20 @@ func extractBPM(data []byte, path string) (float64, error) {
 }
 
 func jsonPathNumber(doc any, path string) (float64, error) {
+	cur, err := jsonPathLookup(doc, path)
+	if err != nil {
+		return 0, err
+	}
+	if v, ok := asNumber(cur); ok {
+		return v, nil
+	}
+	return 0, fmt.Errorf("%q is not a number", path)
+}
+
+// jsonPathLookup walks a dotted path such as data.items[0].name (or
+// data.items.0.name) through decoded JSON. Field names match ignoring case
+// when there is no exact match.
+func jsonPathLookup(doc any, path string) (any, error) {
 	path = bracketIndex.ReplaceAllString(strings.TrimPrefix(path, "$."), ".$1")
 	cur := doc
 	for _, part := range strings.Split(path, ".") {
@@ -549,23 +563,20 @@ func jsonPathNumber(doc any, path string) (float64, error) {
 				}
 			}
 			if !ok {
-				return 0, fmt.Errorf("no field %q in the reply", part)
+				return nil, fmt.Errorf("no field %q in the reply", part)
 			}
 			cur = next
 		case []any:
 			i, err := strconv.Atoi(part)
 			if err != nil || i < 0 || i >= len(node) {
-				return 0, fmt.Errorf("no item %q in the reply", part)
+				return nil, fmt.Errorf("no item %q in the reply", part)
 			}
 			cur = node[i]
 		default:
-			return 0, fmt.Errorf("no field %q in the reply", part)
+			return nil, fmt.Errorf("no field %q in the reply", part)
 		}
 	}
-	if v, ok := asNumber(cur); ok {
-		return v, nil
-	}
-	return 0, fmt.Errorf("%q is not a number", path)
+	return cur, nil
 }
 
 func asNumber(v any) (float64, bool) {

@@ -44,6 +44,7 @@ var DefaultOrder = []string{
 	ModuleHeart,
 	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 	ModuleNetwork, ModuleGPU, ModuleWorld,
+	ModuleCustom1, ModuleCustom2, ModuleCustom3,
 }
 
 var knownModules = func() map[string]bool {
@@ -78,6 +79,9 @@ type DisplayOptions struct {
 	Network      bool     `json:"network"`
 	GPU          bool     `json:"gpu"`
 	World        bool     `json:"world"`
+	Custom1      bool     `json:"custom1"`
+	Custom2      bool     `json:"custom2"`
+	Custom3      bool     `json:"custom3"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -628,6 +632,12 @@ type Config struct {
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
+
+	// The local control API, custom lines and the clipboard shortcut; see
+	// control.go, customlines.go and clipboard.go. All three are per PC.
+	ControlAPI  ControlAPIOptions  `json:"ControlAPI"`
+	CustomLines CustomLinesOptions `json:"CustomLines"`
+	Clipboard   ClipboardOptions   `json:"Clipboard"`
 }
 
 var (
@@ -891,6 +901,9 @@ func DefaultConfig() Config {
 		STTOptions:    defaultSTTOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
+		ControlAPI:    defaultControlAPI(),
+		CustomLines:   defaultCustomLines(),
+		Clipboard:     defaultClipboard(),
 	}
 }
 
@@ -915,6 +928,7 @@ func (c Config) clone() Config {
 	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	out.Rules = c.Rules.clone()
 	out.DND = c.DND.clone()
+	out.CustomLines = c.CustomLines.clone()
 	return out
 }
 
@@ -1111,6 +1125,12 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.GPU
 	case ModuleWorld:
 		return &d.World
+	case ModuleCustom1:
+		return &d.Custom1
+	case ModuleCustom2:
+		return &d.Custom2
+	case ModuleCustom3:
+		return &d.Custom3
 	}
 	return nil
 }
@@ -1383,6 +1403,9 @@ func (c *Config) sanitize() {
 	sanitizeTexts(c)
 	c.Rules.sanitize()
 	c.DND.sanitize()
+	c.ControlAPI.sanitize()
+	c.CustomLines.sanitize()
+	c.Clipboard.sanitize()
 }
 
 func scheduleSave() {

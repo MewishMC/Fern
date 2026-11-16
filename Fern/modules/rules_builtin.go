@@ -97,6 +97,9 @@ var lineLabels = map[string]string{
 
 // LineLabel is a chatbox line's display name.
 func LineLabel(id string) string {
+	if name, ok := customLineName(id); ok {
+		return name
+	}
 	if l, ok := lineLabels[id]; ok {
 		return l
 	}

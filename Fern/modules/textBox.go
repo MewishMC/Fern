@@ -138,6 +138,8 @@ func moduleText(id string, cfg Config) string {
 		return gpuLine(cfg)
 	case ModuleWorld:
 		return worldLine(cfg)
+	case ModuleCustom1, ModuleCustom2, ModuleCustom3:
+		return customLine(cfg, id)
 	}
 	return ""
 }
@@ -193,6 +195,8 @@ func buildLines(cfg Config, vr bool) (lines []FitLine, hidden []string) {
 		line := FitLine{ID: id}
 		if id == ModuleMedia {
 			line = mediaFitLine(cfg)
+		} else if IsCustomLine(id) {
+			line = customFitLine(cfg, id)
 		} else {
 			line.Variants = []string{moduleText(id, cfg)}
 		}
