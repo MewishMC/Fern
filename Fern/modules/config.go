@@ -1391,5 +1391,9 @@ func SaveNow() error {
 	if err := os.WriteFile(tmp, data, 0644); err != nil {
 		return err
 	}
-	return os.Rename(tmp, cfgPath)
+	if err := os.Rename(tmp, cfgPath); err != nil {
+		return err
+	}
+	captureActiveProfile()
+	return nil
 }
