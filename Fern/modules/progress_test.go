@@ -29,6 +29,30 @@ func TestProgressBarStyles(t *testing.T) {
 	}
 }
 
+func TestSanitizeBarPresets(t *testing.T) {
+	c := DefaultConfig()
+	c.MediaOptions.BarPresets = []BarPreset{
+		{Name: "  Hearts  ", Filled: "♥♥♥", Empty: "♡"},
+		{Name: "hearts", Filled: "x"},
+		{Name: "   "},
+		{Name: "Line", Filled: "━", Empty: "─", Head: "●"},
+	}
+	for i := 0; i < 40; i++ {
+		c.MediaOptions.BarPresets = append(c.MediaOptions.BarPresets, BarPreset{Name: "p" + string(rune('a'+i))})
+	}
+	c.sanitize()
+	got := c.MediaOptions.BarPresets
+	if len(got) != maxBarPresets {
+		t.Fatalf("kept %d presets, want %d", len(got), maxBarPresets)
+	}
+	if got[0] != (BarPreset{Name: "Hearts", Filled: "♥♥", Empty: "♡"}) {
+		t.Errorf("first preset: %+v", got[0])
+	}
+	if got[1].Name != "Line" || got[1].Head != "●" {
+		t.Errorf("second preset: %+v", got[1])
+	}
+}
+
 func TestSanitizeLimitsBarCharacters(t *testing.T) {
 	c := DefaultConfig()
 	c.MediaOptions.BarFilled = "abcdef"

@@ -73,6 +73,25 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 ### Changed
 - Custom messages are saved as objects with a heart and a group. Existing message lists are
   converted when loaded; older Fern versions cannot read the new format.
+- The media line can start with your own words per state ("Listening to", "Paused"), show
+  stopped players with their own icon, use any artist separator (such as " ᵇʸ "), go
+  uppercase and write the playback time in small raised digits.
+- "Only show on change" shows the media line for a while (25 seconds by default) after the
+  track changes or you pause or resume, then hides it.
+- Progress bar styles can be saved under a name, and shared as text with Export and Import.
+- A Lyrics line shows the line being sung, synced to the music, from LRCLIB or your own
+  `.lrc` files. It can replace the track on the media line, with adjustable timing, hold
+  time and a marker for instrumental breaks. Each track is looked up once per run.
+- The time line can use any time zone, show its abbreviation, add a second clock and count
+  the time since or until dates, like "together 1y 2m".
+- A Weather line shows the conditions, temperature, feels-like, humidity and wind for a city
+  or coordinates you choose, from Open-Meteo, in °C or °F and km/h, mph or m/s. It can sit
+  on the time line.
+
+### Changed
+- Media titles from video sites are tidied: "(Official Video)", "[HD]", "| Official Music
+  Video", repeated "ft." credits and "Artist - " prefixes are dropped. Turn off **Tidy
+  titles** on the Media page to keep them.
 
 ## v2.2 - Custom bars
 

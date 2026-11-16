@@ -24,12 +24,14 @@ const (
 	ModuleBattery = "battery"
 	ModuleVRPerf  = "vrperf"
 	ModuleHeart   = "heartrate"
+	ModuleLyrics  = "lyrics"
+	ModuleWeather = "weather"
 )
 
 // DefaultOrder is the order used before the user picks one.
 var DefaultOrder = []string{
-	ModuleAFK, ModuleLoading, ModuleTime, ModuleText,
-	ModuleMemory, ModuleCPU, ModuleMedia, ModuleWindow, ModuleLogs,
+	ModuleAFK, ModuleLoading, ModuleTime, ModuleWeather, ModuleText,
+	ModuleMemory, ModuleCPU, ModuleMedia, ModuleLyrics, ModuleWindow, ModuleLogs,
 	ModuleBattery, ModuleVRPerf,
 	ModuleHeart,
 }
@@ -57,6 +59,8 @@ type DisplayOptions struct {
 	Battery      bool     `json:"battery"`
 	VRPerf       bool     `json:"vr_perf"`
 	HeartRate    bool     `json:"heart_rate"`
+	Lyrics       bool     `json:"lyrics"`
+	Weather      bool     `json:"weather"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -172,6 +176,33 @@ type MediaOptions struct {
 	BarRight       string `json:"bar_right"`     // optional cap after the bar, e.g. ]
 	MaxChars       int    `json:"max_chars"`     // limit for the track part
 	PreferredApp   string `json:"preferred_app"` // session to read; empty follows the current one
+	// State words in front of the track, e.g. "Listening to"; empty for none.
+	PlayingText     string `json:"playing_text"`
+	PausedText      string `json:"paused_text"`
+	StoppedText     string `json:"stopped_text"`
+	StoppedIcon     string `json:"stopped_icon"`
+	ShowWhenStopped bool   `json:"show_when_stopped"`
+	Separator       string `json:"separator"` // between the title and the artist
+	Uppercase       bool   `json:"uppercase"`
+	SuperscriptTime bool   `json:"superscript_time"` // ¹˸²⁴ᐟ³˸¹⁸ instead of 1:24/3:18
+	// OnlyOnChange shows the line for ChangeSeconds after the track changes or
+	// playback is paused or resumed, then hides it until the next change.
+	OnlyOnChange  bool `json:"only_on_change"`
+	ChangeSeconds int  `json:"change_seconds"`
+	TidyTitles    bool `json:"tidy_titles"` // drop "(Official Video)", "[HD]" and the like
+	// BarPresets are the user's saved progress bar styles.
+	BarPresets []BarPreset `json:"bar_presets"`
+}
+
+// BarPreset is a named set of progress bar characters. The keys match the
+// MediaOptions fields so the panel can copy one over the other.
+type BarPreset struct {
+	Name   string `json:"name"`
+	Filled string `json:"bar_filled"`
+	Empty  string `json:"bar_empty"`
+	Head   string `json:"bar_head"`
+	Left   string `json:"bar_left"`
+	Right  string `json:"bar_right"`
 }
 
 // TimeOptions controls the clock line.
@@ -180,6 +211,14 @@ type TimeOptions struct {
 	Seconds bool   `json:"seconds"`
 	NoAmPm  bool   `json:"no_am_pm"` // 3:04 instead of 3:04 PM
 	Label   string `json:"label"`
+	// Zone is an IANA time zone like Europe/Berlin; empty uses the PC's.
+	Zone         string        `json:"zone"`
+	ShowZone     bool          `json:"show_zone"` // add the abbreviation, like CET
+	Zone2        string        `json:"zone2"`     // optional second clock
+	Label2       string        `json:"label2"`
+	Counters     []TimeCounter `json:"counters"`
+	CounterUnits int           `json:"counter_units"` // units per counter, 1-4
+	CounterLine  bool          `json:"counter_line"`  // counters on a line of their own
 }
 
 // MemoryOptions controls the memory line.
@@ -322,6 +361,36 @@ const (
 	HeartCustom   = "custom"
 )
 
+// LyricsOptions controls the synced lyrics line.
+type LyricsOptions struct {
+	Label        string `json:"label"`
+	OffsetMS     int    `json:"offset_ms"`     // positive shows lines later
+	HoldSeconds  int    `json:"hold_seconds"`  // longest a line stays up
+	GapSeconds   int    `json:"gap_seconds"`   // pauses this long show GapMarker; 0 never
+	GapMarker    string `json:"gap_marker"`    // shown in breaks and instrumentals
+	ReplaceTrack bool   `json:"replace_track"` // show on the media line instead of the track
+	Folder       string `json:"folder"`        // .lrc files here win over LRCLIB
+	Online       bool   `json:"online"`        // look lyrics up on lrclib.net
+	MaxChars     int    `json:"max_chars"`
+}
+
+// WeatherOptions controls the weather line, from Open-Meteo.
+type WeatherOptions struct {
+	City          string `json:"city"` // a place name, or "lat, lon"
+	Label         string `json:"label"`
+	ShowCondition bool   `json:"show_condition"`
+	ShowEmoji     bool   `json:"show_emoji"`
+	ShowTemp      bool   `json:"show_temp"`
+	ShowFeels     bool   `json:"show_feels_like"`
+	ShowHumidity  bool   `json:"show_humidity"`
+	ShowWind      bool   `json:"show_wind"`
+	TempUnit      string `json:"temp_unit"`    // c or f
+	WindUnit      string `json:"wind_unit"`    // kmh, mph or ms
+	Decimals      int    `json:"decimals"`     // 0 or 1
+	IntervalMin   int    `json:"interval_min"` // minutes between refreshes, 10-60
+	InTime        bool   `json:"in_time"`      // show on the time line instead
+}
+
 // OSCOptions is where chatbox messages are sent.
 type OSCOptions struct {
 	Host string `json:"host"`
@@ -344,6 +413,8 @@ type Config struct {
 	BatteryOptions BatteryOptions `json:"BatteryOptions"`
 	VRPerfOptions  VRPerfOptions  `json:"VRPerfOptions"`
 	HeartRate      HeartOptions   `json:"HeartRateOptions"`
+	LyricsOptions  LyricsOptions  `json:"LyricsOptions"`
+	WeatherOptions WeatherOptions `json:"WeatherOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 	AssistOptions  AssistOptions  `json:"AssistOptions"`
@@ -431,10 +502,15 @@ func DefaultConfig() Config {
 			BarEmpty:       "▱",
 			MaxChars:       90,
 			PreferredApp:   "",
+			StoppedIcon:    "⏹",
+			Separator:      " — ",
+			ChangeSeconds:  25,
+			TidyTitles:     true,
 		},
 		TimeOptions: TimeOptions{
-			Use24h: false,
-			Label:  "",
+			Use24h:       false,
+			Label:        "",
+			CounterUnits: 2,
 		},
 		MemoryOptions: MemoryOptions{
 			Label:       "ᵐᵉᵐ",
@@ -506,6 +582,21 @@ func DefaultConfig() Config {
 			BeatMode:         "toggle",
 			ParamConnected:   "isHRConnected",
 		},
+		LyricsOptions: LyricsOptions{
+			HoldSeconds: 6,
+			GapSeconds:  8,
+			GapMarker:   "♪ ♪ ♪",
+			Online:      true,
+			MaxChars:    90,
+		},
+		WeatherOptions: WeatherOptions{
+			ShowCondition: true,
+			ShowEmoji:     true,
+			ShowTemp:      true,
+			TempUnit:      "c",
+			WindUnit:      "kmh",
+			IntervalMin:   15,
+		},
 		OSCOptions: OSCOptions{
 			Host: "127.0.0.1",
 			Port: 9000,
@@ -526,6 +617,8 @@ func (c Config) clone() Config {
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	out.BatteryOptions.Devices = append([]BatteryDevice{}, c.BatteryOptions.Devices...)
+	out.MediaOptions.BarPresets = append([]BarPreset{}, c.MediaOptions.BarPresets...)
+	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	return out
 }
 
@@ -704,6 +797,10 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.VRPerf
 	case ModuleHeart:
 		return &d.HeartRate
+	case ModuleLyrics:
+		return &d.Lyrics
+	case ModuleWeather:
+		return &d.Weather
 	}
 	return nil
 }
@@ -818,6 +915,17 @@ func (c *Config) sanitize() {
 	}
 	c.MediaOptions.MaxChars = clampInt(c.MediaOptions.MaxChars, 4, 144)
 	c.MediaOptions.PreferredApp = RuneLimit(strings.TrimSpace(c.MediaOptions.PreferredApp), 128)
+	for _, s := range []*string{&c.MediaOptions.PlayingText, &c.MediaOptions.PausedText, &c.MediaOptions.StoppedText} {
+		*s = RuneLimit(strings.Join(strings.Fields(*s), " "), 24)
+	}
+	c.MediaOptions.StoppedIcon = RuneLimit(strings.TrimSpace(c.MediaOptions.StoppedIcon), 4)
+	// The separator keeps its spaces (" ᵇʸ " needs them) but stays on one line.
+	c.MediaOptions.Separator = RuneLimit(strings.ReplaceAll(c.MediaOptions.Separator, "\n", " "), 8)
+	if strings.TrimSpace(c.MediaOptions.Separator) == "" {
+		c.MediaOptions.Separator = " — "
+	}
+	c.MediaOptions.ChangeSeconds = clampInt(c.MediaOptions.ChangeSeconds, 3, 600)
+	c.MediaOptions.BarPresets = sanitizeBarPresets(c.MediaOptions.BarPresets)
 
 	c.MemoryOptions.Label = RuneLimit(strings.TrimSpace(c.MemoryOptions.Label), 16)
 	c.MemoryOptions.Decimals = clampInt(c.MemoryOptions.Decimals, 0, 3)
@@ -861,6 +969,9 @@ func (c *Config) sanitize() {
 	c.WindowOptions.Connector = RuneLimit(strings.TrimSpace(c.WindowOptions.Connector), 16)
 	c.LogsOptions.Label = RuneLimit(strings.TrimSpace(c.LogsOptions.Label), 16)
 	c.LogsOptions.MaxChars = clampInt(c.LogsOptions.MaxChars, 0, 144)
+	sanitizeLyrics(&c.LyricsOptions)
+	sanitizeTime(&c.TimeOptions)
+	sanitizeWeather(&c.WeatherOptions)
 	c.TextOptions.Label = RuneLimit(strings.TrimSpace(c.TextOptions.Label), 16)
 	if c.LoadingOptions.Dots == 0 {
 		c.LoadingOptions.Dots = 6

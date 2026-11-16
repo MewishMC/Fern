@@ -71,6 +71,8 @@ type uiState struct {
 	SteamVR   modules.SteamVRStatus `json:"steamvr"`
 	HeartRate heartState            `json:"heartRate"`
 	Assist    assistState           `json:"assist"`
+	Lyrics    modules.LyricsStatus  `json:"lyrics"`
+	Weather   modules.WeatherStatus `json:"weather"`
 }
 
 // assistState is the Assist page: AI tools, text to speech and speech to
@@ -434,6 +436,8 @@ func buildState() uiState {
 			modules.ModuleBattery: d.Battery,
 			modules.ModuleVRPerf:  d.VRPerf,
 			modules.ModuleHeart:   d.HeartRate,
+			modules.ModuleLyrics:  d.Lyrics,
+			modules.ModuleWeather: d.Weather,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -479,6 +483,8 @@ func buildState() uiState {
 			STT:  modules.CurrentSTT(),
 			Keys: modules.KeyHints(cfg),
 		},
+		Lyrics:  modules.CurrentLyricsStatus(),
+		Weather: modules.CurrentWeatherStatus(),
 	}
 }
 

@@ -607,6 +607,25 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Only show on change</b>
+                            <span>Shows the line when the track changes or you pause or resume, then hides it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaOnChange"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show for</b>
+                            <span>How long the line stays after a change</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="mediaChangeSecs" min="5" max="120" step="5">
+                            <span class="val" id="mediaChangeSecsVal">25s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Keyword filter</b>
                             <span>Matches the app, title or artist, e.g. Spotify. Empty means any app.</span>
                         </div>
@@ -630,6 +649,74 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Playing text</b>
+                            <span>Words before the track, like “Listening to”. Empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="mediaPlayingText" placeholder="Listening to" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Paused text</b>
+                            <span>Used instead while paused, like “Paused”</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="mediaPausedText" placeholder="Paused" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Keep showing when stopped</b>
+                            <span>Some players report stopped rather than paused. Off hides the line then.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaStopped"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Stopped icon and text</b>
+                            <span>Shown before the track while stopped</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="mediaStoppedIcon" placeholder="⏹" maxlength="4" autocomplete="off" style="width:64px" aria-label="Stopped icon">
+                            <input type="text" id="mediaStoppedText" placeholder="Stopped" maxlength="24" autocomplete="off" aria-label="Stopped text">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Artist separator</b>
+                            <span>Between the title and the artist. Spaces count, so “ ᵇʸ ” reads Song ᵇʸ Artist.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="mediaSeparator" list="mediaSeparatorList" maxlength="8" autocomplete="off" placeholder=" — ">
+                            <datalist id="mediaSeparatorList">
+                                <option value=" — "></option>
+                                <option value=" ᵇʸ "></option>
+                                <option value=" by "></option>
+                                <option value=" - "></option>
+                                <option value=" · "></option>
+                                <option value=" | "></option>
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Uppercase</b>
+                            <span>SONG — ARTIST. Progress and icons stay as they are.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaUpper"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Small playback time</b>
+                            <span>Writes the time raised, like ¹˸²⁴ᐟ³˸¹⁸, so it stands apart from the title</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaSuperTime"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Show artist</b>
                             <span>Track — artist instead of the track alone</span>
                         </div>
@@ -644,6 +731,15 @@
                         </div>
                         <div class="field-control">
                             <label class="switch"><input type="checkbox" id="mediaAlbum"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Tidy titles</b>
+                            <span>Drops “(Official Video)”, “[HD]”, “| Official Music Video”, repeated “ft.” credits and “Artist - ” prefixes from video sites</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="mediaTidy"><span></span></label>
                         </div>
                     </div>
                     <div class="field">
@@ -669,10 +765,33 @@
                                 <option value="squares">■■■□□ Squares</option>
                                 <option value="dots">●●●○○ Dots</option>
                                 <option value="classic">[==>-] Classic</option>
+                                <optgroup label="Saved" id="mediaBarSaved"></optgroup>
                                 <option value="custom">Custom</option>
                             </select>
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Save this style</b>
+                            <span>Keeps the characters below under a name in the style list</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="mediaBarPresetName" maxlength="24" autocomplete="off" placeholder="Preset name" aria-label="Preset name">
+                            <button class="btn" type="button" id="mediaBarSave">Save</button>
+                            <button class="btn" type="button" id="mediaBarDelete" title="Delete the selected saved style">Delete</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Share saved styles</b>
+                            <span>Export puts your saved styles here as text and copies it. Paste someone's text and press Import to add theirs.</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn" type="button" id="mediaBarExport">Export</button>
+                            <button class="btn" type="button" id="mediaBarImport">Import</button>
+                        </div>
+                    </div>
+                    <textarea id="mediaBarJson" class="bar-json" rows="3" spellcheck="false" aria-label="Saved styles as JSON" placeholder='[{"name":"Hearts","bar_filled":"♥","bar_empty":"♡"}]'></textarea>
                     <div class="field">
                         <div class="field-label">
                             <b>Bar characters</b>
@@ -695,6 +814,116 @@
                             <input type="range" id="mediaMaxChars" min="20" max="144" step="4">
                             <span class="val" id="mediaMaxCharsVal">90</span>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= LYRICS ================= -->
+            <section class="page" id="page-lyrics">
+                <div class="page-head">
+                    <div>
+                        <h2>Lyrics</h2>
+                        <p>The line being sung, in time with the music</p>
+                    </div>
+                    <span class="badge" id="lyricsBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show lyrics</b>
+                            <span>Follows the track on the Media page. Adds a line in the order set on Lines, or takes over the media line (below).</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="lyrics"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="lyrics-now" id="lyricsNow">Lyrics are off</div>
+                    <div class="np-sub" id="lyricsState">Turn them on to look up the playing track</div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Replace the track line</b>
+                            <span>While a lyric is up it shows on the media line instead of the song. Off gives lyrics a line of their own.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="lyricsReplace"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Timing</b>
+                            <span>Move lines later if they show too early, earlier if they lag</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsOffset" min="-5000" max="5000" step="100">
+                            <span class="val" id="lyricsOffsetVal">on time</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Hold a line for</b>
+                            <span>Longest a line stays up when the next one is far off</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsHold" min="1" max="20" step="1">
+                            <span class="val" id="lyricsHoldVal">6s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Break marker</b>
+                            <span>Shown during instrumental parts and long pauses. Empty shows nothing.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsGapMarker" maxlength="16" autocomplete="off" placeholder="♪ ♪ ♪"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Marker after pauses of</b>
+                            <span>Shorter pauses keep the last line up</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsGap" min="0" max="30" step="1">
+                            <span class="val" id="lyricsGapVal">8s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix on the lyrics line, like 🎤</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsLabel" maxlength="16" autocomplete="off" placeholder="none"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length limit</b>
+                            <span>Characters kept from a long line</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lyricsMaxChars" min="20" max="144" step="4">
+                            <span class="val" id="lyricsMaxCharsVal">90</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Look up online</b>
+                            <span>Asks lrclib.net (free, no account) using only the title, artist, album and length. Each track is asked about once per run.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="lyricsOnline"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Your .lrc folder</b>
+                            <span>Files named like “Artist - Title.lrc” here are used first and work offline. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsFolder" autocomplete="off" placeholder="C:\Users\you\Music\Lyrics" spellcheck="false"></div>
                     </div>
                 </div>
             </section>
@@ -1163,6 +1392,201 @@
                             <span>Optional prefix, like “now”</span>
                         </div>
                         <div class="field-control"><input type="text" id="clockLabel" placeholder="none" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Time zone</b>
+                            <span>Any IANA zone, like Europe/Berlin. Empty uses your PC's zone. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="clockZone" list="clockZoneList" placeholder="Your PC's zone" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the zone</b>
+                            <span>Adds its abbreviation, like 3:04 PM CET</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="clockShowZone"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Second clock</b>
+                            <span>Another zone after the first, like a friend's time. Empty for none.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="clockZone2" list="clockZoneList" placeholder="none" autocomplete="off" spellcheck="false" aria-label="Second clock zone">
+                            <input type="text" id="clockLabel2" maxlength="16" placeholder="Label" autocomplete="off" style="width:96px" aria-label="Second clock label">
+                        </div>
+                    </div>
+                    <datalist id="clockZoneList"></datalist>
+                </div>
+
+                <div class="section-title">Counters <span class="badge" id="counterCount">0</span></div>
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Units shown</b>
+                            <span>How precise each counter is: 2 gives “1y 2m”, 3 gives “1y 2m 6d”</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="counterUnits" min="1" max="4" step="1">
+                            <span class="val" id="counterUnitsVal">2</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Own line</b>
+                            <span>Puts counters on a line below the clock instead of after it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="counterLine"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+                <div class="window-add">
+                    <button class="btn" type="button" id="counterAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add counter</button>
+                </div>
+                <div class="list" id="counterList"></div>
+                <div class="hint">Time line now: <code class="bar-preview" id="timeNow"></code></div>
+                <div class="hint">Time since a past date, or until a future one, after its label: “together 1y 2m”, “trip in 4d 17h”. The time is optional.</div>
+            </section>
+
+            <!-- ================= WEATHER ================= -->
+            <section class="page" id="page-weather">
+                <div class="page-head">
+                    <div>
+                        <h2>Weather</h2>
+                        <p>Current conditions from Open-Meteo, no account needed</p>
+                    </div>
+                    <span class="badge" id="weatherBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the weather</b>
+                            <span>Adds it to the chatbox in the order set on Lines, or after the clock (below)</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="weather"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="lyrics-now" id="weatherNow">Weather is off</div>
+                    <div class="np-sub" id="weatherState">Turn it on and pick a place</div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Place</b>
+                            <span>A city like “Berlin” or “Paris, France”, or coordinates like 48.85, 2.35. Fern never guesses where you are. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="weatherCity" maxlength="80" autocomplete="off" spellcheck="false" placeholder="City"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Put it on the time line</b>
+                            <span>Shows the weather after the clock, like 3:04 PM · ☀️ 21°C, while the time line is on</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherInTime"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Emoji</b>
+                            <span>☀️ ⛅ 🌧️ for the conditions</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherEmoji"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Conditions</b>
+                            <span>Words like “Partly cloudy”</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherCondition"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Temperature</b>
+                            <span>Unit and decimals are set below</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherTemp"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Feels like</b>
+                            <span>“feels 10°C”, counting wind and humidity</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherFeels"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Humidity</b>
+                            <span>“💧81%”</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherHumidity"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Wind</b>
+                            <span>“💨18 km/h”</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="weatherWind"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Units</b>
+                            <span>Temperature, wind speed and decimals</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="weatherTempUnit" aria-label="Temperature unit" style="width:84px">
+                                <option value="c">°C</option>
+                                <option value="f">°F</option>
+                            </select>
+                            <select id="weatherWindUnit" aria-label="Wind unit" style="width:92px">
+                                <option value="kmh">km/h</option>
+                                <option value="mph">mph</option>
+                                <option value="ms">m/s</option>
+                            </select>
+                            <select id="weatherDecimals" aria-label="Decimals" style="width:92px">
+                                <option value="0">21°</option>
+                                <option value="1">21.4°</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Refresh every</b>
+                            <span>Weather changes slowly; one small request each time</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="weatherInterval" min="10" max="60" step="5">
+                            <span class="val" id="weatherIntervalVal">15 min</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix on the weather line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="weatherLabel" maxlength="16" autocomplete="off" placeholder="none"></div>
                     </div>
                 </div>
             </section>
@@ -2538,8 +2962,10 @@
             { id: "logs", name: "VRChat log", icon: "fa-scroll", category: "vrchat", desc: "Latest VRChat join / leave", keywords: "players join leave instance" },
             { id: "heartrate", name: "Heart rate", icon: "fa-heart-pulse", category: "vrchat", desc: "Live BPM and avatar heartbeat", keywords: "pulsoid hyperate bpm heartbeat hr pulse avatar osc" },
             { id: "media", name: "Media", icon: "fa-music", category: "media", desc: "Now playing track with playback time", keywords: "spotify song music now playing" },
+            { id: "lyrics", name: "Lyrics", icon: "fa-microphone", category: "media", desc: "Synced lyrics for the playing track", keywords: "lrc lrclib karaoke song words" },
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
             { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
+            { id: "weather", name: "Weather", icon: "fa-cloud-sun", category: "system", desc: "Conditions and temperature from Open-Meteo", keywords: "temperature forecast rain wind humidity" },
             { id: "time", name: "Time", icon: "fa-clock", category: "system", desc: "Current clock", keywords: "clock hour" },
             { id: "memory", name: "Memory", icon: "fa-memory", category: "system", desc: "RAM usage", keywords: "ram" },
             { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
@@ -2695,6 +3121,9 @@
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
+            renderLyrics(st);
+            renderCounters(st);
+            renderWeather(st);
             if (typeof renderAssist === "function") renderAssist(st);
             renderHeart(st);
         }
@@ -3205,6 +3634,9 @@
                 if (typing !== $("oscHost")) $("oscHost").value = c.OSC.host;
                 if (typing !== $("oscPort")) $("oscPort").value = c.OSC.port;
                 if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
+                if (typing !== $("lyricsFolder")) $("lyricsFolder").value = c.LyricsOptions.folder || "";
+                if (typing !== $("clockZone")) $("clockZone").value = c.TimeOptions.zone || "";
+                if (typing !== $("clockZone2")) $("clockZone2").value = c.TimeOptions.zone2 || "";
                 $("afkMessage").value = c.AfkOptions.afk_message;
                 $("afkTimerStyle").value = c.AfkOptions.timer_style || "full";
                 $("afkTimerFont").value = c.AfkOptions.timer_font || "";
@@ -3494,9 +3926,25 @@
             ["pausedSwitch", ["MediaOptions", "show_when_paused"]],
             ["mediaArtist", ["MediaOptions", "show_artist"]],
             ["mediaAlbum", ["MediaOptions", "show_album"]],
+            ["mediaStopped", ["MediaOptions", "show_when_stopped"]],
+            ["mediaOnChange", ["MediaOptions", "only_on_change"]],
+            ["mediaTidy", ["MediaOptions", "tidy_titles"]],
+            ["lyricsReplace", ["LyricsOptions", "replace_track"]],
+            ["lyricsOnline", ["LyricsOptions", "online"]],
+            ["mediaUpper", ["MediaOptions", "uppercase"]],
+            ["mediaSuperTime", ["MediaOptions", "superscript_time"]],
             ["clock24", ["TimeOptions", "use_24h"]],
             ["clockSeconds", ["TimeOptions", "seconds"]],
             ["clockNoAmPm", ["TimeOptions", "no_am_pm"]],
+            ["clockShowZone", ["TimeOptions", "show_zone"]],
+            ["counterLine", ["TimeOptions", "counter_line"]],
+            ["weatherInTime", ["WeatherOptions", "in_time"]],
+            ["weatherEmoji", ["WeatherOptions", "show_emoji"]],
+            ["weatherCondition", ["WeatherOptions", "show_condition"]],
+            ["weatherTemp", ["WeatherOptions", "show_temp"]],
+            ["weatherFeels", ["WeatherOptions", "show_feels_like"]],
+            ["weatherHumidity", ["WeatherOptions", "show_humidity"]],
+            ["weatherWind", ["WeatherOptions", "show_wind"]],
             ["afkMovementOnly", ["AfkOptions", "poopyafk"]],
             ["afkShowTimer", ["AfkOptions", "show_timer"]],
             ["afkUseMovement", ["AfkOptions", "use_movement"]],
@@ -3555,6 +4003,13 @@
             ["speedRange", ["TextOptions", "speed"], "speedVal", asSeconds(1)],
             ["mediaBarWidth", ["MediaOptions", "bar_width"], "mediaBarWidthVal", asIs],
             ["mediaMaxChars", ["MediaOptions", "max_chars"], "mediaMaxCharsVal", asIs],
+            ["mediaChangeSecs", ["MediaOptions", "change_seconds"], "mediaChangeSecsVal", (v) => v + "s"],
+            ["lyricsOffset", ["LyricsOptions", "offset_ms"], "lyricsOffsetVal", (v) => v === 0 ? "on time" : (Math.abs(v) / 1000).toFixed(1) + "s " + (v > 0 ? "later" : "earlier")],
+            ["lyricsHold", ["LyricsOptions", "hold_seconds"], "lyricsHoldVal", (v) => v + "s"],
+            ["lyricsGap", ["LyricsOptions", "gap_seconds"], "lyricsGapVal", (v) => v ? v + "s" : "never"],
+            ["lyricsMaxChars", ["LyricsOptions", "max_chars"], "lyricsMaxCharsVal", asIs],
+            ["counterUnits", ["TimeOptions", "counter_units"], "counterUnitsVal", asIs],
+            ["weatherInterval", ["WeatherOptions", "interval_min"], "weatherIntervalVal", (v) => v + " min"],
             ["windowMaxChars", ["WindowOptions", "max_chars"], "windowMaxCharsVal", asIs],
             ["logsMaxChars", ["LogsOptions", "max_chars"], "logsMaxCharsVal", asIs],
             ["memDecimals", ["MemoryOptions", "decimals"], "memDecimalsVal", asIs],
@@ -3583,6 +4038,15 @@
             ["mediaFilter", ["MediaOptions", "app_filter"], Infinity],
             ["mediaIcon", ["MediaOptions", "icon"], 4],
             ["mediaPausedIcon", ["MediaOptions", "paused_icon"], 4],
+            ["mediaPlayingText", ["MediaOptions", "playing_text"], 24],
+            ["mediaPausedText", ["MediaOptions", "paused_text"], 24],
+            ["mediaStoppedIcon", ["MediaOptions", "stopped_icon"], 4],
+            ["mediaStoppedText", ["MediaOptions", "stopped_text"], 24],
+            ["mediaSeparator", ["MediaOptions", "separator"], 8],
+            ["lyricsGapMarker", ["LyricsOptions", "gap_marker"], 16],
+            ["lyricsLabel", ["LyricsOptions", "label"], 16],
+            ["clockLabel2", ["TimeOptions", "label2"], 16],
+            ["weatherLabel", ["WeatherOptions", "label"], 16],
             ["mediaBarFilled", ["MediaOptions", "bar_filled"], 2],
             ["mediaBarEmpty", ["MediaOptions", "bar_empty"], 2],
             ["mediaBarHead", ["MediaOptions", "bar_head"], 2],
@@ -3631,6 +4095,13 @@
             ["mediaBarHead", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarLeft", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
             ["mediaBarRight", (c) => c.MediaOptions.show_progress && ["bar", "both"].includes(c.MediaOptions.progress_style)],
+            ["mediaPausedText", (c) => c.MediaOptions.show_when_paused],
+            ["mediaChangeSecs", (c) => c.MediaOptions.only_on_change],
+            ["lyricsLabel", (c) => !(c.LyricsOptions.replace_track && c.display_options.media)],
+            ["lyricsGap", (c) => !!c.LyricsOptions.gap_marker],
+            ["weatherLabel", (c) => !(c.WeatherOptions.in_time && c.display_options.time)],
+            ["mediaStoppedIcon", (c) => c.MediaOptions.show_when_stopped],
+            ["mediaSuperTime", (c) => c.MediaOptions.show_progress && ["time", "both"].includes(c.MediaOptions.progress_style)],
             ["windowVrText", (c) => c.WindowOptions.show_mode],
             ["windowDeskText", (c) => c.WindowOptions.show_mode],
             ["windowConnector", (c) => c.WindowOptions.show_mode],
@@ -4270,17 +4741,304 @@
                 for (const k in BAR_FIELDS) o[k] = Array.from($(BAR_FIELDS[k]).value).slice(0, 2).join("");
             }
             $("mediaBarPreview").textContent = drawBar(o, 0.4) || "(no bar)";
-            const match = Object.keys(BAR_PRESETS).find((name) => Object.keys(BAR_FIELDS).every((k) => (o[k] || "") === BAR_PRESETS[name][k]));
-            if (document.activeElement !== $("mediaBarPreset")) $("mediaBarPreset").value = match || "custom";
+            renderSavedBars();
+            const same = (p) => Object.keys(BAR_FIELDS).every((k) => (o[k] || "") === (p[k] || ""));
+            const builtIn = Object.keys(BAR_PRESETS).find((name) => same(BAR_PRESETS[name]));
+            const saved = savedBars().find(same);
+            if (document.activeElement !== $("mediaBarPreset")) $("mediaBarPreset").value = builtIn || (saved ? "saved:" + saved.name : "custom");
+        }
+
+        // Saved bar styles live in MediaOptions.bar_presets with the same keys
+        // as the bar fields, so applying one is a plain copy.
+        function savedBars() {
+            const c = config();
+            return (c && c.MediaOptions.bar_presets) || [];
+        }
+        function renderSavedBars() {
+            const list = savedBars();
+            const sig = JSON.stringify(list);
+            if (sig === S.savedBarSig || document.activeElement === $("mediaBarPreset")) return;
+            S.savedBarSig = sig;
+            $("mediaBarSaved").replaceChildren(...list.map((p) => {
+                const sample = drawBar(Object.assign({ bar_width: 5 }, p), 0.4);
+                return new Option(sample + " " + p.name, "saved:" + p.name);
+            }));
+            $("mediaBarSaved").hidden = !list.length;
+        }
+        function barFieldsNow() {
+            const o = {};
+            for (const k in BAR_FIELDS) o[k] = Array.from($(BAR_FIELDS[k]).value).slice(0, 2).join("");
+            return o;
+        }
+        // Accepts what Export writes, a single preset, or {presets: [...]}, and
+        // the short keys filled/empty/head/left/right.
+        function parseBarPresets(text) {
+            let data = JSON.parse(text);
+            if (data && !Array.isArray(data) && Array.isArray(data.presets)) data = data.presets;
+            if (!Array.isArray(data)) data = [data];
+            const out = [];
+            data.forEach((p) => {
+                if (!p || typeof p !== "object") return;
+                const name = String(p.name || "").trim().slice(0, 24);
+                if (!name) return;
+                const preset = { name: name };
+                for (const k in BAR_FIELDS) {
+                    const v = p[k] !== undefined ? p[k] : p[k.replace("bar_", "")];
+                    preset[k] = Array.from(String(v === undefined || v === null ? "" : v)).slice(0, 2).join("");
+                }
+                out.push(preset);
+            });
+            return out;
+        }
+        function mergeBarPresets(list, added) {
+            const next = list.map((p) => Object.assign({}, p));
+            added.forEach((p) => {
+                const at = next.findIndex((q) => q.name.toLowerCase() === p.name.toLowerCase());
+                if (at >= 0) next[at] = p; else next.push(p);
+            });
+            return next.slice(0, 30);
         }
         $("mediaBarPreset").addEventListener("change", (ev) => {
-            const preset = BAR_PRESETS[ev.target.value];
+            const value = ev.target.value;
+            let preset = BAR_PRESETS[value];
+            if (!preset && value.startsWith("saved:")) {
+                const found = savedBars().find((p) => "saved:" + p.name === value);
+                if (found) {
+                    preset = {};
+                    for (const k in BAR_FIELDS) preset[k] = found[k] || "";
+                    $("mediaBarPresetName").value = found.name;
+                }
+            }
             if (!preset) return;
             for (const k in preset) $(BAR_FIELDS[k]).value = preset[k];
             renderBarPreview();
             if (pushConfigNow((c) => { Object.assign(c.MediaOptions, preset); })) toast("Bar style: " + ev.target.selectedOptions[0].textContent.replace(/^\S+\s/, ""));
         });
         $("mediaBarWidth").addEventListener("input", () => renderBarPreview());
+        $("mediaBarSave").addEventListener("click", () => {
+            const name = Array.from($("mediaBarPresetName").value.trim()).slice(0, 24).join("");
+            if (!name) { toast("Give the style a name first", true); $("mediaBarPresetName").focus(); return; }
+            const list = savedBars();
+            const exists = list.some((p) => p.name.toLowerCase() === name.toLowerCase());
+            if (!exists && list.length >= 30) { toast("30 saved styles is the limit; delete one first", true); return; }
+            const preset = Object.assign({ name: name }, barFieldsNow());
+            const next = mergeBarPresets(list, [preset]);
+            if (pushConfigNow((c) => { c.MediaOptions.bar_presets = next; })) {
+                S.savedBarSig = "";
+                toast((exists ? "Updated " : "Saved ") + name);
+            }
+        });
+        $("mediaBarDelete").addEventListener("click", () => {
+            const value = $("mediaBarPreset").value;
+            const typed = $("mediaBarPresetName").value.trim().toLowerCase();
+            const list = savedBars();
+            const at = list.findIndex((p) => "saved:" + p.name === value || (typed && p.name.toLowerCase() === typed));
+            if (at < 0) { toast("Pick a saved style, or type its name, to delete it", true); return; }
+            const removed = list[at];
+            const next = list.filter((_, i) => i !== at);
+            if (pushConfigNow((c) => { c.MediaOptions.bar_presets = next; })) {
+                S.savedBarSig = "";
+                toast("Deleted " + removed.name, false, {
+                    label: "Undo",
+                    run: () => pushConfigNow((c) => { c.MediaOptions.bar_presets = mergeBarPresets(c.MediaOptions.bar_presets || [], [removed]); }),
+                });
+            }
+        });
+        $("mediaBarExport").addEventListener("click", () => {
+            const list = savedBars();
+            if (!list.length) { toast("No saved styles yet. Save one first.", true); return; }
+            const text = JSON.stringify(list.map((p) => Object.assign({ name: p.name }, p)));
+            const box = $("mediaBarJson");
+            box.value = text;
+            box.select();
+            const done = () => toast("Copied " + list.length + " style" + (list.length === 1 ? "" : "s"));
+            const fallback = () => {
+                try { if (document.execCommand("copy")) { done(); return; } } catch (e) { }
+                toast("Exported below. Copy it with Ctrl+C.");
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+            else fallback();
+        });
+        $("mediaBarImport").addEventListener("click", () => {
+            const text = $("mediaBarJson").value.trim();
+            if (!text) { toast("Paste exported styles into the box first", true); $("mediaBarJson").focus(); return; }
+            let added;
+            try { added = parseBarPresets(text); } catch (e) { toast("That isn't valid style text", true); return; }
+            if (!added.length) { toast("No named styles found in that text", true); return; }
+            const next = mergeBarPresets(savedBars(), added);
+            if (pushConfigNow((c) => { c.MediaOptions.bar_presets = next; })) {
+                S.savedBarSig = "";
+                toast("Imported " + added.length + " style" + (added.length === 1 ? "" : "s"));
+            }
+        });
+
+        /* ---------------- lyrics page ---------------- */
+        const LYRICS_STATES = {
+            off: ["off", "Lyrics are off", "Turn them on to look up the playing track"],
+            idle: ["waiting", "Nothing playing", "Play something with a title and the lyrics are looked up"],
+            searching: ["searching", "Looking for lyrics…", ""],
+            found: ["found", "", ""],
+            notfound: ["not found", "No synced lyrics for this track", "Add an .lrc file to your folder to fill the gap"],
+            unsynced: ["no timing", "Only unsynced lyrics exist for this track", "Lines need timestamps to follow the music"],
+            instrumental: ["instrumental", "Instrumental", "The break marker shows while it plays"],
+            offline: ["offline", "Couldn't reach lrclib.net", "Trying again in a little while; your .lrc folder still works"],
+            limited: ["paused", "lrclib.net asked Fern to slow down", "Trying again in a few minutes"],
+        };
+        function renderLyrics(st) {
+            const l = st.lyrics || { state: "off" };
+            const info = LYRICS_STATES[l.state] || LYRICS_STATES.idle;
+            $("lyricsBadge").textContent = info[0];
+            let now = info[1], sub = info[2];
+            if (l.state === "found") {
+                now = l.line || "…";
+                sub = (l.source === "LRCLIB" ? "From LRCLIB" : "From " + l.source) + " · " + l.lines + " lines";
+            }
+            if (l.track && l.state !== "off" && l.state !== "idle") sub = l.track + (sub ? " · " + sub : "");
+            $("lyricsNow").textContent = now;
+            $("lyricsState").textContent = sub;
+        }
+        commitField($("lyricsFolder"), (v) => v.trim().replace(/^"|"$/g, ""),
+            (c, v) => { c.LyricsOptions.folder = v; }, "");
+
+        /* ---------------- time page ---------------- */
+        // Chromium knows the IANA zone list, so the picker needs no table of
+        // its own. Typed names are matched to it so the case is right for Go.
+        const ZONES = (() => { try { return Intl.supportedValuesOf("timeZone"); } catch (e) { return []; } })();
+        $("clockZoneList").replaceChildren(...["UTC"].concat(ZONES).map((z) => new Option("", z)));
+        function checkZone(v) {
+            v = v.trim();
+            if (!v) return "";
+            const hit = ZONES.find((z) => z.toLowerCase() === v.toLowerCase());
+            if (hit) return hit;
+            try { new Intl.DateTimeFormat("en-US", { timeZone: v }); return v; } catch (e) { return null; }
+        }
+        commitField($("clockZone"), checkZone, (c, v) => { c.TimeOptions.zone = v; }, "Not a time zone. Pick one from the list, like Europe/Berlin.");
+        commitField($("clockZone2"), checkZone, (c, v) => { c.TimeOptions.zone2 = v; }, "Not a time zone. Pick one from the list, like America/New_York.");
+
+        function renderCounters(st, force) {
+            const list = (lockForms() && S.counters) || st.config.TimeOptions.counters || [];
+            $("counterCount").textContent = list.length;
+            $("timeNow").textContent = (st.samples && st.samples.time) || "";
+            $("counterAdd").disabled = list.length >= 10;
+            const box = $("counterList");
+            const sig = JSON.stringify(list);
+            if (!force && (sig === S.counterSig || box.contains(document.activeElement))) return;
+            S.counterSig = sig;
+            box.replaceChildren();
+            if (!list.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No counters yet.";
+                box.appendChild(empty);
+                return;
+            }
+            list.forEach((c, index) => {
+                const row = document.createElement("div");
+                row.className = "row counter-row";
+                row.dataset.index = String(index);
+                row.innerHTML =
+                    '<input class="msg-input counter-label" type="text" maxlength="24" autocomplete="off" placeholder="together" aria-label="Label">' +
+                    '<input class="compact counter-date" type="date" aria-label="Date">' +
+                    '<input class="compact counter-time" type="time" aria-label="Time (optional)">' +
+                    '<button class="mini-x" title="Remove" aria-label="Remove">✕</button>';
+                const parts = (c.date || "").split("T");
+                row.querySelector(".counter-label").value = c.label || "";
+                row.querySelector(".counter-date").value = parts[0] || "";
+                row.querySelector(".counter-time").value = parts[1] || "";
+                box.appendChild(row);
+            });
+        }
+        function editCounters(mutate, now) {
+            if (!S.state) return false;
+            const current = (lockForms() && S.counters) || S.state.config.TimeOptions.counters || [];
+            const next = current.map((c) => Object.assign({}, c));
+            mutate(next);
+            const ok = (now ? pushConfigNow : pushConfig)((c) => { c.TimeOptions.counters = next.map((x) => Object.assign({}, x)); });
+            if (!ok) return false;
+            S.counters = next;
+            if (now) renderCounters(S.state, true);
+            return true;
+        }
+        function counterFromRow(row) {
+            const day = row.querySelector(".counter-date").value;
+            const time = row.querySelector(".counter-time").value;
+            return {
+                label: Array.from(row.querySelector(".counter-label").value).slice(0, 24).join(""),
+                date: day && time ? day + "T" + time : day,
+            };
+        }
+        $("counterAdd").addEventListener("click", () => {
+            const today = new Date();
+            const day = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
+            if (editCounters((list) => { if (list.length < 10) list.push({ label: "", date: day }); }, true)) {
+                const rows = $("counterList").querySelectorAll(".counter-label");
+                if (rows.length) rows[rows.length - 1].focus();
+            }
+        });
+        $("counterList").addEventListener("input", (ev) => {
+            const row = ev.target.closest(".counter-row");
+            if (!row) return;
+            const index = +row.dataset.index;
+            const value = counterFromRow(row);
+            editCounters((list) => { if (list[index]) list[index] = value; });
+        });
+        $("counterList").addEventListener("focusout", () => {
+            setTimeout(() => { if (S.state) renderCounters(S.state); }, 0);
+        });
+        $("counterList").addEventListener("click", (ev) => {
+            const button = ev.target.closest(".mini-x");
+            if (!button) return;
+            const index = +button.closest(".counter-row").dataset.index;
+            const list = (lockForms() && S.counters) || S.state.config.TimeOptions.counters || [];
+            const removed = list[index];
+            if (!removed) return;
+            if (editCounters((l) => { l.splice(index, 1); }, true)) {
+                toast("Removed " + (removed.label || "counter"), false, {
+                    label: "Undo",
+                    run: () => editCounters((l) => { l.splice(Math.min(index, l.length), 0, removed); }, true),
+                });
+            }
+        });
+
+        /* ---------------- weather page ---------------- */
+        const WEATHER_STATES = {
+            off: ["off", "Weather is off", "Turn it on and pick a place"],
+            nocity: ["no place", "Pick a place", "Type a city or coordinates below"],
+            locating: ["looking", "Finding the place…", ""],
+            notfound: ["not found", "Couldn't find that place", "Try another spelling, add the country, or use coordinates"],
+            ok: ["live", "", ""],
+            offline: ["offline", "Couldn't reach Open-Meteo", "Trying again in a little while"],
+            limited: ["paused", "Open-Meteo asked Fern to slow down", "Trying again in a few minutes"],
+        };
+        const WEATHER_SELECTS = [
+            ["weatherTempUnit", ["WeatherOptions", "temp_unit"], String],
+            ["weatherWindUnit", ["WeatherOptions", "wind_unit"], String],
+            ["weatherDecimals", ["WeatherOptions", "decimals"], Number],
+        ];
+        WEATHER_SELECTS.forEach(([id, path, cast]) => {
+            $(id).addEventListener("change", (ev) => { pushConfigNow((c) => setField(c, path, cast(ev.target.value))); });
+        });
+        function renderWeather(st) {
+            const w = st.weather || { state: "off" };
+            const info = WEATHER_STATES[w.state] || WEATHER_STATES.off;
+            $("weatherBadge").textContent = info[0];
+            let now = info[1], sub = info[2];
+            if (w.state === "ok" || (w.line && w.state !== "off")) {
+                now = w.line || "(nothing selected to show)";
+                sub = w.updatedMs ? "Updated " + fmtAgo(w.updatedMs) : "";
+            }
+            if (w.place && w.state !== "off") sub = w.place + (sub ? " · " + sub : "");
+            $("weatherNow").textContent = now;
+            $("weatherState").textContent = sub;
+            const c = st.config;
+            if (!lockForms()) {
+                WEATHER_SELECTS.forEach(([id, path]) => {
+                    if (document.activeElement !== $(id)) $(id).value = String(field(c, path));
+                });
+                if (document.activeElement !== $("weatherCity")) $("weatherCity").value = c.WeatherOptions.city || "";
+            }
+        }
+        commitField($("weatherCity"), (v) => v.trim(), (c, v) => { c.WeatherOptions.city = v; }, "");
 
         /* ---------------- per module options ---------------- */
         $("afkTimerStyle").addEventListener("change", (ev) => {
