@@ -60,9 +60,10 @@ var (
 	twitchHTTP    = &http.Client{Timeout: 15 * time.Second}
 )
 
-// twitchScopes lets the follower count include more than the total for
-// channels the user moderates; the total itself needs no scope.
-const twitchScopes = "moderator:read:followers"
+// twitchScopes is what the sign-in asks for: the follower list, chat, the
+// alerts and the announcement and shoutout actions (see twitch_api.go). The
+// follower total itself needs no scope.
+var twitchScopes = strings.Join(twitchAllScopes, " ")
 
 var errTwitchAuth = errors.New("twitch: token rejected")
 
@@ -296,17 +297,8 @@ func twitchCycle(o TwitchOptions) error {
 			setTwitchLink(linkWaiting, err.Error())
 			return err
 		}
-		refresh := GetSecret(SecretTwitchRefresh)
-		if refresh == "" || attempt > 0 {
+		if attempt > 0 || twitchRefreshToken(o.ClientID, c.token) != nil {
 			break
-		}
-		tokens, rerr := c.refresh(refresh)
-		if rerr != nil {
-			break
-		}
-		_ = SetSecret(SecretTwitchToken, tokens.AccessToken)
-		if tokens.RefreshToken != "" {
-			_ = SetSecret(SecretTwitchRefresh, tokens.RefreshToken)
 		}
 	}
 	setTwitchLink(linkError, "Twitch rejected the sign-in. Sign in again.")

@@ -138,6 +138,14 @@ func moduleText(id string, cfg Config) string {
 		return gpuLine(cfg)
 	case ModuleWorld:
 		return worldLine(cfg)
+	case ModuleTwitchChat:
+		return twitchChatLine(cfg)
+	case ModuleTikTok:
+		return tiktokLine(cfg)
+	case ModuleKick:
+		return kickLine(cfg)
+	case ModuleYouTube:
+		return youtubeLine(cfg)
 	}
 	return ""
 }

@@ -44,6 +44,7 @@ var DefaultOrder = []string{
 	ModuleHeart,
 	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 	ModuleNetwork, ModuleGPU, ModuleWorld,
+	ModuleTwitchChat, ModuleTikTok, ModuleKick, ModuleYouTube,
 }
 
 var knownModules = func() map[string]bool {
@@ -78,6 +79,10 @@ type DisplayOptions struct {
 	Network      bool     `json:"network"`
 	GPU          bool     `json:"gpu"`
 	World        bool     `json:"world"`
+	TwitchChat   bool     `json:"twitch_chat"`
+	TikTok       bool     `json:"tiktok"`
+	Kick         bool     `json:"kick"`
+	YouTube      bool     `json:"youtube"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -625,6 +630,12 @@ type Config struct {
 	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
 	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
 
+	// Streaming platforms; see streaming.go.
+	TwitchChatOptions TwitchChatOptions `json:"TwitchChatOptions"`
+	TikTokOptions     TikTokOptions     `json:"TikTokOptions"`
+	KickOptions       LiveStatusOptions `json:"KickOptions"`
+	YouTubeOptions    LiveStatusOptions `json:"YouTubeOptions"`
+
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
@@ -891,6 +902,11 @@ func DefaultConfig() Config {
 		STTOptions:    defaultSTTOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
+
+		TwitchChatOptions: defaultTwitchChatOptions(),
+		TikTokOptions:     defaultTikTokOptions(),
+		KickOptions:       defaultKickOptions(),
+		YouTubeOptions:    defaultYouTubeOptions(),
 	}
 }
 
@@ -915,6 +931,7 @@ func (c Config) clone() Config {
 	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	out.Rules = c.Rules.clone()
 	out.DND = c.DND.clone()
+	out.TwitchChatOptions = c.TwitchChatOptions.clone()
 	return out
 }
 
@@ -1111,6 +1128,14 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.GPU
 	case ModuleWorld:
 		return &d.World
+	case ModuleTwitchChat:
+		return &d.TwitchChat
+	case ModuleTikTok:
+		return &d.TikTok
+	case ModuleKick:
+		return &d.Kick
+	case ModuleYouTube:
+		return &d.YouTube
 	}
 	return nil
 }
@@ -1352,6 +1377,7 @@ func (c *Config) sanitize() {
 	c.sanitizeAssist()
 
 	c.sanitizeSocial()
+	c.sanitizeStreaming()
 
 	// VRChat drops chatbox messages sent faster than about one a second.
 	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)
