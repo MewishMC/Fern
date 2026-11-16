@@ -19,6 +19,14 @@ func TestStyleText(t *testing.T) {
 			t.Errorf("StyleText(%q, %q) = %q, want %q", c.text, c.style, got, c.want)
 		}
 	}
+	// Built many times, since map order is random: only letters are styled.
+	for i := 0; i < 200; i++ {
+		for r := range buildTextStyles()["smallcaps"] {
+			if !(r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z') {
+				t.Fatalf("small caps styles %q", r)
+			}
+		}
+	}
 	tables := TextStyleTables()
 	for _, s := range TextStyles {
 		if len(tables[s.ID]) == 0 {

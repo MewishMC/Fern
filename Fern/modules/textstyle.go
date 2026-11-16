@@ -58,8 +58,12 @@ func buildTextStyles() map[string]map[rune]string {
 	t := map[string]map[rune]string{}
 
 	small := fromPairs("abcdefghijklmnopqrstuvwxyz", "ᴀʙᴄᴅᴇғɢʜɪᴊᴋʟᴍɴᴏᴘǫʀsᴛᴜᴠᴡxʏᴢ")
-	for r, s := range small {
-		small[r-'a'+'A'] = s
+	// Loop over the letters, not the map: keys added while ranging over a
+	// map may be visited too, and 'K'-'a'+'A' is '+'.
+	for r := 'a'; r <= 'z'; r++ {
+		if s, ok := small[r]; ok {
+			small[r-'a'+'A'] = s
+		}
 	}
 	t["smallcaps"] = small
 
