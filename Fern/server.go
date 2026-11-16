@@ -84,6 +84,9 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	Sensors sensorsState `json:"sensors"`
+	System  systemState  `json:"system"`
 }
 
 type appState struct {
@@ -386,6 +389,8 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "sensors":
+		handleSensorsCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -524,6 +529,12 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+
+			modules.ModuleSensors:   d.Sensors,
+			modules.ModuleUptime:    d.Uptime,
+			modules.ModulePing:      d.Ping,
+			modules.ModuleDisk:      d.Disk,
+			modules.ModulePCBattery: d.PCBattery,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -582,6 +593,9 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		Sensors: currentSensors(cfg),
+		System:  currentSystem(),
 	}
 }
 
