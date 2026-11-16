@@ -84,6 +84,10 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	API         apiPanelState    `json:"api"`
+	CustomLines customLinesState `json:"customLines"`
+	Clipboard   clipboardState   `json:"clipboard"`
 }
 
 type appState struct {
@@ -386,6 +390,12 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "api":
+		handleAPICommand(cmd)
+	case "customLine":
+		handleCustomLineCommand(cmd)
+	case "clipboard":
+		handleClipboardCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -524,6 +534,10 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+
+			modules.ModuleCustom1: d.Custom1,
+			modules.ModuleCustom2: d.Custom2,
+			modules.ModuleCustom3: d.Custom3,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -582,6 +596,10 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		API:         currentAPI(),
+		CustomLines: currentCustomLines(),
+		Clipboard:   currentClipboard(),
 	}
 }
 
