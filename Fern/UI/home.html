@@ -3100,6 +3100,51 @@
 
                 <div class="card" style="margin-bottom:12px">
                     <div class="card-head">
+                        <h3>Microphone</h3>
+                        <span class="badge" id="voicemodMicBadge">unknown</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Mute and bleep</b>
+                            <span>Hold the bleep button to cover your voice with Voicemod's beep</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn small" type="button" id="voicemodMuteBtn"><i class="fa fa-microphone-slash" aria-hidden="true"></i> <span>Mute</span></button>
+                            <button class="btn small ghost" type="button" id="voicemodBleepBtn" aria-pressed="false"><i class="fa fa-volume-high" aria-hidden="true"></i> <span>Hold to bleep</span></button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Mute shortcut</b>
+                            <span id="voicemodMuteKeyDesc">Mutes or unmutes from any app. Click the box and press the keys; Backspace clears it.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="voicemodMuteKey" placeholder="none" autocomplete="off" spellcheck="false" style="width:150px" aria-label="Mute shortcut">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Bleep shortcut</b>
+                            <span id="voicemodBleepKeyDesc">Bleeps while you hold it, from any app. Click the box and press the keys; Backspace clears it.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="voicemodBleepKey" placeholder="none" autocomplete="off" spellcheck="false" style="width:150px" aria-label="Bleep shortcut">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Longest bleep</b>
+                            <span>A bleep stops by itself after this, even if the key or button is still down</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="voicemodBleepMax" min="1" max="60" step="1">
+                            <span class="val" id="voicemodBleepMaxVal">10s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
                         <h3>Voice</h3>
                         <button class="btn small ghost" type="button" id="voicemodReload"><i class="fa fa-rotate" aria-hidden="true"></i> Reload</button>
                     </div>
@@ -3147,6 +3192,222 @@
                             <input type="text" id="voicemodVoiceIcon" maxlength="4" autocomplete="off" aria-label="Voice icon">
                         </div>
                     </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Announce mute</b>
+                            <span>While Voicemod's microphone is muted</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="voicemodAnnounceMute"><span></span></label>
+                            <input type="text" id="voicemodMuteText" maxlength="24" autocomplete="off" aria-label="Mute text">
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= OBS ================= -->
+            <section class="page" id="page-obs">
+                <div class="page-head">
+                    <div>
+                        <h2>OBS</h2>
+                        <p>Show when you are live or recording, run OBS from rules, and put the chatbox on stream</p>
+                    </div>
+                    <span class="badge link-badge" id="obsBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the OBS line</b>
+                            <span>Live and recording time, and the scene if you want it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="obs"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Connect with the line off</b>
+                            <span>Keeps the controls below working. Rules that use OBS connect by themselves.</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="obsEnabled"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Address</b>
+                            <span>OBS › Tools › WebSocket Server Settings. Turn the server on there; the port is usually 4455.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="obsHost" autocomplete="off" spellcheck="false" style="width:150px" aria-label="OBS host">
+                            <input type="number" id="obsPort" min="1" max="65535" style="width:90px" aria-label="OBS port">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Server password</b>
+                            <span>From the same window (Show Connect Info). Stored encrypted, never shown again.</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="obsPassword" data-secret="obs_password" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="obsPassword">Save</button>
+                            <button class="btn small ghost" type="button" data-secret-clear="obsPassword">Clear</button>
+                        </div>
+                    </div>
+                    <div class="link-status" id="obsStatus"></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Controls</h3>
+                        <button class="btn small ghost" type="button" id="obsReconnect"><i class="fa fa-rotate" aria-hidden="true"></i> Reconnect</button>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Stream</b>
+                            <span id="obsStreamDesc">Not live</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn small" type="button" id="obsStreamBtn"><i class="fa fa-video" aria-hidden="true"></i> <span>Start streaming</span></button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Recording</b>
+                            <span id="obsRecordDesc">Not recording</span>
+                        </div>
+                        <div class="field-control">
+                            <button class="btn small ghost" type="button" id="obsPauseBtn" hidden><i class="fa fa-pause" aria-hidden="true"></i> <span>Pause</span></button>
+                            <button class="btn small" type="button" id="obsRecordBtn"><i class="fa fa-circle" aria-hidden="true"></i> <span>Start recording</span></button>
+                        </div>
+                    </div>
+                    <div class="section-title" style="margin-top:10px">Scene</div>
+                    <div class="voice-list" id="obsScenes"></div>
+                    <div class="section-title" style="margin-top:10px">Sources in this scene</div>
+                    <div class="voice-list" id="obsItems"></div>
+                    <div class="hint">Rules can do the same: start or stop the stream or recording, switch scenes and show or hide sources, and react when OBS goes live or changes scene.</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head"><h3>Chatbox</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the stream</b>
+                            <span>While you are live</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="obsShowStream"><span></span></label>
+                            <input type="text" id="obsLiveText" maxlength="24" autocomplete="off" aria-label="Live text">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the recording</b>
+                            <span>While OBS records</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="obsShowRecord"><span></span></label>
+                            <input type="text" id="obsRecText" maxlength="24" autocomplete="off" aria-label="Recording text">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Paused recording</b>
+                            <span>Shown instead while the recording is paused</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="obsPausedText" maxlength="24" autocomplete="off" style="width:160px" aria-label="Paused text"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show how long</b>
+                            <span>The running time after each, like 1:02:03</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="obsShowDuration"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the scene</b>
+                            <span>The scene on program, after this label</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="obsShowScene"><span></span></label>
+                            <input type="text" id="obsSceneLabel" maxlength="16" autocomplete="off" aria-label="Scene label">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Only while live or recording</b>
+                            <span>Off shows the scene the rest of the time too</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="obsOnlyActive"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between parts</b>
+                            <span>Spaces count</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="obsSeparator" maxlength="8" autocomplete="off" style="width:80px" aria-label="Separator"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head"><h3>Chatbox overlay</h3></div>
+                    <div class="hint" style="margin-top:0">Add a Browser source in OBS with this address. It shows exactly what Fern sends to the chatbox, live, on a transparent background, and works without the OBS connection. The address only works on this PC, and it changes if Fern has to use another port.</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Address</b>
+                            <span>Paste it as the Browser source's URL</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="overlayUrl" readonly style="width:300px" aria-label="Overlay address">
+                            <button class="btn small" type="button" id="overlayCopy"><i class="fa fa-copy" aria-hidden="true"></i> Copy</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Text size</b>
+                            <span>In pixels</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="overlaySize" min="12" max="96" step="2">
+                            <span class="val" id="overlaySizeVal">32px</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Colours</b>
+                            <span>The text, and the bubble behind it</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="color" id="overlayColor" aria-label="Text colour">
+                            <select id="overlayBubble" style="width:140px" aria-label="Bubble">
+                                <option value="dark">Dark bubble</option>
+                                <option value="light">Light bubble</option>
+                                <option value="none">No bubble</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Alignment</b>
+                            <span>Where the bubble sits in the source</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="overlayAlign" style="width:140px" aria-label="Alignment">
+                                <option value="left">Left</option>
+                                <option value="center">Centre</option>
+                                <option value="right">Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Outline</b>
+                            <span>A dark edge, so the text reads without a bubble</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="overlayOutline"><span></span></label></div>
+                    </div>
+                    <div class="hint">More options go in the address: <code>font</code>, <code>weight</code>, <code>width</code>, <code>radius</code>, <code>pad</code>, <code>valign</code>, <code>fade</code>, <code>keep=1</code> and <code>css</code>. OBS's Custom CSS box can style <code>#box</code> and <code>#text</code>.</div>
+                    <iframe id="overlayPreview" title="Overlay preview" style="display:block;width:100%;height:160px;margin-top:10px;border:1px dashed var(--border-strong);border-radius:8px;background:repeating-conic-gradient(rgba(127,127,127,.16) 0 25%, transparent 0 50%) 0 0/20px 20px"></iframe>
                 </div>
             </section>
 
@@ -4377,7 +4638,8 @@
             { id: "discord", name: "Discord", icon: "fa-brands fa-discord", category: "social", desc: "Voice channel, speakers and Rich Presence", keywords: "voice call vc rich presence rpc" },
             { id: "twitch", name: "Twitch", icon: "fa-brands fa-twitch", category: "social", desc: "Live status, viewers and game", keywords: "stream live viewers followers" },
             { id: "soundpad", name: "Soundpad", icon: "fa-volume-high", category: "social", desc: "The sound you just played", keywords: "soundboard sound effect" },
-            { id: "voicemod", name: "Voicemod", icon: "fa-masks-theater", category: "social", desc: "Voice changer and soundboard", keywords: "voice changer soundboard meme" },
+            { id: "voicemod", name: "Voicemod", icon: "fa-masks-theater", category: "social", desc: "Voice changer, soundboard, mute and bleep", keywords: "voice changer soundboard meme mute bleep beep censor microphone" },
+            { id: "obs", name: "OBS", icon: "fa-video", category: "social", desc: "Live and recording time, scene and stream overlay", keywords: "obs studio stream streaming recording record scene source websocket overlay browser source" },
         ];
         const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
         const MODULE_NAME = Object.fromEntries(MODULES.map((m) => [m.id, m.name]));
@@ -4542,6 +4804,8 @@
             renderProfiles(st);
             renderBackups(st);
             renderRules(st);
+            renderOBS(st);
+            renderVoicemodMic(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -6432,6 +6696,32 @@
             ["hrParamBeat", hrOsc],
             ["hrParamConnected", hrOsc],
         );
+
+        // OBS and the Voicemod microphone.
+        const OBS = "OBSOptions";
+        CHECKS.push(
+            ["obsEnabled", [OBS, "enabled"]],
+            ["obsShowStream", [OBS, "show_stream"]],
+            ["obsShowRecord", [OBS, "show_record"]],
+            ["obsShowDuration", [OBS, "show_duration"]],
+            ["obsShowScene", [OBS, "show_scene"]],
+            ["obsOnlyActive", [OBS, "only_active"]],
+            ["voicemodAnnounceMute", ["VoicemodOptions", "announce_mute"]],
+        );
+        RANGES.push(
+            ["voicemodBleepMax", ["VoicemodOptions", "bleep_max_sec"], "voicemodBleepMaxVal", (v) => v + "s"],
+        );
+        TEXTS.push(
+            ["obsLiveText", [OBS, "live_text"], 24],
+            ["obsRecText", [OBS, "rec_text"], 24],
+            ["obsPausedText", [OBS, "paused_text"], 24],
+            ["obsSceneLabel", [OBS, "scene_label"], 16],
+            ["obsSeparator", [OBS, "separator"], 8],
+            ["voicemodMuteText", ["VoicemodOptions", "mute_text"], 24],
+        );
+        DEPENDS.push(
+            ["obsPausedText", (c) => c[OBS].show_record],
+        );
         function applyDepends(c) {
             if (!c) return;
             DEPENDS.forEach(([id, active]) => {
@@ -6884,6 +7174,276 @@
                 });
             }
         }
+
+        /* ---------------- OBS ---------------- */
+        function obsTime(ms) {
+            const s = Math.max(0, Math.floor((ms || 0) / 1000));
+            const h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, sec = s % 60;
+            const two = (n) => String(n).padStart(2, "0");
+            return h ? h + ":" + two(m) + ":" + two(sec) : m + ":" + two(sec);
+        }
+        function renderOBS(st) {
+            const o = st.obs;
+            const c = st.config && st.config.OBSOptions;
+            if (!o || !c) return;
+            const want = !!(st.modules.obs || c.enabled || o.link.state !== "off");
+            const on = o.link.state === "connected";
+            let text = "";
+            if (on) text = "Connected" + (o.version ? " · obs-websocket " + o.version : "") + (o.scene ? " · scene: " + o.scene : "");
+            setLink("obsBadge", "obsStatus", o.link, want ? text : "Turn on the line or the switch below to connect");
+            const typing = document.activeElement;
+            if (typing !== $("obsHost")) $("obsHost").value = c.host || "";
+            if (typing !== $("obsPort")) $("obsPort").value = c.port || 4455;
+
+            const stream = $("obsStreamBtn");
+            stream.disabled = !on;
+            stream.classList.toggle("ghost", !!o.streaming);
+            stream.querySelector("span").textContent = o.streaming ? "Stop streaming" : "Start streaming";
+            $("obsStreamDesc").textContent = !on ? "OBS isn't connected" : o.streaming ? "Live for " + obsTime(o.streamMs) : "Not live";
+            const record = $("obsRecordBtn");
+            record.disabled = !on;
+            record.classList.toggle("ghost", !!o.recording);
+            record.querySelector("span").textContent = o.recording ? "Stop recording" : "Start recording";
+            $("obsRecordDesc").textContent = !on ? "OBS isn't connected"
+                : o.recording ? (o.recordPaused ? "Paused at " : "Recording for ") + obsTime(o.recordMs) : "Not recording";
+            const pause = $("obsPauseBtn");
+            pause.hidden = !on || !o.recording;
+            pause.querySelector("span").textContent = o.recordPaused ? "Resume" : "Pause";
+            pause.querySelector("i").className = "fa " + (o.recordPaused ? "fa-play" : "fa-pause");
+
+            const scenes = o.scenes || [];
+            const sceneSig = on + "|" + o.scene + "|" + scenes.join("\u0000");
+            if (sceneSig !== S.obsSceneSig) {
+                S.obsSceneSig = sceneSig;
+                const list = $("obsScenes");
+                list.replaceChildren();
+                if (!scenes.length) list.innerHTML = '<div class="empty-note">' + (on ? "No scenes yet." : "Scenes show up once OBS is connected.") + "</div>";
+                scenes.forEach((name) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "voice-chip" + (name === o.scene ? " on" : "");
+                    b.dataset.scene = name;
+                    b.textContent = name;
+                    list.appendChild(b);
+                });
+            }
+            const items = o.items || [];
+            const itemSig = on + "|" + items.map((it) => it.id + (it.enabled ? "+" : "-") + it.name).join("\u0000");
+            if (itemSig !== S.obsItemSig) {
+                S.obsItemSig = itemSig;
+                const list = $("obsItems");
+                list.replaceChildren();
+                if (!items.length) list.innerHTML = '<div class="empty-note">' + (on ? "This scene has no sources." : "Sources show up once OBS is connected.") + "</div>";
+                items.forEach((it) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "voice-chip" + (it.enabled ? " on" : "");
+                    b.dataset.item = String(it.id);
+                    b.dataset.enabled = it.enabled ? "1" : "";
+                    b.title = it.enabled ? "Shown. Click to hide." : "Hidden. Click to show.";
+                    b.innerHTML = '<i class="fa ' + (it.enabled ? "fa-eye" : "fa-eye-slash") + '" aria-hidden="true"></i> ';
+                    b.appendChild(document.createTextNode(it.name));
+                    list.appendChild(b);
+                });
+            }
+            renderOverlay(st);
+        }
+        commitField($("obsHost"), (v) => v.trim() || null,
+            (c, v) => { c.OBSOptions.host = v; }, "The OBS address can't be empty");
+        commitField($("obsPort"), (v) => {
+            const n = Number(v);
+            return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : null;
+        }, (c, v) => { c.OBSOptions.port = v; }, "The OBS port must be a whole number from 1 to 65535");
+        $("obsReconnect").addEventListener("click", () => {
+            if (send({ type: "obs", action: "reconnect" })) toast("Reconnecting to OBS");
+        });
+        $("obsStreamBtn").addEventListener("click", () => {
+            const live = !!(S.state && S.state.obs && S.state.obs.streaming);
+            if (live && !confirm("Stop the stream?")) return;
+            if (send({ type: "obs", action: "stream", module: live ? "stop" : "start" })) toast(live ? "Stopping the stream" : "Starting the stream");
+        });
+        $("obsRecordBtn").addEventListener("click", () => {
+            const rec = !!(S.state && S.state.obs && S.state.obs.recording);
+            if (rec && !confirm("Stop the recording?")) return;
+            if (send({ type: "obs", action: "record", module: rec ? "stop" : "start" })) toast(rec ? "Stopping the recording" : "Starting the recording");
+        });
+        $("obsPauseBtn").addEventListener("click", () => {
+            const paused = !!(S.state && S.state.obs && S.state.obs.recordPaused);
+            send({ type: "obs", action: "record", module: paused ? "resume" : "pause" });
+        });
+        $("obsScenes").addEventListener("click", (ev) => {
+            const b = ev.target.closest("[data-scene]");
+            if (b && send({ type: "obs", action: "scene", text: b.dataset.scene })) toast("Scene: " + b.dataset.scene);
+        });
+        $("obsItems").addEventListener("click", (ev) => {
+            const b = ev.target.closest("[data-item]");
+            if (b) send({ type: "obs", action: "source", text: b.dataset.item, enabled: !b.dataset.enabled });
+        });
+
+        /* ---------------- chatbox overlay ----------------
+           The address builder is a convenience kept in this browser only: the
+           overlay itself reads its look from the address. */
+        const OVERLAY_DEFAULT = { size: 32, color: "#ffffff", bubble: "dark", align: "left", outline: false };
+        function overlayPrefs() {
+            try {
+                return Object.assign({}, OVERLAY_DEFAULT, JSON.parse(localStorage.getItem("fern_overlay") || "{}"));
+            } catch (e) {
+                return Object.assign({}, OVERLAY_DEFAULT);
+            }
+        }
+        function saveOverlayPrefs(p) {
+            try { localStorage.setItem("fern_overlay", JSON.stringify(p)); } catch (e) { }
+        }
+        function overlayQuery(p) {
+            const q = new URLSearchParams();
+            if (Number(p.size) !== OVERLAY_DEFAULT.size) q.set("size", String(p.size));
+            if (String(p.color).toLowerCase() !== OVERLAY_DEFAULT.color) q.set("color", String(p.color).replace("#", ""));
+            if (p.bubble === "none") q.set("bg", "none");
+            else if (p.bubble === "light") q.set("bg", "f4f4f8e6");
+            if (p.align !== "left") q.set("align", p.align);
+            if (p.outline) { q.set("outline", "3"); q.set("shadow", "0"); }
+            const s = q.toString();
+            return s ? "?" + s : "";
+        }
+        function renderOverlay(st) {
+            const p = overlayPrefs();
+            const base = (st && st.obs && st.obs.overlay) || location.origin + "/overlay";
+            const url = base + overlayQuery(p);
+            if ($("overlayUrl").value !== url) $("overlayUrl").value = url;
+            if (document.activeElement !== $("overlaySize")) $("overlaySize").value = p.size;
+            $("overlaySizeVal").textContent = p.size + "px";
+            if ($("overlayColor").value !== p.color) $("overlayColor").value = p.color;
+            $("overlayBubble").value = p.bubble;
+            $("overlayAlign").value = p.align;
+            $("overlayOutline").checked = !!p.outline;
+            // The preview only runs while the OBS page is open.
+            const visible = $("page-obs").classList.contains("active");
+            const src = visible ? "/overlay" + overlayQuery(p) : "about:blank";
+            if (S.overlaySrc !== src) {
+                S.overlaySrc = src;
+                $("overlayPreview").src = src;
+            }
+        }
+        function editOverlay(change) {
+            const p = overlayPrefs();
+            change(p);
+            saveOverlayPrefs(p);
+            renderOverlay(S.state);
+        }
+        $("overlaySize").addEventListener("input", (ev) => editOverlay((p) => { p.size = Number(ev.target.value) || OVERLAY_DEFAULT.size; }));
+        $("overlayColor").addEventListener("input", (ev) => editOverlay((p) => { p.color = ev.target.value; }));
+        $("overlayBubble").addEventListener("change", (ev) => editOverlay((p) => {
+            p.bubble = ev.target.value;
+            // White text on the light bubble would vanish.
+            if (p.bubble === "light" && p.color.toLowerCase() === "#ffffff") p.color = "#1a1a22";
+            if (p.bubble !== "light" && p.color.toLowerCase() === "#1a1a22") p.color = "#ffffff";
+        }));
+        $("overlayAlign").addEventListener("change", (ev) => editOverlay((p) => { p.align = ev.target.value; }));
+        $("overlayOutline").addEventListener("change", (ev) => editOverlay((p) => { p.outline = ev.target.checked; }));
+        $("overlayCopy").addEventListener("click", () => {
+            const box = $("overlayUrl");
+            const text = box.value;
+            box.select();
+            const done = () => toast("Overlay address copied");
+            const fallback = () => {
+                try { if (document.execCommand("copy")) { done(); return; } } catch (e) { }
+                toast("Copy it with Ctrl+C");
+            };
+            if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback);
+            else fallback();
+        });
+        $("nav").addEventListener("click", () => renderOverlay(S.state));
+        document.addEventListener("click", (ev) => { if (ev.target.closest("[data-open], [data-back]")) renderOverlay(S.state); });
+
+        /* ---------------- Voicemod microphone ---------------- */
+        function renderVoicemodMic(st) {
+            const vm = st.social && st.social.voicemod;
+            if (!vm) return;
+            const on = vm.link.state === "connected";
+            const badge = $("voicemodMicBadge");
+            const label = !on ? "offline" : !vm.muteKnown ? "unknown" : vm.muted ? "muted" : "live";
+            if (badge.textContent !== label) badge.textContent = label;
+            badge.classList.toggle("on", label === "live");
+            const mute = $("voicemodMuteBtn");
+            mute.disabled = !on;
+            mute.querySelector("span").textContent = vm.muted ? "Unmute" : "Mute";
+            mute.classList.toggle("ghost", !!vm.muted);
+            const bleep = $("voicemodBleepBtn");
+            bleep.disabled = !on;
+            bleep.classList.toggle("on", !!vm.bleeping);
+            bleep.setAttribute("aria-pressed", vm.bleeping ? "true" : "false");
+            const c = st.config.VoicemodOptions;
+            const errs = st.voicemodKeys || {};
+            [["voicemodMuteKey", "mute_hotkey", "voicemodMuteKeyDesc", "mute", "Mutes or unmutes from any app."],
+            ["voicemodBleepKey", "bleep_hotkey", "voicemodBleepKeyDesc", "bleep", "Bleeps while you hold it, from any app."]].forEach(([id, key, descId, errKey, text]) => {
+                if (document.activeElement !== $(id)) $(id).value = c[key] || "";
+                const err = errs[errKey] || "";
+                const desc = err || text + " Click the box and press the keys; Backspace clears it.";
+                if ($(descId).textContent !== desc) $(descId).textContent = desc;
+                $(descId).classList.toggle("bad", !!err);
+            });
+        }
+        $("voicemodMuteBtn").addEventListener("click", () => send({ type: "voicemod", action: "mute" }));
+        (function () {
+            const b = $("voicemodBleepBtn");
+            let held = false;
+            const start = (ev) => {
+                if (b.disabled || held) return;
+                if (ev && ev.pointerId !== undefined && b.setPointerCapture) {
+                    try { b.setPointerCapture(ev.pointerId); } catch (e) { }
+                }
+                held = send({ type: "voicemod", action: "bleepOn" });
+            };
+            const stop = () => {
+                if (!held) return;
+                held = false;
+                send({ type: "voicemod", action: "bleepOff" });
+            };
+            b.addEventListener("pointerdown", start);
+            b.addEventListener("pointerup", stop);
+            b.addEventListener("pointercancel", stop);
+            b.addEventListener("lostpointercapture", stop);
+            b.addEventListener("keydown", (ev) => {
+                if ((ev.key === " " || ev.key === "Enter") && !ev.repeat) { ev.preventDefault(); start(); }
+            });
+            b.addEventListener("keyup", (ev) => { if (ev.key === " " || ev.key === "Enter") stop(); });
+            b.addEventListener("blur", stop);
+            window.addEventListener("blur", stop);
+        })();
+        // A shortcut box: click it and press the keys. Same rules as the other
+        // shortcuts: letters and digits need a modifier.
+        function shortcutBox(id, path, label) {
+            const el = $(id);
+            const commit = (value) => {
+                el.value = value;
+                if (pushConfigNow((c) => setField(c, path, value))) toast(value ? label + ": " + value : label + " off");
+                el.blur();
+            };
+            el.addEventListener("keydown", (ev) => {
+                if (ev.key === "Tab") return;
+                ev.preventDefault();
+                if (ev.key === "Escape") { el.blur(); return; }
+                if (ev.key === "Backspace" || ev.key === "Delete") { commit(""); return; }
+                const mods = [ev.ctrlKey && "Ctrl", ev.altKey && "Alt", ev.shiftKey && "Shift", ev.metaKey && "Win"].filter(Boolean);
+                const code = ev.code || "";
+                let key = "";
+                if (/^Key[A-Z]$/.test(code)) key = code.slice(3);
+                else if (/^Digit\d$/.test(code)) key = code.slice(5);
+                else if (/^(F\d{1,2}|Numpad\d|Space|Insert|Home|End|PageUp|PageDown|Pause)$/.test(code)) key = code;
+                if (!key) { el.value = mods.length ? mods.join("+") + "+…" : ""; return; }
+                if (!mods.length && !HOTKEY_FREE.test(key)) {
+                    toast(key + " needs Ctrl, Alt, Shift or Win with it", true);
+                    return;
+                }
+                commit(mods.concat(key).join("+"));
+            });
+            el.addEventListener("blur", () => {
+                const c = config();
+                if (c) el.value = field(c, path) || "";
+            });
+        }
+        shortcutBox("voicemodMuteKey", ["VoicemodOptions", "mute_hotkey"], "Mute shortcut");
+        shortcutBox("voicemodBleepKey", ["VoicemodOptions", "bleep_hotkey"], "Bleep shortcut");
 
         /* ---------------- live actions ---------------- */
         $("btnMaster").addEventListener("click", () => {
