@@ -628,6 +628,10 @@ type Config struct {
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
+
+	// Chatbox animation and blocked worlds; see motion.go and worldblock.go.
+	Motion     MotionOptions     `json:"Motion"`
+	WorldBlock WorldBlockOptions `json:"WorldBlock"`
 }
 
 var (
@@ -891,6 +895,8 @@ func DefaultConfig() Config {
 		STTOptions:    defaultSTTOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
+		Motion:        defaultMotionOptions(),
+		WorldBlock:    defaultWorldBlockOptions(),
 	}
 }
 
@@ -915,6 +921,8 @@ func (c Config) clone() Config {
 	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	out.Rules = c.Rules.clone()
 	out.DND = c.DND.clone()
+	out.Motion = c.Motion.clone()
+	out.WorldBlock = c.WorldBlock.clone()
 	return out
 }
 
@@ -1146,6 +1154,9 @@ func EffectiveRateMS(cfg Config) int64 {
 		if fast > 0 && fast < rate {
 			rate = fast
 		}
+	}
+	if m := motionRateMS(cfg); m > 0 && m < rate {
+		rate = m
 	}
 	return rate
 }
@@ -1383,6 +1394,8 @@ func (c *Config) sanitize() {
 	sanitizeTexts(c)
 	c.Rules.sanitize()
 	c.DND.sanitize()
+	c.Motion.sanitize()
+	c.WorldBlock.sanitize()
 }
 
 func scheduleSave() {
