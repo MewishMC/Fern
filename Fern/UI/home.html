@@ -45,6 +45,7 @@
                     <span id="linesInfo">0 lines</span>
                     <span id="holdInfo"></span>
                 </div>
+                <div class="fit-info" id="fitInfo" hidden></div>
             </div>
 
             <nav id="nav">
@@ -138,6 +139,7 @@
                             <span class="badge" id="sendBadge">hold 10s</span>
                         </div>
                         <textarea id="sendText" placeholder="Type a message to push to the chatbox…"></textarea>
+                        <button type="button" class="suggest" id="sendSuggest" hidden title="Use this earlier message"></button>
                         <div class="send-row">
                             <select id="sendHold">
                                 <option value="5">Hold 5 seconds</option>
@@ -148,6 +150,10 @@
                             </select>
                             <button class="btn ghost" id="btnClearHold">Clear pin</button>
                             <button class="btn" id="btnSend">Send</button>
+                        </div>
+                        <div class="send-opts">
+                            <label class="switch" title="Send as you type"><input type="checkbox" id="liveTyping" aria-label="Live typing"><span></span></label>
+                            <span><b>Live typing</b> &middot; <span id="liveHint">the chatbox follows as you type</span></span>
                         </div>
                         <div class="hint">Overrides the rotation for a while, then Fern goes back to normal. <kbd>Ctrl</kbd> + <kbd>Enter</kbd> also sends.</div>
                         <div class="assist-bar" id="assistBar">
@@ -177,6 +183,13 @@
                                 <button class="btn ghost small" type="button" id="assistUse">Use</button>
                                 <button class="btn small" type="button" id="assistUseSend">Use &amp; send</button>
                             </div>
+                        </div>
+                        <div class="recent" id="recentBox" hidden>
+                            <div class="recent-head">
+                                <span>Recent <span class="count" id="recentCount">0</span></span>
+                                <button type="button" class="btn ghost small" id="btnClearRecent">Clear</button>
+                            </div>
+                            <div class="recent-list" id="recentList"></div>
                         </div>
                     </div>
 
@@ -256,6 +269,16 @@
                 <div class="section-title" style="margin-top:0">Order &amp; visibility</div>
                 <div class="list" id="orderList" style="margin-top:0"></div>
 
+                <div class="section-title">When it doesn't fit</div>
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Drop priority</h3>
+                        <button class="btn ghost" id="btnDropReset">Default</button>
+                    </div>
+                    <div class="hint" style="margin-top:0">VRChat shows 144 characters and 9 lines. When the chatbox is longer, Fern first shortens lines (media loses its bar, then its time, then album and feat. credits), then drops whole lines from the top of this list. Media is cut to fit before it is dropped. The last line left is cut with &ldquo;&hellip;&rdquo;. This is separate from the display order above.</div>
+                    <div class="list" id="dropList"></div>
+                </div>
+
                 <div class="section-title">Chatbox</div>
                 <div class="card">
                     <div class="field">
@@ -281,6 +304,20 @@
                                 <option value="  ">Two spaces</option>
                             </select>
                         </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Line prefix</b>
+                            <span>Put before every line, e.g. &ldquo;&raquo; &rdquo;. Counts toward the 144 characters.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="linePrefix" maxlength="16" placeholder="none" autocomplete="off" style="width:200px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Line suffix</b>
+                            <span>Put after every line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lineSuffix" maxlength="16" placeholder="none" autocomplete="off" style="width:200px"></div>
                     </div>
                 </div>
 
@@ -3311,6 +3348,86 @@
                     </div>
                 </div>
 
+                <div class="section-title">Chat</div>
+                <div class="card" id="chatCard">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Live typing rate</b>
+                            <span>With live typing on, how often the message is sent while you type. VRChat drops messages that come faster than about one a second.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="liveRate" min="1000" max="3000" step="100">
+                            <span class="val" id="liveRateVal">1.5s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Typing indicator</b>
+                            <span>Show VRChat's typing bubble while you write a message on the Live page</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="typingIndicator"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Remember sent messages</b>
+                            <span>Keep the last 20 messages from &ldquo;Send now&rdquo; to resend with a click. Turning this off forgets them.</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="keepHistory"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Autocomplete</b>
+                            <span>Suggest a whole earlier message as you type it; <kbd>Tab</kbd> takes it</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="chatAutocomplete"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Sound for sent messages</b>
+                            <span>VRChat plays its chatbox sound once for each message from &ldquo;Send now&rdquo;</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="notifySend"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Sound for automatic updates</b>
+                            <span>Plays whenever the chatbox text changes. With the clock or loading dots on, that is often.</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="notifyAuto"><span></span></label></div>
+                    </div>
+                </div>
+
+                <div class="section-title">More outputs</div>
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Extra destinations</h3>
+                        <span class="badge" id="outBadge">off</span>
+                    </div>
+                    <div class="hint" style="margin-top:0">Send the same chatbox to up to two more places, such as a second VRChat client or an OSC router.</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Output 2</b>
+                            <span>Host and port</span>
+                        </div>
+                        <div class="field-control out-control">
+                            <input type="text" id="out0Host" autocomplete="off" aria-label="Output 2 host" placeholder="127.0.0.1">
+                            <input type="number" id="out0Port" min="1" max="65535" aria-label="Output 2 port">
+                            <label class="switch" title="Send to output 2"><input type="checkbox" id="out0On" aria-label="Send to output 2"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Output 3</b>
+                            <span>Host and port</span>
+                        </div>
+                        <div class="field-control out-control">
+                            <input type="text" id="out1Host" autocomplete="off" aria-label="Output 3 host" placeholder="127.0.0.1">
+                            <input type="number" id="out1Port" min="1" max="65535" aria-label="Output 3 port">
+                            <label class="switch" title="Send to output 3"><input type="checkbox" id="out1On" aria-label="Send to output 3"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="hint">Every change is saved to <code>%LOCALAPPDATA%\Fern\config.json</code> as you make it.</div>
             </section>
 
@@ -3651,6 +3768,8 @@
             renderFooter(st);
             syncControls(st);
             renderOrder(st);
+            renderDropOrder(st);
+            renderRecent(st);
             renderModules(st);
             syncMessages(st);
             renderLogs(st);
@@ -3676,6 +3795,8 @@
             $("count").textContent = st.chars + " / " + st.maxChars;
             $("linesInfo").textContent = st.lines + (st.lines === 1 ? " line" : " lines") + " · max " + st.maxLines;
 
+            renderFitInfo(st);
+
             const hold = st.hold || {};
             $("holdInfo").textContent = hold.pinned
                 ? "pinned message"
@@ -3683,6 +3804,21 @@
 
             $("btnMaster").textContent = st.config.display_options.show ? "Display on" : "Display off";
             $("btnMaster").classList.toggle("ghost", !!st.config.display_options.show);
+        }
+
+        // Says which lines did not fit, so a missing line is not a mystery.
+        function renderFitInfo(st) {
+            const fit = st.fit || {};
+            const names = (ids) => (ids || []).map((id) => MODULE_NAME[id] || id).join(", ");
+            const parts = [];
+            if (fit.dropped && fit.dropped.length) parts.push("Dropped to fit: " + names(fit.dropped));
+            if (fit.shrunk && fit.shrunk.length) parts.push((fit.cut ? "Cut: " : "Shortened: ") + names(fit.shrunk));
+            if (fit.hidden && fit.hidden.length) parts.push((st.inVR ? "Hidden in VR: " : "Hidden on desktop: ") + names(fit.hidden));
+            const text = parts.join(" · ");
+            const el = $("fitInfo");
+            if (el.textContent !== text) el.textContent = text;
+            el.hidden = !text;
+            el.title = text ? text + ". Change what goes first on the Lines page." : "";
         }
 
         // Windows reports the app's own name as the media title until a track is
@@ -4129,6 +4265,9 @@
         function renderFooter(st) {
             $("oscLabel").textContent = st.osc;
             $("oscBadge").textContent = st.osc;
+            const extraOn = (st.config.OSC.extra || []).filter((o) => o.enabled).length;
+            $("outBadge").textContent = extraOn ? extraOn + " on" : "off";
+            $("outBadge").classList.toggle("on", extraOn > 0);
             const vr = vrchatLink(st.vrchat || {});
             $("vrLabel").textContent = "VRChat: " + vr.text;
             $("vrLabel").title = vr.detail;
@@ -4167,6 +4306,10 @@
                 const typing = document.activeElement;
                 if (typing !== $("oscHost")) $("oscHost").value = c.OSC.host;
                 if (typing !== $("oscPort")) $("oscPort").value = c.OSC.port;
+                (c.OSC.extra || []).forEach((out, i) => {
+                    if (typing !== $("out" + i + "Host")) $("out" + i + "Host").value = out.host;
+                    if (typing !== $("out" + i + "Port")) $("out" + i + "Port").value = out.port;
+                });
                 if (typing !== $("afkTime")) $("afkTime").value = c.AfkOptions.afk_time;
                 if (typing !== $("lyricsFolder")) $("lyricsFolder").value = c.LyricsOptions.folder || "";
                 if (typing !== $("clockZone")) $("clockZone").value = c.TimeOptions.zone || "";
@@ -4184,6 +4327,10 @@
 
             RANGES.forEach(([, path, labelId, format]) => { $(labelId).textContent = format(field(c, path)); });
             $("windowBadge").textContent = d.active_window ? "on" : "off";
+            const liveHint = c.ChatOptions.live_typing
+                ? "sends as you type, every " + (c.ChatOptions.live_rate_ms / 1000).toFixed(1) + "s"
+                : "off, messages go out when you press Send";
+            if ($("liveHint").textContent !== liveHint) $("liveHint").textContent = liveHint;
 
             const style = c.MediaOptions.show_progress ? (c.MediaOptions.progress_style || "both") : "none";
             renderBarPreview();
@@ -4198,9 +4345,69 @@
             }
         }
 
+        // A small note on a line's row when the chatbox is showing it shortened
+        // or not at all right now.
+        function fitFlag(st, id) {
+            const fit = st.fit || {};
+            if (!st.modules || !st.modules[id] || fit.hold) return "";
+            if ((fit.hidden || []).includes(id)) return ' <span class="row-flag">' + (st.inVR ? "hidden in VR" : "hidden on desktop") + "</span>";
+            if ((fit.dropped || []).includes(id)) return ' <span class="row-flag warn">dropped to fit</span>';
+            if ((fit.shrunk || []).includes(id)) return ' <span class="row-flag">' + (fit.cut ? "cut to fit" : "shortened") + "</span>";
+            return "";
+        }
+
+        function fitFlagSig(st) {
+            const fit = st.fit || {};
+            return JSON.stringify([fit.dropped, fit.shrunk, fit.cut, fit.hold, fit.hidden, st.inVR]);
+        }
+
+        // Per line: show always, only in VR or only on desktop.
+        const VISIBILITY = [["always", "Always"], ["vr", "VR only"], ["desktop", "Desktop only"]];
+        function lineVisibility(st, id) {
+            return (st.config.display_options.visibility || {})[id] || "always";
+        }
+
+        function renderDropOrder(st) {
+            const order = (st.config.display_options.drop_order || []).filter((id) => MODULE_NAME[id]);
+            const sig = order.join(",") + "|" + JSON.stringify(st.modules) + "|" + fitFlagSig(st);
+            if (sig === S.dropSig) return;
+            const active = document.activeElement;
+            if (active && active.closest("#dropList")) return;
+            S.dropSig = sig;
+
+            const list = $("dropList");
+            list.innerHTML = "";
+            order.forEach((id, index) => {
+                const name = MODULE_NAME[id] || id;
+                const row = document.createElement("div");
+                row.className = "row" + (st.modules[id] ? "" : " off");
+                row.dataset.id = id;
+                row.innerHTML =
+                    '<span class="grip" draggable="true" title="Drag to reorder">⠿</span>' +
+                    '<span class="drop-rank">' + (index + 1) + "</span>" +
+                    '<div class="row-main"><div class="row-name">' + name + fitFlag(st, id) + "</div>" +
+                    '<span class="row-desc">' + (index === 0 ? "Dropped first" : index === order.length - 1 ? "Kept longest" : "") +
+                    (st.modules[id] ? "" : (index === 0 || index === order.length - 1 ? " · " : "") + "off") + "</span></div>" +
+                    '<div class="row-actions">' +
+                    '<button class="chev" data-drop-move="up" title="Drop earlier" aria-label="Drop ' + name + ' earlier"' + (index === 0 ? " disabled" : "") + ">▲</button>" +
+                    '<button class="chev" data-drop-move="down" title="Keep longer" aria-label="Keep ' + name + ' longer"' + (index === order.length - 1 ? " disabled" : "") + ">▼</button>" +
+                    "</div>";
+                list.appendChild(row);
+            });
+        }
+
+        function setDropOrder(order) {
+            if (!pushConfigNow((c) => { c.display_options.drop_order = order; })) return;
+            S.state.config.display_options.drop_order = order;
+            S.dropSig = "";
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+            renderDropOrder(S.state);
+        }
+
         function renderOrder(st) {
             const order = st.order || [];
-            const sig = order.join(",") + "|" + JSON.stringify(st.modules);
+            const sig = order.join(",") + "|" + JSON.stringify(st.modules) + "|" + fitFlagSig(st) +
+                "|" + JSON.stringify(st.config.display_options.visibility || {});
             if (sig === S.orderSig) return;
             S.orderSig = sig;
 
@@ -4216,9 +4423,12 @@
                 row.dataset.index = String(index);
                 row.innerHTML =
                     '<span class="grip" draggable="true" title="Drag to reorder">⠿</span>' +
-                    '<div class="row-main"><div class="row-name">' + (MODULE_NAME[id] || id) +
+                    '<div class="row-main"><div class="row-name">' + (MODULE_NAME[id] || id) + fitFlag(st, id) +
                     '</div><span class="row-desc">' + (MODULE_DESC[id] || "") + "</span></div>" +
                     '<div class="row-actions">' +
+                    '<select class="compact vis-pick" data-vis="' + id + '" title="When this line shows" aria-label="When ' + (MODULE_NAME[id] || id) + ' shows">' +
+                    VISIBILITY.map(([v, label]) => '<option value="' + v + '"' + (lineVisibility(st, id) === v ? " selected" : "") + ">" + label + "</option>").join("") +
+                    "</select>" +
                     '<button class="chev" data-open="' + id + '" title="Settings" aria-label="' + (MODULE_NAME[id] || id) + ' settings"><i class="fa fa-gear" aria-hidden="true"></i></button>' +
                     '<button class="chev" data-move="up" title="Move up" aria-label="Move ' + (MODULE_NAME[id] || id) + ' up"' + (index === 0 ? " disabled" : "") + '>▲</button>' +
                     '<button class="chev" data-move="down" title="Move down" aria-label="Move ' + (MODULE_NAME[id] || id) + ' down"' + (index === order.length - 1 ? " disabled" : "") + '>▼</button>' +
@@ -4453,6 +4663,14 @@
         // [checkbox id, config path] — saved immediately on change.
         const CHECKS = [
             ["masterSwitch", ["display_options", "show"]],
+            ["out0On", ["OSC", "extra", 0, "enabled"]],
+            ["out1On", ["OSC", "extra", 1, "enabled"]],
+            ["notifySend", ["ChatOptions", "notify_send"]],
+            ["notifyAuto", ["ChatOptions", "notify_auto"]],
+            ["liveTyping", ["ChatOptions", "live_typing"]],
+            ["typingIndicator", ["ChatOptions", "typing_indicator"]],
+            ["keepHistory", ["ChatOptions", "keep_history"]],
+            ["chatAutocomplete", ["ChatOptions", "autocomplete"]],
             ["spinFast", ["LoadingOptions", "fast"]],
             ["loadDots", ["LoadingOptions", "show_dots"]],
             ["cycleSwitch", ["TextOptions", "cycle"]],
@@ -4548,6 +4766,7 @@
         // [range id, config path, value label id, label format] — debounced.
         const RANGES = [
             ["rateRange", ["timeout_ms"], "rateVal", asSeconds(2)],
+            ["liveRate", ["ChatOptions", "live_rate_ms"], "liveRateVal", asSeconds(1)],
             ["spinRate", ["LoadingOptions", "rate_ms"], "spinRateVal", asMs],
             ["loadDotsRange", ["LoadingOptions", "dots"], "loadDotsVal", asIs],
             ["speedRange", ["TextOptions", "speed"], "speedVal", asSeconds(1)],
@@ -4587,6 +4806,8 @@
 
         // [text input id, config path, max length] — debounced.
         const TEXTS = [
+            ["linePrefix", ["display_options", "line_prefix"], 16],
+            ["lineSuffix", ["display_options", "line_suffix"], 16],
             ["loadText", ["LoadingOptions", "text"], 40],
             ["textLabel", ["TextOptions", "label"], 16],
             ["clockLabel", ["TimeOptions", "label"], Infinity],
@@ -4666,6 +4887,8 @@
         // Settings that do nothing given another setting are dimmed and locked:
         // [control id, is it in effect for this config].
         const DEPENDS = [
+            ["liveRate", (c) => c.ChatOptions.live_typing],
+            ["chatAutocomplete", (c) => c.ChatOptions.keep_history],
             ["clockNoAmPm", (c) => !c.TimeOptions.use_24h],
             ["loadDotsRange", (c) => c.LoadingOptions.show_dots],
             ["spinRate", (c) => c.LoadingOptions.fast],
@@ -5257,11 +5480,164 @@
             if (send({ type: "send", text: text, hold: hold })) {
                 toast(hold === 0 ? "Pinned" : "Sent · holding " + hold + "s");
                 $("sendText").value = "";
+                composeDone();
             }
         }
 
+        /* ---------------- composing ----------------
+           Live typing sends the box as it changes, at most once per live rate
+           (Fern holds back anything faster too). The typing bubble is re-sent
+           every few seconds while keys are pressed and taken down after a
+           pause, on send, or when the box is left. */
+        const compose = { liveTimer: null, liveAt: 0, liveSent: "", typingOn: false, typingAt: 0, typingIdle: null };
+
+        function chatOptions() {
+            const c = config();
+            return (c && c.ChatOptions) || {};
+        }
+
+        function scheduleLive() {
+            clearTimeout(compose.liveTimer);
+            const rate = Math.max(1000, num(chatOptions().live_rate_ms, 1500));
+            const wait = Math.max(0, compose.liveAt + rate - Date.now());
+            compose.liveTimer = setTimeout(() => {
+                if (!chatOptions().live_typing) return;
+                const text = $("sendText").value.trim();
+                if (text === compose.liveSent) return;
+                if (!send({ type: "live", text: text, hold: num($("sendHold").value, 10) })) return;
+                compose.liveAt = Date.now();
+                compose.liveSent = text;
+            }, wait);
+        }
+
+        function setTyping(active) {
+            clearTimeout(compose.typingIdle);
+            if (active && chatOptions().typing_indicator) {
+                if (!compose.typingOn || Date.now() - compose.typingAt > 4000) {
+                    if (send({ type: "typing", enabled: true })) {
+                        compose.typingOn = true;
+                        compose.typingAt = Date.now();
+                    }
+                }
+                compose.typingIdle = setTimeout(() => setTyping(false), 5000);
+            } else if (compose.typingOn) {
+                compose.typingOn = false;
+                send({ type: "typing", enabled: false });
+            }
+        }
+
+        function composeChanged() {
+            const text = $("sendText").value;
+            if (chatOptions().live_typing) scheduleLive();
+            setTyping(text.trim() !== "");
+            updateSuggestion();
+        }
+
+        // After a send: the next keystroke starts a new message.
+        function composeDone() {
+            clearTimeout(compose.liveTimer);
+            compose.liveSent = "";
+            setTyping(false);
+            updateSuggestion();
+        }
+
+        $("sendText").addEventListener("input", composeChanged);
+        $("sendText").addEventListener("blur", () => setTyping(false));
+
+        /* ---------------- message history ---------------- */
+        // The newest earlier message that starts with what is typed so far.
+        function suggestionFor(typed) {
+            const opts = chatOptions();
+            if (!opts.autocomplete || typed.trim().length < 2) return "";
+            const lower = typed.toLowerCase();
+            return (opts.history || []).find((m) => m.length > typed.length && m.toLowerCase().startsWith(lower)) || "";
+        }
+
+        function updateSuggestion() {
+            const typed = $("sendText").value;
+            const match = suggestionFor(typed);
+            const el = $("sendSuggest");
+            el.hidden = !match;
+            el.dataset.text = match;
+            if (!match) return;
+            el.innerHTML = "";
+            const key = document.createElement("kbd");
+            key.textContent = "Tab";
+            const done = document.createElement("span");
+            done.className = "suggest-typed";
+            done.textContent = match.slice(0, typed.length);
+            const rest = document.createElement("span");
+            rest.textContent = match.slice(typed.length);
+            el.append(key, done, rest);
+        }
+
+        function acceptSuggestion() {
+            const text = $("sendSuggest").dataset.text;
+            if (!text) return false;
+            const box = $("sendText");
+            box.value = text;
+            box.focus();
+            box.setSelectionRange(text.length, text.length);
+            composeChanged();
+            return true;
+        }
+
+        $("sendText").addEventListener("keydown", (ev) => {
+            if (ev.key === "Tab" && !ev.shiftKey && !$("sendSuggest").hidden && acceptSuggestion()) ev.preventDefault();
+            if (ev.key === "Escape" && !$("sendSuggest").hidden) {
+                ev.preventDefault();
+                $("sendSuggest").hidden = true;
+            }
+        });
+        $("sendSuggest").addEventListener("mousedown", (ev) => ev.preventDefault());
+        $("sendSuggest").addEventListener("click", acceptSuggestion);
+
+        function renderRecent(st) {
+            const history = (st.config.ChatOptions && st.config.ChatOptions.history) || [];
+            const sig = history.join("\u0001");
+            if (sig === S.recentSig) return;
+            S.recentSig = sig;
+            $("recentBox").hidden = !history.length;
+            $("recentCount").textContent = history.length;
+            const list = $("recentList");
+            list.innerHTML = "";
+            history.forEach((text) => {
+                const item = document.createElement("button");
+                item.type = "button";
+                item.className = "recent-item";
+                item.dataset.text = text;
+                item.title = "Send again · Shift+click to edit";
+                item.textContent = text;
+                list.appendChild(item);
+            });
+            if (document.activeElement === $("sendText")) updateSuggestion();
+        }
+
+        $("recentList").addEventListener("click", (ev) => {
+            const item = ev.target.closest(".recent-item");
+            if (!item) return;
+            const text = item.dataset.text;
+            if (ev.shiftKey) {
+                $("sendText").value = text;
+                $("sendText").focus();
+                composeChanged();
+                return;
+            }
+            const hold = num($("sendHold").value, 10);
+            if (send({ type: "send", text: text, hold: hold })) toast("Sent again · " + (hold === 0 ? "pinned" : "holding " + hold + "s"));
+        });
+
+        $("btnClearRecent").addEventListener("click", () => {
+            const history = chatOptions().history || [];
+            if (!history.length || !send({ type: "clearChatHistory" })) return;
+            toast("Recent messages cleared");
+        });
+
         $("btnClearHold").addEventListener("click", () => {
-            if (send({ type: "clearHold" })) toast("Back to rotation");
+            if (send({ type: "clearHold" })) {
+                compose.liveSent = "";
+                toast("Back to rotation");
+            }
         });
 
         document.addEventListener("click", (ev) => {
@@ -5298,6 +5674,22 @@
                 if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
                 toggleModule(id, toggle.checked);
             }
+        });
+
+        $("orderList").addEventListener("change", (ev) => {
+            const pick = ev.target.closest("select[data-vis]");
+            if (!pick || !S.state) return;
+            const id = pick.dataset.vis, value = pick.value;
+            const apply = (c) => {
+                const vis = Object.assign({}, c.display_options.visibility || {});
+                if (value === "always") delete vis[id]; else vis[id] = value;
+                c.display_options.visibility = vis;
+            };
+            if (!pushConfigNow(apply)) return;
+            apply(S.state.config);
+            pick.blur();
+            const label = VISIBILITY.find(([v]) => v === value)[1];
+            toast((MODULE_NAME[id] || id) + ": " + (value === "always" ? "shows always" : label));
         });
 
         // Flip a module locally right away, then tell the server.
@@ -5386,6 +5778,22 @@
             S.orderSig = "";
             send({ type: "order", order });
             renderOrder(S.state);
+        });
+
+        dragTarget($("dropList"), (rows) => setDropOrder(rows.map((r) => r.dataset.id)));
+        $("dropList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-drop-move]");
+            if (!button || !S.state) return;
+            const order = (S.state.config.display_options.drop_order || []).slice();
+            const from = order.indexOf(button.closest(".row").dataset.id);
+            const to = button.dataset.dropMove === "up" ? from - 1 : from + 1;
+            if (from < 0 || to < 0 || to >= order.length) return;
+            order.splice(to, 0, order.splice(from, 1)[0]);
+            setDropOrder(order);
+        });
+        // An empty list is filled with the default order by Fern.
+        $("btnDropReset").addEventListener("click", () => {
+            if (pushConfigNow((c) => { c.display_options.drop_order = []; })) toast("Drop priority reset: time goes first, your text last");
         });
 
         dragTarget($("msgList"), (rows) => {
@@ -6047,6 +6455,14 @@
             const n = Number(v);
             return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : null;
         }, (c, v) => { c.OSC.port = v; }, "OSC port must be a whole number from 1 to 65535");
+        [0, 1].forEach((i) => {
+            commitField($("out" + i + "Host"), (v) => v.trim() || null,
+                (c, v) => { c.OSC.extra[i].host = v; }, "Output " + (i + 2) + " host can't be empty");
+            commitField($("out" + i + "Port"), (v) => {
+                const n = Number(v);
+                return Number.isInteger(n) && n >= 1 && n <= 65535 ? n : null;
+            }, (c, v) => { c.OSC.extra[i].port = v; }, "Output " + (i + 2) + " port must be a whole number from 1 to 65535");
+        });
         commitField($("afkTime"), (v) => {
             const n = Number(v);
             return v.trim() !== "" && Number.isFinite(n) && n >= 0 && n <= 3600 ? Math.round(n) : null;

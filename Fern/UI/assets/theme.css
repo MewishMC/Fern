@@ -1262,6 +1262,163 @@ select option {
     text-overflow: ellipsis;
 }
 
+/* Live page composer: live typing switch, suggestion and recent messages. */
+.send-opts {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text-dim);
+}
+
+.send-opts b {
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.suggest {
+    display: block;
+    width: 100%;
+    margin-top: 6px;
+    padding: 5px 9px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font: inherit;
+    font-size: .75rem;
+    text-align: left;
+    cursor: pointer;
+    white-space: pre;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.suggest[hidden] {
+    display: none;
+}
+
+.suggest:hover {
+    border-color: var(--accent-border);
+}
+
+.suggest kbd {
+    margin-right: 8px;
+}
+
+.suggest-typed {
+    color: var(--text-primary);
+}
+
+.recent {
+    margin-top: 12px;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 10px;
+}
+
+.recent-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: .62rem;
+    font-weight: 600;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+}
+
+.recent-head .count {
+    margin-left: 4px;
+    text-transform: none;
+}
+
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 8px;
+    max-height: 168px;
+    overflow-y: auto;
+}
+
+.recent-item {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    background: var(--bg-input);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: .75rem;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 0 0 auto;
+}
+
+.recent-item:hover {
+    border-color: var(--accent-border);
+    color: var(--text-primary);
+}
+
+/* Extra OSC outputs: host, port and a switch on one row. */
+.out-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.out-control input[type="text"] {
+    width: 150px;
+}
+
+.out-control input[type="number"] {
+    width: 86px;
+}
+
+/* Fitting the chatbox: which lines are dropped or shortened right now. */
+.row-flag {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 5px;
+    border: 1px solid var(--border-strong);
+    font-size: .6rem;
+    font-weight: 600;
+    letter-spacing: .3px;
+    color: var(--text-muted);
+    vertical-align: 1px;
+}
+
+.row-flag.warn {
+    color: var(--amber);
+    border-color: color-mix(in srgb, var(--amber) 45%, transparent);
+}
+
+.row.off .row-name {
+    color: var(--text-dim);
+}
+
+.drop-rank {
+    flex: 0 0 18px;
+    text-align: center;
+    font-size: .7rem;
+    font-weight: 600;
+    color: var(--text-faint);
+}
+
+.fit-info {
+    margin-top: 4px;
+    font-size: 9.5px;
+    color: var(--amber);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .row-actions {
     display: flex;
     align-items: center;

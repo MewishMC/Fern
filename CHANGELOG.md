@@ -106,6 +106,18 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 - Tokens, client secrets and keys for these are stored encrypted for your Windows account
   in `secrets.dat`, never shown again in the panel and never written to `config.json`.
   Each integration has a status badge and stays quiet when its app is not running.
+- A chatbox that is too long now fits instead of being cut off mid-line: media first loses its
+  bar, its time, then album and feat. credits, then whole lines are dropped by a priority you
+  set on the Lines page (time first, your text last by default), and only the last line left
+  is cut with "…". The preview and the Lines page say which lines were dropped or shortened.
+- Each line can show always, only in VR or only on desktop.
+- A prefix and suffix can be put around every chatbox line.
+- VRChat's chatbox sound can play for sent messages (on by default, once per message) and,
+  separately, for automatic updates.
+- The chatbox can go to up to two more OSC outputs, each with its own host, port and switch.
+- Send now has live typing (sends as you type, kept to VRChat's rate), shows VRChat's typing
+  bubble while you write, remembers your last 20 messages to resend with a click, and
+  suggests a whole earlier message as you type it (Tab takes it).
 
 ## v2.2 - Custom bars
 

@@ -75,7 +75,21 @@ type DisplayOptions struct {
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
 	MaxLines     int      `json:"max_lines"`
+	// DropOrder is which line goes first when the chatbox is too long.
+	DropOrder []string `json:"drop_order"`
+	// Visibility limits a line to VR or desktop: "vr" or "desktop" per id.
+	// Missing ids show always.
+	Visibility map[string]string `json:"visibility"`
+	LinePrefix string            `json:"line_prefix"` // put before every line
+	LineSuffix string            `json:"line_suffix"` // put after every line
 }
+
+// Values of DisplayOptions.Visibility.
+const (
+	ShowAlways  = "always"
+	ShowVR      = "vr"
+	ShowDesktop = "desktop"
+)
 
 // WindowOptions controls how the active window title is shortened.
 type WindowOptions struct {
@@ -472,6 +486,39 @@ type VoicemodOptions struct {
 type OSCOptions struct {
 	Host string `json:"host"`
 	Port int    `json:"port"`
+	// Extra are more places that get the same chatbox, e.g. a second VRChat
+	// or an OSC router. Always ExtraOutputs entries.
+	Extra []OSCTarget `json:"extra"`
+}
+
+// OSCTarget is one more OSC destination.
+type OSCTarget struct {
+	Enabled bool   `json:"enabled"`
+	Host    string `json:"host"`
+	Port    int    `json:"port"`
+}
+
+// ExtraOutputs is how many OSC destinations can be added to the main one.
+const ExtraOutputs = 2
+
+func defaultExtraOutput(i int) OSCTarget {
+	return OSCTarget{Host: "127.0.0.1", Port: 9002 + i}
+}
+
+// ChatOptions controls messages typed on the Live page and how sends sound.
+type ChatOptions struct {
+	NotifySend bool `json:"notify_send"` // play VRChat's sound for "Send now" messages
+	NotifyAuto bool `json:"notify_auto"` // play it when the automatic chatbox changes
+	// LiveTyping sends the message box as you type, at most every LiveRateMS.
+	LiveTyping bool `json:"live_typing"`
+	LiveRateMS int  `json:"live_rate_ms"`
+	// TypingIndicator shows VRChat's typing bubble while composing.
+	TypingIndicator bool `json:"typing_indicator"`
+	// History holds the last messages sent from the Live page, newest first,
+	// for resending and autocomplete. Empty and not kept while KeepHistory is off.
+	History      []string `json:"history"`
+	KeepHistory  bool     `json:"keep_history"`
+	Autocomplete bool     `json:"autocomplete"` // suggest whole earlier messages while typing
 }
 
 // Config is the persisted application configuration.
@@ -493,6 +540,7 @@ type Config struct {
 	LyricsOptions  LyricsOptions  `json:"LyricsOptions"`
 	WeatherOptions WeatherOptions `json:"WeatherOptions"`
 	OSCOptions     OSCOptions     `json:"OSC"`
+	ChatOptions    ChatOptions    `json:"ChatOptions"`
 	TimeoutMS      int64          `json:"timeout_ms"`
 	AssistOptions  AssistOptions  `json:"AssistOptions"`
 	TTSOptions     TTSOptions     `json:"TTSOptions"`
@@ -534,6 +582,8 @@ func DefaultConfig() Config {
 			Separator:    "\n",
 			MaxChars:     144,
 			MaxLines:     9,
+			DropOrder:    append([]string{}, DefaultDropOrder...),
+			Visibility:   map[string]string{},
 		},
 		TextMessages: Messages("♡ hi there", "♡ have a good day", "♡ be kind"),
 		WindowOptions: WindowOptions{
@@ -720,8 +770,17 @@ func DefaultConfig() Config {
 			VoiceIcon:      "🎙️",
 		},
 		OSCOptions: OSCOptions{
-			Host: "127.0.0.1",
-			Port: 9000,
+			Host:  "127.0.0.1",
+			Port:  9000,
+			Extra: []OSCTarget{defaultExtraOutput(0), defaultExtraOutput(1)},
+		},
+		ChatOptions: ChatOptions{
+			NotifySend:      true,
+			LiveRateMS:      1500,
+			TypingIndicator: true,
+			History:         []string{},
+			KeepHistory:     true,
+			Autocomplete:    true,
 		},
 		TimeoutMS:     2500,
 		AssistOptions: defaultAssistOptions(),
@@ -736,6 +795,13 @@ func (c Config) clone() Config {
 	out.TextMessages = append([]TextMessage{}, c.TextMessages...)
 	out.TextOptions.Groups = append([]string{}, c.TextOptions.Groups...)
 	out.TextOptions.Icons = append([]string{}, c.TextOptions.Icons...)
+	out.DisplayOptions.DropOrder = append([]string{}, c.DisplayOptions.DropOrder...)
+	out.DisplayOptions.Visibility = make(map[string]string, len(c.DisplayOptions.Visibility))
+	for id, v := range c.DisplayOptions.Visibility {
+		out.DisplayOptions.Visibility[id] = v
+	}
+	out.OSCOptions.Extra = append([]OSCTarget{}, c.OSCOptions.Extra...)
+	out.ChatOptions.History = append([]string{}, c.ChatOptions.History...)
 	out.WindowOptions.Rules = append([]WindowRule{}, c.WindowOptions.Rules...)
 	out.WindowOptions.HideTitles = append([]string{}, c.WindowOptions.HideTitles...)
 	out.BatteryOptions.Devices = append([]BatteryDevice{}, c.BatteryOptions.Devices...)
@@ -970,6 +1036,33 @@ func EffectiveRateMS(cfg Config) int64 {
 	return rate
 }
 
+// knownIDs keeps the known module ids of list once each, then appends the
+// ones it is missing in the order of fallback.
+func knownIDs(list, fallback []string) []string {
+	seen := make(map[string]bool, len(knownModules))
+	out := make([]string, 0, len(knownModules))
+	for _, id := range append(append([]string{}, list...), fallback...) {
+		if knownModules[id] && !seen[id] {
+			seen[id] = true
+			out = append(out, id)
+		}
+	}
+	for _, id := range DefaultOrder {
+		if !seen[id] {
+			seen[id] = true
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// affixLine removes line breaks and shortens s to n runes. Spaces are kept,
+// since a prefix like "» " needs its space.
+func affixLine(s string, n int) string {
+	s = strings.NewReplacer("\r", "", "\n", "").Replace(s)
+	return RuneLimit(s, n)
+}
+
 func clampInt(v, lo, hi int) int {
 	if v < lo {
 		return lo
@@ -1018,6 +1111,16 @@ func (c *Config) sanitize() {
 		}
 	}
 	c.DisplayOptions.Order = order
+	c.DisplayOptions.DropOrder = knownIDs(c.DisplayOptions.DropOrder, DefaultDropOrder)
+	visibility := make(map[string]string, len(c.DisplayOptions.Visibility))
+	for id, v := range c.DisplayOptions.Visibility {
+		if knownModules[id] && (v == ShowVR || v == ShowDesktop) {
+			visibility[id] = v
+		}
+	}
+	c.DisplayOptions.Visibility = visibility
+	c.DisplayOptions.LinePrefix = affixLine(c.DisplayOptions.LinePrefix, 16)
+	c.DisplayOptions.LineSuffix = affixLine(c.DisplayOptions.LineSuffix, 16)
 
 	if c.AfkOptions.AFKTime < 0 {
 		c.AfkOptions.AFKTime = 0
@@ -1120,12 +1223,31 @@ func (c *Config) sanitize() {
 
 	c.sanitizeSocial()
 
+	// VRChat drops chatbox messages sent faster than about one a second.
+	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)
+	c.ChatOptions.History = cleanChatHistory(c.ChatOptions.History, c.ChatOptions.KeepHistory)
+
 	if c.OSCOptions.Host == "" {
 		c.OSCOptions.Host = "127.0.0.1"
 	}
 	if c.OSCOptions.Port < 1 || c.OSCOptions.Port > 65535 {
 		c.OSCOptions.Port = 9000
 	}
+	extra := make([]OSCTarget, ExtraOutputs)
+	for i := range extra {
+		extra[i] = defaultExtraOutput(i)
+		if i < len(c.OSCOptions.Extra) {
+			t := c.OSCOptions.Extra[i]
+			extra[i].Enabled = t.Enabled
+			if host := RuneLimit(strings.TrimSpace(t.Host), 253); host != "" {
+				extra[i].Host = host
+			}
+			if t.Port >= 1 && t.Port <= 65535 {
+				extra[i].Port = t.Port
+			}
+		}
+	}
+	c.OSCOptions.Extra = extra
 
 	sanitizeTexts(c)
 }

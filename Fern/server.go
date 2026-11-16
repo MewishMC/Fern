@@ -44,6 +44,7 @@ var assetStamp = func() string {
 // uiState is the single payload pushed to the interface.
 type uiState struct {
 	Preview   string                `json:"preview"`
+	Fit       modules.Chatbox       `json:"fit"`
 	Chars     int                   `json:"chars"`
 	Lines     int                   `json:"lines"`
 	MaxChars  int                   `json:"maxChars"`
@@ -290,12 +291,22 @@ func handleCommand(cmd command) {
 	case "config":
 		var next modules.Config
 		if err := json.Unmarshal(cmd.Config, &next); err == nil {
+			// The panel's copy of the message history can be a send behind;
+			// Fern's own copy is the one that counts.
+			next.ChatOptions.History = modules.GetConfig().ChatOptions.History
 			modules.SetConfig(next)
 		}
 	case "send":
 		hold := time.Duration(cmd.Hold) * time.Second
 		modules.SetHold(cmd.Text, hold)
 		modules.SpeakSent(cmd.Text)
+		modules.AddChatHistory(cmd.Text)
+	case "clearChatHistory":
+		modules.ClearChatHistory()
+	case "live":
+		modules.SetLive(cmd.Text, time.Duration(cmd.Hold)*time.Second)
+	case "typing":
+		go sendTyping(cmd.Enabled)
 	case "clearHold":
 		modules.ClearHold()
 	case "media":
@@ -430,7 +441,8 @@ func broadcast(payload []byte) {
 
 func buildState() uiState {
 	cfg := modules.GetConfig()
-	preview := modules.PreviewText()
+	box := modules.ComposeChatbox()
+	preview := box.Text
 	lines := 0
 	if preview != "" {
 		lines = strings.Count(preview, "\n") + 1
@@ -443,6 +455,7 @@ func buildState() uiState {
 	d := cfg.DisplayOptions
 	return uiState{
 		Preview:  preview,
+		Fit:      box,
 		Samples:  modules.ModuleSamples(cfg),
 		Chars:    utf8.RuneCountInString(preview),
 		Lines:    lines,

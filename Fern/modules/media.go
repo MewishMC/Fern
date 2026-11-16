@@ -2,6 +2,7 @@ package modules
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -353,13 +354,20 @@ func isSpotifyBranding(title string) bool {
 
 // mediaLine renders the now playing module for the chatbox.
 func mediaLine(cfg Config) string {
+	return mediaFitLine(cfg).Variants[0]
+}
+
+// mediaFitLine renders the now playing line with its shorter forms for
+// fitting the chatbox: without the bar, without the time, without album and
+// feat. credits, and finally with the track cut to fit.
+func mediaFitLine(cfg Config) FitLine {
 	if lyric := replacingLyric(cfg); lyric != "" {
-		return joinNonEmpty(" ", strings.TrimSpace(cfg.MediaOptions.Icon), lyric)
+		return FitLine{ID: ModuleMedia, Variants: []string{joinNonEmpty(" ", strings.TrimSpace(cfg.MediaOptions.Icon), lyric)}}
 	}
 	if mediaHiddenByChange(cfg.MediaOptions, mediaChangedSince()) {
-		return ""
+		return FitLine{ID: ModuleMedia, Variants: []string{""}}
 	}
-	return formatMediaLine(cfg.MediaOptions, CurrentMedia())
+	return mediaFit(CurrentMedia(), cfg.MediaOptions)
 }
 
 // Playback states the media line tells apart.
@@ -381,24 +389,36 @@ func mediaState(info MediaInfo) string {
 	return mediaPaused
 }
 
-// formatMediaLine builds the media line from a snapshot, so it can be tested
-// without a media session.
+// formatMediaLine builds the full media line from a snapshot, so it can be
+// tested without a media session.
 func formatMediaLine(o MediaOptions, info MediaInfo) string {
+	return mediaFit(info, o).Variants[0]
+}
+
+// mediaFit builds the media line and its shorter forms from a snapshot.
+func mediaFit(info MediaInfo, o MediaOptions) FitLine {
+	line := FitLine{ID: ModuleMedia, Variants: []string{""}}
 	if !info.Available {
-		return ""
+		return line
 	}
 	state := mediaState(info)
 	if (state == mediaPaused && !o.ShowWhenPaused) || (state == mediaStopped && !o.ShowWhenStopped) {
-		return ""
+		return line
 	}
 
 	title, artist := info.Title, info.Artist
 	if o.TidyTitles {
 		title, artist = TidyTrack(title, artist)
 	}
-	track := mediaTrack(o, title, artist, info.Album)
-	if track == "" {
-		return ""
+	full := mediaTrack(o, title, artist, info.Album)
+	if full == "" {
+		return line
+	}
+	shortOpts := o
+	shortOpts.ShowAlbum = false
+	short := mediaTrack(shortOpts, stripFeat(title), firstArtist(artist), "")
+	if short == "" {
+		short = full
 	}
 
 	icon, words := o.Icon, o.PlayingText
@@ -411,29 +431,72 @@ func formatMediaLine(o MediaOptions, info MediaInfo) string {
 	if o.Uppercase {
 		words = strings.ToUpper(words)
 	}
+	lead := joinNonEmpty(" ", strings.TrimSpace(icon), strings.TrimSpace(words))
 
 	// The progress switch wins over the style: with it off the line is just
 	// the track, which is what the switch promises in the UI. A stopped player
 	// has no meaningful position.
-	detail := ""
+	clock, bar := "", ""
 	if o.ShowProgress && info.DurationMS > 0 && state != mediaStopped {
 		pos := time.Duration(info.PositionMS) * time.Millisecond
 		dur := time.Duration(info.DurationMS) * time.Millisecond
-		clock := ""
 		if o.ProgressStyle == "time" || o.ProgressStyle == "both" {
 			clock = shortClock(pos) + "/" + shortClock(dur)
 			if o.SuperscriptTime {
 				clock = superscriptClock(clock)
 			}
 		}
-		bar := ""
 		if o.ProgressStyle == "bar" || o.ProgressStyle == "both" {
 			bar = progressBar(pos, dur, o)
 		}
-		detail = strings.TrimSpace(strings.Join([]string{bar, clock}, " "))
 	}
 
-	return joinNonEmpty(" ", strings.TrimSpace(icon), strings.TrimSpace(words), track, detail)
+	compose := func(track, bar, clock string) string {
+		return joinNonEmpty(" ", lead, track, strings.TrimSpace(bar+" "+clock))
+	}
+	line.Variants = []string{compose(full, bar, clock)}
+	for _, v := range []string{compose(full, "", clock), compose(full, "", ""), compose(short, "", "")} {
+		if v != line.Variants[len(line.Variants)-1] {
+			line.Variants = append(line.Variants, v)
+		}
+	}
+	line.Trim = func(max int) string {
+		prefix := ""
+		if lead != "" {
+			prefix = lead + " "
+		}
+		budget := max - len([]rune(prefix))
+		// Fewer than a handful of letters of a title says nothing; drop the
+		// line instead.
+		if budget < 8 || budget >= len([]rune(short)) {
+			return ""
+		}
+		return prefix + ellipsize(short, budget)
+	}
+	return line
+}
+
+var (
+	featBracket = regexp.MustCompile(`(?i)\s*[(\[]\s*(?:feat\.?|ft\.?|featuring|with)\s[^)\]]*[)\]]`)
+	featTail    = regexp.MustCompile(`(?i)\s+(?:feat\.?|ft\.?|featuring)\s.*$`)
+)
+
+// stripFeat removes "(feat. Someone)" style credits from a title.
+func stripFeat(title string) string {
+	out := featTail.ReplaceAllString(featBracket.ReplaceAllString(title, ""), "")
+	if out = strings.TrimSpace(out); out == "" {
+		return title
+	}
+	return out
+}
+
+// firstArtist keeps the main artist of "A, B" or "A feat. B".
+func firstArtist(artist string) string {
+	artist = stripFeat(artist)
+	if i := strings.Index(artist, ", "); i > 0 {
+		artist = artist[:i]
+	}
+	return strings.TrimSpace(artist)
 }
 
 // mediaTrack joins the title, artist and album as configured and shortens the
