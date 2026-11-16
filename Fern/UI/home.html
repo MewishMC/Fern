@@ -55,6 +55,7 @@
                     <button class="nav-item" data-page="modules" data-label="Modules"><i class="fa fa-puzzle-piece" aria-hidden="true"></i><span class="nav-label">Modules</span><span class="nav-count" id="navModCount"></span></button>
                     <button class="nav-item" data-page="lines" data-label="Lines"><i class="fa fa-list" aria-hidden="true"></i><span class="nav-label">Lines</span></button>
                     <button class="nav-item" data-page="profiles" data-label="Profiles"><i class="fa fa-layer-group" aria-hidden="true"></i><span class="nav-label">Profiles</span></button>
+                    <button class="nav-item" data-page="rules" data-label="Rules"><i class="fa fa-bolt" aria-hidden="true"></i><span class="nav-label">Rules</span></button>
                     <button class="nav-item" data-page="assist" data-label="Assist"><i class="fa fa-wand-magic-sparkles" aria-hidden="true"></i><span class="nav-label">Assist</span></button>
                 </div>
                 <div class="nav-group">
@@ -100,6 +101,7 @@
                     <div class="head-actions">
                         <select class="compact" id="liveProfile" title="Switch profile. While one is active, your changes are saved into it." aria-label="Profile" hidden></select>
                         <button class="btn ghost" id="btnAfk" title="Show the AFK line until you turn it off" aria-pressed="false"><i class="fa fa-moon" aria-hidden="true"></i><span>I'm AFK</span></button>
+                        <button class="btn ghost" id="btnDnd" title="Hide every line except the ones allowed on the Lines page" aria-pressed="false"><i class="fa fa-bell-slash" aria-hidden="true"></i><span>Do not disturb</span></button>
                         <button class="btn ghost" id="btnSkip">Next text</button>
                         <button class="btn" id="btnMaster">Display on</button>
                     </div>
@@ -324,6 +326,35 @@
                     </div>
                 </div>
 
+
+                <div class="section-title">Do not disturb</div>
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Do not disturb</b>
+                            <span id="dndDesc">Hides every line except the ones below. Messages you send still show. Also on the Live page, the tray menu, a shortcut and in rules.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="dndSwitch" aria-label="Do not disturb"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field" style="flex-wrap:wrap">
+                        <div class="field-label">
+                            <b>Still show</b>
+                            <span>Lines that stay while do not disturb is on</span>
+                        </div>
+                        <div class="field-control rule-multi" id="dndAllow"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Shortcut</b>
+                            <span id="dndHotkeyDesc">Turns do not disturb on or off from any app. Click the box and press the keys; Backspace clears it.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="dndHotkey" placeholder="none" autocomplete="off" spellcheck="false" style="width:150px" aria-label="Do not disturb shortcut">
+                        </div>
+                    </div>
+                </div>
             </section>
 
             <!-- ================= PROFILES ================= -->
@@ -373,6 +404,77 @@
                     <div class="hint">Switch here, from the quick switcher on the Live page, from the tray icon's menu, or with a profile's shortcut, which works in any app. <i class="fa fa-palette" aria-hidden="true"></i> stores the panel's current look (Appearance page) with a profile, so switching changes it too.</div>
                     <div class="hint">Profiles leave out API keys and sign-ins, the window, tray and mic shortcut, where the chatbox is sent (Output), the Assist tools, the Display switch, tracker names and saved bar styles. Those stay as they are when you switch.</div>
                 </div>
+            </section>
+
+            <!-- ================= RULES ================= -->
+            <section class="page" id="page-rules">
+                <div class="page-head">
+                    <div>
+                        <h2>Rules</h2>
+                        <p>When something happens, Fern does something: a profile for one world, quiet while you're AFK, a hello when a friend joins</p>
+                    </div>
+                    <div class="head-actions">
+                        <span class="badge" id="rulesBadge">no rules</span>
+                        <label class="switch" title="Run rules"><input type="checkbox" id="rulesMaster" aria-label="Run rules"><span></span></label>
+                        <button class="btn" type="button" id="ruleNew"><i class="fa fa-plus" aria-hidden="true"></i> New rule</button>
+                    </div>
+                </div>
+
+                <div class="card rule-editor" id="ruleEditor" hidden style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3 id="ruleEditTitle">New rule</h3>
+                        <span class="badge" id="ruleEditKind"></span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Name</b>
+                            <span>Optional; shown in the list</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ruleName" maxlength="60" placeholder="e.g. Quiet at night" autocomplete="off" style="width:220px"></div>
+                    </div>
+                    <div class="section-title">When</div>
+                    <div id="ruleTrigger"></div>
+                    <div class="section-title">Only if <span class="count" id="ruleCondCount"></span></div>
+                    <div id="ruleConds"></div>
+                    <button class="btn ghost small" type="button" id="ruleAddCond"><i class="fa fa-plus" aria-hidden="true"></i> Add condition</button>
+                    <div class="section-title">Then <span class="count" id="ruleActCount"></span></div>
+                    <div id="ruleActs"></div>
+                    <button class="btn ghost small" type="button" id="ruleAddAct"><i class="fa fa-plus" aria-hidden="true"></i> Add action</button>
+                    <div class="section-title">Options</div>
+                    <div class="field" id="ruleUndoField">
+                        <div class="field-label">
+                            <b>Undo when it ends</b>
+                            <span id="ruleUndoDesc">Puts back what the actions changed once the trigger stops holding</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="ruleUndo" aria-label="Undo when it ends"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Cooldown</b>
+                            <span>Seconds before the rule may fire again; 0 is none</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="ruleCooldown" min="0" max="86400" step="1" style="width:110px" aria-label="Cooldown in seconds"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>On</b>
+                            <span>Off keeps the rule without running it</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="ruleEnabled" aria-label="Rule on"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="rule-editor-foot">
+                        <button class="btn ghost" type="button" id="ruleCancel">Cancel</button>
+                        <button class="btn" type="button" id="ruleSave">Save rule</button>
+                    </div>
+                </div>
+
+                <div class="list" id="ruleList" style="margin-top:0"></div>
+                <div class="hint">Rules are checked from the top, so when two change the same thing the lower one wins. A rule whose trigger holds for a while (a world, a time, AFK) fires once when it starts, and with <b>Undo when it ends</b> puts things back when it stops. <i class="fa fa-play" aria-hidden="true"></i> runs a rule's actions right away.</div>
+                <div class="hint">Matching text is case-insensitive and finds the text anywhere; write <code>/regex/</code> for a regular expression. Rules stay the same when you switch profiles.</div>
             </section>
 
             <!-- ================= TEXT ================= -->
@@ -473,6 +575,16 @@
                     <div class="window-add">
                         <input type="text" id="textGroupName" maxlength="24" placeholder="New group, like Night or Busy" autocomplete="off" aria-label="Group name">
                         <button class="btn" id="textGroupAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add group</button>
+                    </div>
+                    <div class="field" id="textWorldGroup" style="margin-top:10px">
+                        <div class="field-label">
+                            <b>In this world</b>
+                            <span id="textWorldDesc">Join a world in VRChat first.</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="textWorldPick" style="width:170px" aria-label="Group for this world"></select>
+                            <button class="btn ghost" type="button" id="textWorldUse"><i class="fa fa-earth-americas" aria-hidden="true"></i> Use in this world</button>
+                        </div>
                     </div>
                 </div>
 
@@ -1387,6 +1499,16 @@
                         <div class="stat"><b id="sessPlayers">0</b><span>Players here · peak</span></div>
                         <div class="stat"><b id="sessWorlds">0</b><span>Worlds visited</span></div>
                         <div class="stat"><b id="sessMet">0</b><span>Players met · most at once</span></div>
+                    </div>
+                    <div class="field" id="logsWorldGroup" style="margin-top:10px">
+                        <div class="field-label">
+                            <b>Messages in this world</b>
+                            <span id="logsWorldDesc">Join a world in VRChat first.</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="logsWorldPick" style="width:170px" aria-label="Group for this world"></select>
+                            <button class="btn ghost" type="button" id="logsWorldUse"><i class="fa fa-earth-americas" aria-hidden="true"></i> Use in this world</button>
+                        </div>
                     </div>
                 </div>
 
@@ -4419,6 +4541,7 @@
             renderOSCIn(st);
             renderProfiles(st);
             renderBackups(st);
+            renderRules(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -5061,6 +5184,7 @@
             if (fit.dropped && fit.dropped.length) parts.push("Dropped to fit: " + names(fit.dropped));
             if (fit.shrunk && fit.shrunk.length) parts.push((fit.cut ? "Cut: " : "Shortened: ") + names(fit.shrunk));
             if (fit.hidden && fit.hidden.length) parts.push((st.inVR ? "Hidden in VR: " : "Hidden on desktop: ") + names(fit.hidden));
+            if (fit.dnd) parts.push("Do not disturb" + (fit.quiet && fit.quiet.length ? ", hiding " + names(fit.quiet) : ""));
             const text = parts.join(" · ");
             const el = $("fitInfo");
             if (el.textContent !== text) el.textContent = text;
@@ -8022,6 +8146,626 @@
             S.msgsDirty = 0;
             toast("Settings reset");
         });
+
+        /* ---------------- rules ----------------
+           The editor is drawn from the registry Fern sends (state.rules
+           triggers and actions, each with a list of fields), so triggers and
+           actions added on the Go side show up here without page changes. */
+        function ruleReg() {
+            return (S.state && S.state.rules) || {};
+        }
+        function ruleDefs(kind) {
+            const reg = ruleReg();
+            if (kind === "act") return reg.actions || [];
+            if (kind === "cond") return (reg.triggers || []).filter((t) => t.state);
+            return reg.triggers || [];
+        }
+        function ruleDef(kind, id) {
+            return ruleDefs(kind === "cond" ? "trigger" : kind).find((d) => d.id === id);
+        }
+        function ruleOptions(f) {
+            if (f.source) return (ruleReg().sources || {})[f.source] || [];
+            return f.options || [];
+        }
+        function ruleFieldDefault(f) {
+            switch (f.type) {
+                case "number": {
+                    let v = typeof f.default === "number" ? f.default : 0;
+                    if (f.max > f.min) v = Math.min(f.max, Math.max(f.min, v));
+                    return v;
+                }
+                case "bool": return f.default === true;
+                case "multi": return Array.isArray(f.default) ? f.default.slice() : [];
+                case "select":
+                    if (typeof f.default === "string") return f.default;
+                    return !f.source && f.options && f.options.length ? f.options[0].value : "";
+                case "time": return typeof f.default === "string" ? f.default : "00:00";
+                default: return typeof f.default === "string" ? f.default : "";
+            }
+        }
+        function ruleParamsFor(def, params) {
+            const out = Object.assign({}, params || {});
+            ((def && def.fields) || []).forEach((f) => {
+                if (out[f.key] === undefined) out[f.key] = ruleFieldDefault(f);
+            });
+            return out;
+        }
+        function ruleShown(f, params) {
+            return !f.showIf || f.showIf.values.includes(String(params[f.showIf.key]));
+        }
+
+        let ruleDatalistSeq = 0;
+        function ruleFieldEl(f, value) {
+            const wrap = document.createElement("div");
+            wrap.className = "field rule-field";
+            wrap.dataset.key = f.key;
+            wrap.dataset.type = f.type;
+            const label = document.createElement("div");
+            label.className = "field-label";
+            const b = document.createElement("b");
+            b.textContent = f.label;
+            label.appendChild(b);
+            if (f.hint) {
+                const hint = document.createElement("span");
+                hint.textContent = f.hint;
+                label.appendChild(hint);
+            }
+            const ctl = document.createElement("div");
+            ctl.className = "field-control";
+            let input = null;
+            if (f.type === "bool") {
+                const sw = document.createElement("label");
+                sw.className = "switch";
+                input = document.createElement("input");
+                input.type = "checkbox";
+                input.checked = !!value;
+                sw.appendChild(input);
+                sw.appendChild(document.createElement("span"));
+                ctl.appendChild(sw);
+            } else if (f.type === "number") {
+                input = document.createElement("input");
+                input.type = "number";
+                if (f.max > f.min) { input.min = String(f.min); input.max = String(f.max); }
+                input.step = f.step ? String(f.step) : "any";
+                input.value = String(typeof value === "number" ? value : 0);
+                input.style.width = "110px";
+                ctl.appendChild(input);
+            } else if (f.type === "select") {
+                input = document.createElement("select");
+                const opts = ruleOptions(f);
+                if (f.source && !(typeof f.default === "string" && f.default)) input.add(new Option(f.placeholder || "—", ""));
+                opts.forEach((o) => input.add(new Option(o.label || o.value, o.value)));
+                if (value && !opts.some((o) => o.value === value)) input.add(new Option(value + " (not found)", value));
+                input.value = value || "";
+                input.style.width = "200px";
+                ctl.appendChild(input);
+            } else if (f.type === "multi") {
+                const box = document.createElement("div");
+                box.className = "rule-multi";
+                const on = new Set(Array.isArray(value) ? value : []);
+                ruleOptions(f).forEach((o) => {
+                    const chip = document.createElement("label");
+                    chip.className = "rule-chip";
+                    const check = document.createElement("input");
+                    check.type = "checkbox";
+                    check.value = o.value;
+                    check.checked = on.has(o.value);
+                    chip.appendChild(check);
+                    chip.appendChild(document.createTextNode(o.label || o.value));
+                    box.appendChild(chip);
+                });
+                ctl.appendChild(box);
+            } else if (f.type === "time") {
+                input = document.createElement("input");
+                input.type = "time";
+                input.value = value || "00:00";
+                ctl.appendChild(input);
+            } else {
+                input = document.createElement("input");
+                input.type = "text";
+                input.autocomplete = "off";
+                input.spellcheck = false;
+                input.maxLength = f.maxLen || 200;
+                if (f.placeholder) input.placeholder = f.placeholder;
+                input.value = value == null ? "" : String(value);
+                input.style.width = "220px";
+                if (f.source) {
+                    const list = document.createElement("datalist");
+                    list.id = "ruleSuggest" + (++ruleDatalistSeq);
+                    ruleOptions(f).forEach((o) => {
+                        const opt = document.createElement("option");
+                        opt.value = o.value;
+                        if (o.label && o.label !== o.value) opt.label = o.label;
+                        list.appendChild(opt);
+                    });
+                    input.setAttribute("list", list.id);
+                    ctl.appendChild(list);
+                }
+                ctl.appendChild(input);
+            }
+            if (input) input.setAttribute("aria-label", f.label);
+            wrap.appendChild(label);
+            wrap.appendChild(ctl);
+            return wrap;
+        }
+        function readRuleField(wrap) {
+            const type = wrap.dataset.type;
+            if (type === "multi") {
+                return Array.from(wrap.querySelectorAll(".rule-multi input")).filter((c) => c.checked).map((c) => c.value);
+            }
+            const input = wrap.querySelector(".field-control input, .field-control select");
+            if (!input) return "";
+            if (type === "bool") return input.checked;
+            if (type === "number") {
+                const n = Number(input.value);
+                return Number.isFinite(n) ? n : 0;
+            }
+            return input.value;
+        }
+        function readRuleFields(box) {
+            const out = {};
+            box.querySelectorAll(":scope > .rule-field").forEach((w) => { out[w.dataset.key] = readRuleField(w); });
+            return out;
+        }
+        // Dims the fields that do not apply with the others' current values.
+        function syncRuleShowIf(box, def) {
+            const values = readRuleFields(box);
+            ((def && def.fields) || []).forEach((f) => {
+                const w = box.querySelector(':scope > .rule-field[data-key="' + CSS.escape(f.key) + '"]');
+                if (w) w.classList.toggle("inactive", !ruleShown(f, values));
+            });
+        }
+
+        function ruleTypeSelect(defs, value) {
+            const select = document.createElement("select");
+            select.className = "rule-type";
+            select.setAttribute("aria-label", "Kind");
+            const groups = {};
+            defs.forEach((d) => {
+                const cat = d.category || "Other";
+                if (!groups[cat]) {
+                    groups[cat] = document.createElement("optgroup");
+                    groups[cat].label = cat;
+                    select.appendChild(groups[cat]);
+                }
+                groups[cat].appendChild(new Option(d.label, d.id));
+            });
+            if (value && !defs.some((d) => d.id === value)) select.add(new Option(value + " (not available)", value));
+            select.value = value || "";
+            return select;
+        }
+        function ruleIconButton(action, icon, title, disabled) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "btn icon";
+            button.dataset.rstep = action;
+            button.title = title;
+            button.setAttribute("aria-label", title);
+            button.disabled = !!disabled;
+            button.innerHTML = '<i class="fa ' + icon + '" aria-hidden="true"></i>';
+            return button;
+        }
+        function ruleStepEl(kind, step, index, count) {
+            const def = ruleDef(kind, step.type);
+            const el = document.createElement("div");
+            el.className = "rule-step";
+            el.dataset.kind = kind;
+            el.dataset.index = String(index);
+            const head = document.createElement("div");
+            head.className = "rule-step-head";
+            if (kind === "cond") {
+                const not = document.createElement("select");
+                not.className = "rule-not compact";
+                not.setAttribute("aria-label", "While or unless");
+                not.add(new Option("while", ""));
+                not.add(new Option("unless", "not"));
+                not.value = step.not ? "not" : "";
+                head.appendChild(not);
+            }
+            head.appendChild(ruleTypeSelect(ruleDefs(kind), step.type));
+            const desc = document.createElement("span");
+            desc.className = "rule-desc";
+            desc.textContent = def ? def.description || "" : "Not available in this version of Fern; it is kept as it is.";
+            head.appendChild(desc);
+            if (kind === "act") {
+                head.appendChild(ruleIconButton("up", "fa-chevron-up", "Move up", index === 0));
+                head.appendChild(ruleIconButton("down", "fa-chevron-down", "Move down", index === count - 1));
+            }
+            if (kind !== "trigger") head.appendChild(ruleIconButton("remove", "fa-trash", "Remove"));
+            el.appendChild(head);
+            const fields = document.createElement("div");
+            fields.className = "rule-fields";
+            ((def && def.fields) || []).forEach((f) => fields.appendChild(ruleFieldEl(f, step.params[f.key])));
+            el.appendChild(fields);
+            syncRuleShowIf(fields, def);
+            return el;
+        }
+
+        function newRuleDraft() {
+            const first = ruleDefs("trigger")[0];
+            return {
+                id: "", name: "", enabled: true, cooldown: 0, undo: true,
+                trigger: { type: first ? first.id : "", params: ruleParamsFor(first, {}) },
+                conditions: [], actions: [],
+            };
+        }
+        function openRuleEditor(rule, isNew) {
+            const d = JSON.parse(JSON.stringify(rule));
+            d.trigger = d.trigger || { type: "", params: {} };
+            d.conditions = d.conditions || [];
+            d.actions = d.actions || [];
+            [d.trigger].concat(d.conditions).forEach((s) => { s.params = ruleParamsFor(ruleDef("trigger", s.type), s.params); });
+            d.actions.forEach((s) => { s.params = ruleParamsFor(ruleDef("act", s.type), s.params); });
+            S.ruleDraft = d;
+            S.ruleDraftNew = !!isNew;
+            $("ruleName").value = d.name || "";
+            $("ruleUndo").checked = !!d.undo;
+            $("ruleEnabled").checked = !!d.enabled;
+            $("ruleCooldown").value = String(d.cooldown || 0);
+            $("ruleEditTitle").textContent = isNew ? "New rule" : "Edit rule";
+            paintRuleEditor();
+            $("ruleEditor").hidden = false;
+            $("ruleEditor").scrollIntoView({ block: "nearest" });
+            $("ruleName").focus();
+        }
+        function closeRuleEditor() {
+            S.ruleDraft = null;
+            $("ruleEditor").hidden = true;
+        }
+        function paintRuleEditor() {
+            const d = S.ruleDraft;
+            if (!d) return;
+            const limits = ruleReg().limits || {};
+            $("ruleTrigger").replaceChildren(ruleStepEl("trigger", d.trigger, 0, 1));
+            const conds = $("ruleConds");
+            conds.replaceChildren();
+            d.conditions.forEach((c, i) => conds.appendChild(ruleStepEl("cond", c, i, d.conditions.length)));
+            const acts = $("ruleActs");
+            acts.replaceChildren();
+            d.actions.forEach((a, i) => acts.appendChild(ruleStepEl("act", a, i, d.actions.length)));
+            $("ruleCondCount").textContent = d.conditions.length || "";
+            $("ruleActCount").textContent = d.actions.length || "";
+            $("ruleAddCond").disabled = d.conditions.length >= (limits.conditions || 8) || !ruleDefs("cond").length;
+            $("ruleAddAct").disabled = d.actions.length >= (limits.actions || 10) || !ruleDefs("act").length;
+            syncRuleUndo();
+        }
+        function syncRuleUndo() {
+            const d = S.ruleDraft;
+            const def = d && ruleDef("trigger", d.trigger.type);
+            const state = !!(def && def.state);
+            $("ruleEditKind").textContent = def ? (state ? "while it holds" : "each time it happens") : "";
+            $("ruleUndoField").classList.toggle("inactive", !state);
+            $("ruleUndoDesc").textContent = state
+                ? "Puts back what the actions changed once the trigger or a condition stops holding"
+                : "Only for triggers that hold for a while, like a world, a time or AFK";
+        }
+        // Copies what the editor shows into the draft.
+        function readRuleDraft() {
+            const d = S.ruleDraft;
+            if (!d) return null;
+            const limits = ruleReg().limits || {};
+            d.name = $("ruleName").value.trim();
+            d.undo = $("ruleUndo").checked;
+            d.enabled = $("ruleEnabled").checked;
+            d.cooldown = Math.max(0, Math.min(limits.cooldown || 86400, Math.round(Number($("ruleCooldown").value) || 0)));
+            document.querySelectorAll("#ruleEditor .rule-step").forEach((el) => {
+                const kind = el.dataset.kind;
+                const index = +el.dataset.index;
+                const step = kind === "trigger" ? d.trigger : kind === "cond" ? d.conditions[index] : d.actions[index];
+                if (!step) return;
+                Object.assign(step.params, readRuleFields(el.querySelector(".rule-fields")));
+                if (kind === "cond") step.not = el.querySelector(".rule-not").value === "not";
+            });
+            return d;
+        }
+
+        $("ruleEditor").addEventListener("change", (ev) => {
+            const d = S.ruleDraft;
+            if (!d) return;
+            const stepEl = ev.target.closest(".rule-step");
+            readRuleDraft();
+            if (stepEl && ev.target.classList.contains("rule-type")) {
+                const kind = stepEl.dataset.kind;
+                const index = +stepEl.dataset.index;
+                const def = ruleDef(kind, ev.target.value);
+                const step = { type: ev.target.value, params: ruleParamsFor(def, {}) };
+                if (kind === "trigger") d.trigger = step;
+                else if (kind === "cond") d.conditions[index] = Object.assign(step, { not: d.conditions[index].not });
+                else d.actions[index] = step;
+                paintRuleEditor();
+                return;
+            }
+            if (stepEl) syncRuleShowIf(stepEl.querySelector(".rule-fields"), ruleDef(stepEl.dataset.kind, stepEl.querySelector(".rule-type").value));
+        });
+        $("ruleEditor").addEventListener("input", (ev) => {
+            const stepEl = ev.target.closest(".rule-step");
+            if (stepEl) syncRuleShowIf(stepEl.querySelector(".rule-fields"), ruleDef(stepEl.dataset.kind, stepEl.querySelector(".rule-type").value));
+        });
+        $("ruleEditor").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-rstep]");
+            if (!button || !S.ruleDraft) return;
+            const d = readRuleDraft();
+            const stepEl = button.closest(".rule-step");
+            const index = +stepEl.dataset.index;
+            const list = stepEl.dataset.kind === "cond" ? d.conditions : d.actions;
+            const action = button.dataset.rstep;
+            if (action === "remove") list.splice(index, 1);
+            else if (action === "up" && index > 0) list.splice(index - 1, 0, list.splice(index, 1)[0]);
+            else if (action === "down" && index < list.length - 1) list.splice(index + 1, 0, list.splice(index, 1)[0]);
+            paintRuleEditor();
+        });
+        $("ruleAddCond").addEventListener("click", () => {
+            const d = readRuleDraft();
+            const def = ruleDefs("cond")[0];
+            if (!d || !def) return;
+            d.conditions.push({ type: def.id, not: false, params: ruleParamsFor(def, {}) });
+            paintRuleEditor();
+        });
+        $("ruleAddAct").addEventListener("click", () => {
+            const d = readRuleDraft();
+            const def = ruleDefs("act")[0];
+            if (!d || !def) return;
+            d.actions.push({ type: def.id, params: ruleParamsFor(def, {}) });
+            paintRuleEditor();
+        });
+        $("ruleCancel").addEventListener("click", closeRuleEditor);
+        $("ruleSave").addEventListener("click", () => {
+            const d = readRuleDraft();
+            if (!d) return;
+            if (!d.trigger.type) { toast("Pick what the rule waits for", true); return; }
+            if (!d.actions.length) { toast("Add at least one action", true); return; }
+            if (send({ type: "rule", action: "save", config: d })) closeRuleEditor();
+        });
+        $("ruleNew").addEventListener("click", () => openRuleEditor(newRuleDraft(), true));
+
+        // One line about a step: its label and the values it was given.
+        function ruleStepText(kind, step) {
+            const def = ruleDef(kind, step.type);
+            if (!def) return (step.type || "nothing") + " (not available)";
+            const params = step.params || {};
+            const bits = [];
+            (def.fields || []).forEach((f) => {
+                if (!ruleShown(f, params)) return;
+                const v = params[f.key];
+                if (v === undefined || v === null || v === "" || v === false) return;
+                if (f.type === "bool") { bits.push(f.label.toLowerCase()); return; }
+                if (f.type === "select") {
+                    const o = ruleOptions(f).find((x) => x.value === v);
+                    bits.push(o ? o.label : String(v));
+                    return;
+                }
+                if (f.type === "multi") {
+                    const opts = ruleOptions(f);
+                    if (!Array.isArray(v) || !v.length || v.length === opts.length) return;
+                    bits.push(v.map((x) => (opts.find((o) => o.value === x) || { label: x }).label).join(" "));
+                    return;
+                }
+                if (f.type === "number") { bits.push(f.label.toLowerCase() + " " + v); return; }
+                bits.push(f.type === "time" ? String(v) : "“" + String(v) + "”");
+            });
+            if (def.fields && def.fields.some((f) => f.type === "time") && bits.length >= 2) {
+                bits.splice(0, 2, bits[0] + "–" + bits[1]);
+            }
+            return def.label + (bits.length ? ": " + bits.join(", ") : "");
+        }
+        function ruleSummary(r) {
+            const parts = ["When " + ruleStepText("trigger", r.trigger || {})];
+            (r.conditions || []).forEach((c) => parts.push((c.not ? "unless " : "while ") + ruleStepText("cond", c)));
+            const acts = (r.actions || []).map((a) => ruleStepText("act", a));
+            parts.push("then " + (acts.length ? acts.join("; ") : "nothing yet"));
+            return parts.join(" · ");
+        }
+
+        function renderRules(st) {
+            const reg = st.rules || {};
+            const list = (st.config.Rules && st.config.Rules.list) || [];
+            const status = reg.status || {};
+            noticeToast("rule", reg.notice);
+            const master = $("rulesMaster");
+            if (document.activeElement !== master) master.checked = !!reg.enabled;
+            const on = list.filter((r) => r.enabled).length;
+            $("rulesBadge").textContent = list.length ? on + " of " + list.length + " on" + (reg.enabled ? "" : ", paused") : "no rules";
+            $("rulesBadge").classList.toggle("on", !!reg.enabled && on > 0);
+            $("ruleNew").disabled = list.length >= ((reg.limits || {}).rules || 100);
+            renderDnd(st);
+            renderWorldGroups(st);
+
+            const box = $("ruleList");
+            const sig = JSON.stringify([list, status, reg.enabled, reg.sources, (reg.triggers || []).length, (reg.actions || []).length]);
+            if (sig === S.ruleSig) return;
+            S.ruleSig = sig;
+            box.replaceChildren();
+            if (!list.length) {
+                const empty = document.createElement("div");
+                empty.className = "log-empty";
+                empty.textContent = "No rules yet. New rule makes one; the custom messages page can add one that picks a message group per world.";
+                box.appendChild(empty);
+                return;
+            }
+            list.forEach((r, index) => {
+                const s = status[r.id] || {};
+                const row = document.createElement("div");
+                row.className = "row rule-row" + (r.enabled && reg.enabled ? "" : " off");
+                row.dataset.id = r.id;
+                row.innerHTML =
+                    '<label class="switch" title="Rule on"><input type="checkbox" class="rule-on" aria-label="Rule on"><span></span></label>' +
+                    '<div class="row-main"><span class="row-name"></span><span class="row-desc rule-sum"></span><span class="row-desc rule-stat"></span></div>' +
+                    '<div class="row-actions">' +
+                    '<button class="btn icon" type="button" data-rule="test" title="Run its actions now" aria-label="Run its actions now"><i class="fa fa-play" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-rule="edit" title="Edit" aria-label="Edit"><i class="fa fa-pen" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-rule="duplicate" title="Duplicate" aria-label="Duplicate"><i class="fa fa-clone" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-rule="up" title="Move up" aria-label="Move up"' + (index === 0 ? " disabled" : "") + '><i class="fa fa-chevron-up" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-rule="down" title="Move down" aria-label="Move down"' + (index === list.length - 1 ? " disabled" : "") + '><i class="fa fa-chevron-down" aria-hidden="true"></i></button>' +
+                    '<button class="btn icon" type="button" data-rule="delete" title="Delete" aria-label="Delete"><i class="fa fa-trash" aria-hidden="true"></i></button>' +
+                    "</div>";
+                row.querySelector(".rule-on").checked = !!r.enabled;
+                const name = row.querySelector(".row-name");
+                name.textContent = r.name || "Rule " + (index + 1);
+                const flag = (text) => {
+                    const f = document.createElement("span");
+                    f.className = "row-flag";
+                    f.textContent = text;
+                    name.appendChild(f);
+                };
+                if (s.active) flag("HOLDING");
+                if (s.paused) flag("PAUSED");
+                const summary = ruleSummary(r);
+                const sum = row.querySelector(".rule-sum");
+                sum.textContent = summary;
+                sum.title = summary;
+                const stat = row.querySelector(".rule-stat");
+                const bits = [];
+                bits.push(s.lastFired ? "Last fired " + fmtWhen(s.lastFired) + (s.fires > 1 ? " · " + s.fires + " times since Fern started" : "") : "Not fired since Fern started");
+                if (r.cooldown) bits.push("cooldown " + fmtDuration(r.cooldown));
+                if (r.undo && (ruleDef("trigger", (r.trigger || {}).type) || {}).state) bits.push("undoes when it ends");
+                stat.textContent = s.error || bits.join(" · ");
+                stat.title = stat.textContent;
+                stat.classList.toggle("bad", !!s.error);
+                box.appendChild(row);
+            });
+        }
+        $("rulesMaster").addEventListener("change", (ev) => {
+            send({ type: "rule", action: "master", enabled: ev.target.checked });
+        });
+        $("ruleList").addEventListener("change", (ev) => {
+            if (!ev.target.classList.contains("rule-on")) return;
+            send({ type: "rule", action: "enable", module: ev.target.closest(".rule-row").dataset.id, enabled: ev.target.checked });
+        });
+        $("ruleList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-rule]");
+            if (!button) return;
+            const id = button.closest(".rule-row").dataset.id;
+            const action = button.dataset.rule;
+            const c = config();
+            const rule = c && c.Rules ? (c.Rules.list || []).find((r) => r.id === id) : null;
+            if (action === "edit") {
+                if (rule) openRuleEditor(rule, false);
+                return;
+            }
+            if (action === "delete") {
+                if (!confirm("Delete the rule " + ((rule && rule.name) || "") + "? If it is holding with Undo on, what it changed is put back.")) return;
+                if (S.ruleDraft && S.ruleDraft.id === id) closeRuleEditor();
+            }
+            send({ type: "rule", action: action, module: id });
+        });
+
+        /* ---------------- do not disturb ---------------- */
+        function renderDnd(st) {
+            const dnd = (st.rules && st.rules.dnd) || {};
+            const c = st.config.DND || {};
+            const on = !!dnd.on;
+            const button = $("btnDnd");
+            button.classList.toggle("ghost", !on);
+            button.setAttribute("aria-pressed", on ? "true" : "false");
+            button.querySelector("span").textContent = on ? "Do not disturb on" : "Do not disturb";
+            if (document.activeElement !== $("dndSwitch")) $("dndSwitch").checked = on;
+            const allow = c.allow || [];
+            $("dndDesc").textContent = on
+                ? "On: the chatbox only shows " + (allow.length ? allow.map((id) => MODULE_NAME[id] || id).join(", ") : "messages you send") + "."
+                : "Hides every line except the ones below. Messages you send still show. Also on the Live page, the tray menu, a shortcut and in rules.";
+            const order = (st.config.display_options.order || []).filter((id) => MODULE_NAME[id]);
+            const sig = JSON.stringify([order, allow]);
+            if (sig !== S.dndSig) {
+                S.dndSig = sig;
+                const box = $("dndAllow");
+                box.replaceChildren();
+                order.forEach((id) => {
+                    const chip = document.createElement("label");
+                    chip.className = "rule-chip";
+                    const check = document.createElement("input");
+                    check.type = "checkbox";
+                    check.value = id;
+                    check.checked = allow.includes(id);
+                    chip.appendChild(check);
+                    chip.appendChild(document.createTextNode(MODULE_NAME[id]));
+                    box.appendChild(chip);
+                });
+            }
+            const hk = $("dndHotkey");
+            if (document.activeElement !== hk) hk.value = c.hotkey || "";
+            const err = dnd.hotkeyErr || "";
+            $("dndHotkeyDesc").textContent = err || "Turns do not disturb on or off from any app. Click the box and press the keys; Backspace clears it.";
+            $("dndHotkeyDesc").classList.toggle("bad", !!err);
+        }
+        $("btnDnd").addEventListener("click", () => {
+            const on = !!(S.state && S.state.rules && S.state.rules.dnd && S.state.rules.dnd.on);
+            if (send({ type: "dnd", enabled: !on })) toast(on ? "Do not disturb off" : "Do not disturb on");
+        });
+        $("dndSwitch").addEventListener("change", (ev) => {
+            send({ type: "dnd", enabled: ev.target.checked });
+        });
+        $("dndAllow").addEventListener("change", () => {
+            const ids = Array.from($("dndAllow").querySelectorAll("input")).filter((c) => c.checked).map((c) => c.value);
+            pushConfigNow((c) => { c.DND.allow = ids; });
+        });
+        function setDndHotkey(value) {
+            const hk = $("dndHotkey");
+            hk.value = value;
+            if (pushConfigNow((c) => { c.DND.hotkey = value; })) toast(value ? "Do not disturb shortcut: " + value : "Do not disturb shortcut off");
+            hk.blur();
+        }
+        $("dndHotkey").addEventListener("keydown", (ev) => {
+            if (ev.key === "Tab") return;
+            ev.preventDefault();
+            const hk = ev.target;
+            if (ev.key === "Escape") { hk.blur(); return; }
+            if (ev.key === "Backspace" || ev.key === "Delete") { setDndHotkey(""); return; }
+            const mods = [ev.ctrlKey && "Ctrl", ev.altKey && "Alt", ev.shiftKey && "Shift", ev.metaKey && "Win"].filter(Boolean);
+            const code = ev.code || "";
+            let key = "";
+            if (/^Key[A-Z]$/.test(code)) key = code.slice(3);
+            else if (/^Digit\d$/.test(code)) key = code.slice(5);
+            else if (/^(F\d{1,2}|Numpad\d|Space|Insert|Home|End|PageUp|PageDown|Pause)$/.test(code)) key = code;
+            if (!key) { hk.value = mods.length ? mods.join("+") + "+…" : ""; return; }
+            if (!mods.length && !HOTKEY_FREE.test(key)) {
+                toast(key + " needs Ctrl, Alt, Shift or Win with it", true);
+                return;
+            }
+            setDndHotkey(mods.concat(key).join("+"));
+        });
+        $("dndHotkey").addEventListener("blur", () => {
+            const c = config();
+            if (c && c.DND) $("dndHotkey").value = c.DND.hotkey || "";
+        });
+
+        /* ---------------- message groups per world ---------------- */
+        const WORLD_GROUP_FIELDS = [
+            ["textWorldGroup", "textWorldPick", "textWorldUse", "textWorldDesc"],
+            ["logsWorldGroup", "logsWorldPick", "logsWorldUse", "logsWorldDesc"],
+        ];
+        function renderWorldGroups(st) {
+            const w = st.logs && st.logs.world;
+            const inWorld = !!(w && w.id);
+            const groups = st.config.TextOptions.groups || [];
+            const rules = (st.config.Rules && st.config.Rules.list) || [];
+            const rule = inWorld ? rules.find((r) => r.trigger && r.trigger.type === "world" && (r.trigger.params || {}).world === w.id &&
+                (r.actions || []).some((a) => a.type === "group")) : null;
+            const ruleGroup = rule ? ((rule.actions.find((a) => a.type === "group").params || {}).group || "") : null;
+            const worldName = inWorld ? (w.name || w.id) : "";
+            WORLD_GROUP_FIELDS.forEach(([field, pick, use, desc]) => {
+                $(field).classList.toggle("inactive", !inWorld);
+                $(use).disabled = !inWorld;
+                const select = $(pick);
+                const sig = JSON.stringify([groups, w && w.id, ruleGroup]);
+                if (select.dataset.sig !== sig && document.activeElement !== select) {
+                    select.dataset.sig = sig;
+                    select.replaceChildren(new Option("All hearted messages", ""));
+                    groups.forEach((g) => select.add(new Option(g, g)));
+                    select.value = ruleGroup !== null ? ruleGroup : (st.config.TextOptions.group || "");
+                }
+                $(desc).textContent = !inWorld
+                    ? "Join a world in VRChat first."
+                    : rule
+                        ? "In " + worldName + " a rule cycles through " + (ruleGroup || "all hearted messages") + (rule.enabled ? "" : " (the rule is off)") + ". Pick another group to change it."
+                        : "Adds a rule: in " + worldName + ", cycle through this group, and go back when you leave.";
+            });
+        }
+        WORLD_GROUP_FIELDS.forEach(([, pick, use]) => {
+            $(use).addEventListener("click", () => {
+                send({ type: "rule", action: "worldGroup", text: $(pick).value });
+            });
+        });
+
 
         /* ---------------- keep the media clock moving ---------------- */
         setInterval(() => {

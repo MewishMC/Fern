@@ -3213,3 +3213,83 @@ input[type="password"]:focus {
     color: var(--text-muted);
     overflow-wrap: anywhere;
 }
+
+/* ---------------- rules ---------------- */
+
+.rule-step {
+    background: var(--bg-input);
+    border: 1px solid var(--border-default);
+    border-radius: 10px;
+    padding: 9px 12px;
+    margin-bottom: 7px;
+}
+
+.rule-step-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.rule-step-head .rule-desc {
+    flex: 1;
+    min-width: 140px;
+    font-size: .72rem;
+    color: var(--text-dim);
+}
+
+.rule-fields {
+    margin-top: 8px;
+}
+
+.rule-fields:empty {
+    display: none;
+}
+
+.rule-step .field {
+    padding: 7px 10px;
+    background: transparent;
+}
+
+.rule-multi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.rule-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .74rem;
+    color: var(--text-secondary);
+    padding: 3px 9px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.rule-chip:has(input:checked) {
+    border-color: var(--accent-border);
+    background: var(--accent-soft);
+}
+
+.rule-chip input {
+    margin: 0;
+}
+
+.rule-row.off .row-main {
+    opacity: .55;
+}
+
+.rule-row .row-desc.bad {
+    color: var(--red);
+}
+
+.rule-editor-foot {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 12px;
+}
