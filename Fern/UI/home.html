@@ -1280,6 +1280,193 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Spotify Web API: optional extras on top of the Windows media session -->
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head">
+                        <h3><i class="fa fa-brands fa-spotify" aria-hidden="true"></i> Spotify</h3>
+                        <span class="badge link-badge" id="spotifyBadge">off</span>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Use the Spotify Web API</b>
+                            <span>Optional. Adds liked songs, shuffle, repeat, the device and the playlist, plus controls. The track itself still comes from Windows.</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="spotifyEnabled"><span></span></label></div>
+                    </div>
+                    <div class="link-status" id="spotifyStatus"></div>
+                    <ol class="howto">
+                        <li>In the Spotify Developer Dashboard press <b>Create app</b>. Any name works; tick <i>Web API</i>.</li>
+                        <li>Add this <b>Redirect URI</b> to the app: <code id="spotifyRedirect">http://127.0.0.1:1931/callback</code></li>
+                        <li>Copy its <b>Client ID</b> below and press <b>Sign in with Spotify</b>. Fern keeps the sign-in fresh by itself. Controls need Spotify Premium.</li>
+                    </ol>
+                    <div class="btn-row"><button class="btn small ghost" type="button" data-external="https://developer.spotify.com/dashboard"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Spotify Developer Dashboard</button></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Client ID</b>
+                            <span>From your app in the dashboard. No client secret is needed.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="spotifyClientId" maxlength="64" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Sign-in port</b>
+                            <span>Fern listens on this port only while you sign in. Change it if it is busy, then update the Redirect URI.</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="spotifyPort" min="1024" max="65535" step="1" style="width:110px" aria-label="Sign-in port"></div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn small" type="button" id="spotifySignIn"><i class="fa fa-brands fa-spotify" aria-hidden="true"></i> Sign in with Spotify</button>
+                        <button class="btn small ghost" type="button" id="spotifySignOut">Sign out</button>
+                        <button class="btn small ghost" type="button" id="spotifyRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Check now</button>
+                    </div>
+                    <div class="device-box" id="spotifySignInBox" hidden></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Controls</b>
+                            <span id="spotifyControlsHint">Like the song, shuffle and repeat</span>
+                        </div>
+                        <div class="field-control sp-controls">
+                            <button class="btn icon" type="button" id="spotifyLike" title="Add to Liked Songs" aria-label="Like or unlike the song"><i class="fa fa-heart" aria-hidden="true"></i></button>
+                            <button class="btn icon" type="button" id="spotifyShuffle" title="Shuffle" aria-label="Shuffle"><i class="fa fa-shuffle" aria-hidden="true"></i></button>
+                            <button class="btn icon" type="button" id="spotifyRepeat" title="Repeat" aria-label="Repeat"><i class="fa fa-repeat" aria-hidden="true"></i><span class="sp-tag" id="spotifyRepeatTag"></span></button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Volume</b>
+                            <span>Of the device Spotify plays on</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="spotifyVolume" min="0" max="100" step="1" aria-label="Spotify volume">
+                            <span class="val" id="spotifyVolumeVal">–</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Device</b>
+                            <span>Moves playback to another Spotify Connect device</span>
+                        </div>
+                        <div class="field-control"><select id="spotifyDevice" style="width:220px" aria-label="Spotify device"></select></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Add to queue</b>
+                            <span>A song link, a spotify: URI or search words; the first match is queued</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="spotifyQueueInput" maxlength="200" autocomplete="off" placeholder="song or link" aria-label="Song to queue">
+                            <button class="btn small" type="button" id="spotifyQueueAdd"><i class="fa fa-plus" aria-hidden="true"></i> Queue</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Check every</b>
+                            <span>How often Fern asks Spotify</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="spotifyInterval" min="2" max="60" step="1">
+                            <span class="val" id="spotifyIntervalVal">5s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head"><h3>Spotify on the media line</h3></div>
+                    <div class="hint">Shown after the track while Spotify plays the same song Windows reports.</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Liked</b>
+                            <span>Mark for a song in your Liked Songs, and one for the rest (empty shows nothing)</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="spotifyShowLiked"><span></span></label>
+                            <input type="text" id="spotifyLikedIcon" maxlength="4" autocomplete="off" style="width:64px" aria-label="Liked mark">
+                            <input type="text" id="spotifyUnlikedIcon" maxlength="4" autocomplete="off" style="width:64px" placeholder="none" aria-label="Not liked mark">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Shuffle</b>
+                            <span>Shown while shuffle is on</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="spotifyShowShuffle"><span></span></label>
+                            <input type="text" id="spotifyShuffleIcon" maxlength="4" autocomplete="off" style="width:64px" aria-label="Shuffle mark">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Repeat</b>
+                            <span>Marks for repeating the playlist and the song</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="spotifyShowRepeat"><span></span></label>
+                            <input type="text" id="spotifyRepeatIcon" maxlength="4" autocomplete="off" style="width:64px" aria-label="Repeat playlist mark">
+                            <input type="text" id="spotifyRepeatOneIcon" maxlength="4" autocomplete="off" style="width:64px" aria-label="Repeat song mark">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Device</b>
+                            <span>Its name, with a word before it</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="spotifyShowDevice"><span></span></label>
+                            <input type="text" id="spotifyDevicePrefix" maxlength="16" autocomplete="off" aria-label="Device prefix">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Playlist</b>
+                            <span>The playlist playing, with a word before it. Spotify's own mixes stay unnamed.</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="spotifyShowPlaylist"><span></span></label>
+                            <input type="text" id="spotifyPlaylistPrefix" maxlength="16" autocomplete="off" aria-label="Playlist prefix">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:12px">
+                    <div class="card-head"><h3>Spotify avatar parameters</h3></div>
+                    <div class="hint">Your avatar sets these to control Spotify, and Fern sends the real state back so menu toggles match. Leave a name empty to skip it.</div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Use avatar parameters</b>
+                            <span>Values sent while an avatar loads are ignored</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="spotifyParams"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Liked</b><span>Bool: on likes the song, off removes it</span></div>
+                        <div class="field-control"><input type="text" id="spotifyParamLike" maxlength="128" autocomplete="off" spellcheck="false" placeholder="not used"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Shuffle</b><span>Bool</span></div>
+                        <div class="field-control"><input type="text" id="spotifyParamShuffle" maxlength="128" autocomplete="off" spellcheck="false" placeholder="not used"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Repeat</b><span>Int: 0 off, 1 playlist, 2 song</span></div>
+                        <div class="field-control"><input type="text" id="spotifyParamRepeat" maxlength="128" autocomplete="off" spellcheck="false" placeholder="not used"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Volume</b><span>Float: 0 to 1, for a radial menu</span></div>
+                        <div class="field-control"><input type="text" id="spotifyParamVolume" maxlength="128" autocomplete="off" spellcheck="false" placeholder="not used"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Device</b><span>Int: 1 is the first device in the list above, 2 the next</span></div>
+                        <div class="field-control"><input type="text" id="spotifyParamDevice" maxlength="128" autocomplete="off" spellcheck="false" placeholder="not used"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Add to queue</b><span>Bool: turning it on queues the song below</span></div>
+                        <div class="field-control"><input type="text" id="spotifyParamQueue" maxlength="128" autocomplete="off" spellcheck="false" placeholder="not used"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Song to queue</b><span>A link, URI or search words</span></div>
+                        <div class="field-control"><input type="text" id="spotifyQueueText" maxlength="200" autocomplete="off" placeholder="song or link"></div>
+                    </div>
+                </div>
             </section>
 
             <!-- ================= LYRICS ================= -->
@@ -2857,6 +3044,177 @@
                 </div>
             </section>
 
+            <!-- ================= LAST.FM ================= -->
+            <section class="page" id="page-lastfm">
+                <div class="page-head">
+                    <div>
+                        <h2>Last.fm</h2>
+                        <p>What your scrobbler reports, from any player or device, with your play count</p>
+                    </div>
+                    <span class="badge link-badge" id="lastfmBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the Last.fm line</b>
+                            <span>Asks Last.fm on the interval below</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="lastfm"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="lastfmStatus"></div>
+                    <div class="btn-row"><button class="btn small ghost" type="button" id="lastfmRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Check now</button></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Set up</h3>
+                        <button class="btn small ghost" type="button" data-external="https://www.last.fm/api/account/create"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Get an API key</button>
+                    </div>
+                    <ol class="howto">
+                        <li>Create an API account on Last.fm. Any application name works; the callback URL can stay empty.</li>
+                        <li>Paste the <b>API key</b> (not the shared secret) and your Last.fm username below. Both are stored encrypted.</li>
+                    </ol>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Username</b>
+                            <span>The profile whose scrobbles are shown</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="text" id="lastfmUser" data-secret="lastfm_user" maxlength="64" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="lastfmUser">Save</button>
+                            <button class="btn small ghost" type="button" data-secret-clear="lastfmUser">Clear</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>API key</b>
+                            <span>Never shown again once saved</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="lastfmKey" data-secret="lastfm_key" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="lastfmKey">Save</button>
+                            <button class="btn small ghost" type="button" data-secret-clear="lastfmKey">Clear</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head"><h3>What to show</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Icon and words</b>
+                            <span>Before the track, like “Scrobbling”. Either can be empty.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="lastfmIcon" maxlength="4" autocomplete="off" style="width:64px" aria-label="Icon">
+                            <input type="text" id="lastfmText" maxlength="24" autocomplete="off" placeholder="no words" aria-label="Words before the track">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show artist</b>
+                            <span>Song — artist instead of the song alone</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="lastfmArtist"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Artist separator</b>
+                            <span>Spaces count</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lastfmSeparator" maxlength="8" autocomplete="off" placeholder=" — "></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show album</b>
+                            <span>Appends the album after the artist</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="lastfmAlbum"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Play count</b>
+                            <span>How often you have played this song, and the word after it</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="lastfmPlays"><span></span></label>
+                            <input type="text" id="lastfmPlaysLabel" maxlength="16" autocomplete="off" aria-label="Play count label">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Loved</b>
+                            <span>Mark for a song you loved on Last.fm</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="lastfmLoved"><span></span></label>
+                            <input type="text" id="lastfmLovedIcon" maxlength="4" autocomplete="off" style="width:64px" aria-label="Loved mark">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Total scrobbles</b>
+                            <span>Everything you have scrobbled, and the word after it</span>
+                        </div>
+                        <div class="field-control check-text">
+                            <label class="switch"><input type="checkbox" id="lastfmTotal"><span></span></label>
+                            <input type="text" id="lastfmTotalLabel" maxlength="16" autocomplete="off" aria-label="Total label">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Short numbers</b>
+                            <span>1.2k instead of 1234</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="lastfmCompact"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Keep the last song</b>
+                            <span>Off hides the line while nothing is scrobbling</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="lastfmShowLast"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Last song words</b>
+                            <span>Used instead of the words above for the last song</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lastfmLastText" maxlength="24" autocomplete="off" placeholder="no words"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Your own layout</b>
+                            <span><code>{icon}</code> <code>{text}</code> <code>{title}</code> <code>{artist}</code> <code>{album}</code> <code>{track}</code> <code>{plays}</code> <code>{playCount}</code> <code>{loved}</code> <code>{total}</code> <code>{totalCount}</code>. Replaces the switches above.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lastfmTemplate" placeholder="use the switches" maxlength="200" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Track length limit</b>
+                            <span>Characters kept from the song, artist and album</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lastfmMaxChars" min="20" max="144" step="4">
+                            <span class="val" id="lastfmMaxCharsVal">90</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Check every</b>
+                            <span>How often Fern asks Last.fm</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="lastfmInterval" min="10" max="300" step="5">
+                            <span class="val" id="lastfmIntervalVal">15s</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- ================= TWITCH ================= -->
             <section class="page" id="page-twitch">
                 <div class="page-head">
@@ -4363,6 +4721,7 @@
             { id: "heartrate", name: "Heart rate", icon: "fa-heart-pulse", category: "vrchat", desc: "Live BPM and avatar heartbeat", keywords: "pulsoid hyperate bpm heartbeat hr pulse avatar osc" },
             { id: "media", name: "Media", icon: "fa-music", category: "media", desc: "Now playing track with playback time", keywords: "spotify song music now playing" },
             { id: "lyrics", name: "Lyrics", icon: "fa-microphone", category: "media", desc: "Synced lyrics for the playing track", keywords: "lrc lrclib karaoke song words" },
+            { id: "lastfm", name: "Last.fm", icon: "fa-brands fa-lastfm", category: "media", desc: "Now scrobbling, play count and loved", keywords: "scrobble scrobbling audioscrobbler plays loved music spotify" },
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
             { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
             { id: "weather", name: "Weather", icon: "fa-cloud-sun", category: "system", desc: "Conditions and temperature from Open-Meteo", keywords: "temperature forecast rain wind humidity" },
@@ -4542,6 +4901,7 @@
             renderProfiles(st);
             renderBackups(st);
             renderRules(st);
+            renderMusic(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -6432,6 +6792,80 @@
             ["hrParamBeat", hrOsc],
             ["hrParamConnected", hrOsc],
         );
+        // Spotify (on the Media page) and the Last.fm line.
+        const SP = "SpotifyOptions";
+        const LF = "LastFMOptions";
+        CHECKS.push(
+            ["spotifyEnabled", [SP, "enabled"]],
+            ["spotifyShowLiked", [SP, "show_liked"]],
+            ["spotifyShowShuffle", [SP, "show_shuffle"]],
+            ["spotifyShowRepeat", [SP, "show_repeat"]],
+            ["spotifyShowDevice", [SP, "show_device"]],
+            ["spotifyShowPlaylist", [SP, "show_playlist"]],
+            ["spotifyParams", [SP, "params"]],
+            ["lastfmArtist", [LF, "show_artist"]],
+            ["lastfmAlbum", [LF, "show_album"]],
+            ["lastfmPlays", [LF, "show_plays"]],
+            ["lastfmLoved", [LF, "show_loved"]],
+            ["lastfmTotal", [LF, "show_total"]],
+            ["lastfmCompact", [LF, "compact"]],
+            ["lastfmShowLast", [LF, "show_last"]],
+        );
+        RANGES.push(
+            ["spotifyInterval", [SP, "interval_sec"], "spotifyIntervalVal", (v) => v + "s"],
+            ["lastfmInterval", [LF, "interval_sec"], "lastfmIntervalVal", (v) => v + "s"],
+            ["lastfmMaxChars", [LF, "max_chars"], "lastfmMaxCharsVal", asIs],
+        );
+        TEXTS.push(
+            ["spotifyClientId", [SP, "client_id"], 64],
+            ["spotifyLikedIcon", [SP, "liked_icon"], 4],
+            ["spotifyUnlikedIcon", [SP, "unliked_icon"], 4],
+            ["spotifyShuffleIcon", [SP, "shuffle_icon"], 4],
+            ["spotifyRepeatIcon", [SP, "repeat_icon"], 4],
+            ["spotifyRepeatOneIcon", [SP, "repeat_one_icon"], 4],
+            ["spotifyDevicePrefix", [SP, "device_prefix"], 16],
+            ["spotifyPlaylistPrefix", [SP, "playlist_prefix"], 16],
+            ["spotifyParamLike", [SP, "param_like"], 128],
+            ["spotifyParamShuffle", [SP, "param_shuffle"], 128],
+            ["spotifyParamRepeat", [SP, "param_repeat"], 128],
+            ["spotifyParamVolume", [SP, "param_volume"], 128],
+            ["spotifyParamDevice", [SP, "param_device"], 128],
+            ["spotifyParamQueue", [SP, "param_queue"], 128],
+            ["spotifyQueueText", [SP, "queue_text"], 200],
+            ["lastfmIcon", [LF, "icon"], 4],
+            ["lastfmText", [LF, "text"], 24],
+            ["lastfmSeparator", [LF, "separator"], 8],
+            ["lastfmPlaysLabel", [LF, "plays_label"], 16],
+            ["lastfmLovedIcon", [LF, "loved_icon"], 4],
+            ["lastfmTotalLabel", [LF, "total_label"], 16],
+            ["lastfmLastText", [LF, "last_text"], 24],
+            ["lastfmTemplate", [LF, "template"], 200],
+        );
+        const spOn = (c) => c[SP].enabled;
+        const spParams = (c) => c[SP].enabled && c[SP].params;
+        const lfSwitches = (c) => !c[LF].template;
+        DEPENDS.push(
+            ["spotifyInterval", spOn],
+            ["spotifyClientId", spOn],
+            ["spotifyPort", spOn],
+            ["spotifyShowLiked", spOn],
+            ["spotifyShowShuffle", spOn],
+            ["spotifyShowRepeat", spOn],
+            ["spotifyShowDevice", spOn],
+            ["spotifyShowPlaylist", spOn],
+            ["spotifyParams", spOn],
+            ["spotifyParamLike", spParams],
+            ["spotifyParamShuffle", spParams],
+            ["spotifyParamRepeat", spParams],
+            ["spotifyParamVolume", spParams],
+            ["spotifyParamDevice", spParams],
+            ["spotifyParamQueue", spParams],
+            ["spotifyQueueText", (c) => spParams(c) && !!c[SP].param_queue],
+            ["lastfmArtist", lfSwitches],
+            ["lastfmAlbum", lfSwitches],
+            ["lastfmSeparator", (c) => c[LF].show_artist || /\{track\}/.test(c[LF].template)],
+            ["lastfmLastText", (c) => c[LF].show_last],
+        );
         function applyDepends(c) {
             if (!c) return;
             DEPENDS.forEach(([id, active]) => {
@@ -6830,6 +7264,176 @@
                 openExternal(dev.uri);
             }
         }
+
+        /* ---------------- Spotify and Last.fm ---------------- */
+        const REPEAT_TAG = { off: "", context: "", track: "1" };
+        const REPEAT_TITLE = { off: "Repeat is off", context: "Repeating the playlist", track: "Repeating this song" };
+
+        function renderMusic(st) {
+            const m = st.music;
+            if (!m) return;
+            const c = st.config;
+            const sp = m.spotify;
+            let text = "";
+            if (sp.link.state === "connected") {
+                text = sp.active
+                    ? (sp.playing ? "Playing" : "Paused") + (sp.title ? " ‘" + sp.title + "’" : "") +
+                    (sp.device.name ? " on " + sp.device.name : "") +
+                    (sp.checkedAt ? " · checked " + timeOf(sp.checkedAt) : "")
+                    : "Signed in. Nothing is playing on Spotify right now.";
+            }
+            setLink("spotifyBadge", "spotifyStatus", sp.link, c[SP].enabled ? text : "Turn on the Web API to sign in and use the controls");
+            if ($("spotifyRedirect").textContent !== sp.redirectUri) $("spotifyRedirect").textContent = sp.redirectUri;
+            if (document.activeElement !== $("spotifyPort") && !lockForms()) $("spotifyPort").value = c[SP].redirect_port;
+            $("spotifySignIn").innerHTML = '<i class="fa fa-brands fa-spotify" aria-hidden="true"></i> ' + (sp.signedIn ? "Sign in again" : "Sign in with Spotify");
+            $("spotifySignIn").disabled = !c[SP].enabled || !c[SP].client_id;
+            $("spotifySignOut").hidden = !sp.signedIn;
+            $("spotifyRefresh").disabled = !c[SP].enabled || !sp.signedIn;
+            renderSpotifySignIn(sp.signIn);
+
+            const ready = c[SP].enabled && sp.signedIn && sp.link.state === "connected";
+            const active = ready && sp.active;
+            const hint = !ready ? "Sign in to use the controls" : !sp.active ? "Start playing on a Spotify device first" : "Like the song, shuffle and repeat";
+            if ($("spotifyControlsHint").textContent !== hint) $("spotifyControlsHint").textContent = hint;
+            const like = $("spotifyLike");
+            like.disabled = !active || sp.liked === null;
+            like.classList.toggle("on", sp.liked === true);
+            like.title = sp.liked ? "Remove from Liked Songs" : "Add to Liked Songs";
+            $("spotifyShuffle").disabled = !active;
+            $("spotifyShuffle").classList.toggle("on", active && sp.shuffle);
+            $("spotifyRepeat").disabled = !active;
+            $("spotifyRepeat").classList.toggle("on", active && sp.repeat !== "off");
+            $("spotifyRepeat").title = REPEAT_TITLE[sp.repeat] || "Repeat";
+            $("spotifyRepeatTag").textContent = active ? REPEAT_TAG[sp.repeat] || "" : "";
+
+            const vol = $("spotifyVolume");
+            const canVolume = active && sp.device.supportsVolume && sp.device.volume >= 0;
+            vol.disabled = !canVolume;
+            if (canVolume && Date.now() - (S.spVolAt || 0) > 2500) {
+                vol.value = sp.device.volume;
+                $("spotifyVolumeVal").textContent = sp.device.volume + "%";
+            } else if (!canVolume) {
+                $("spotifyVolumeVal").textContent = "–";
+            }
+
+            const devSig = sp.devices.map((d) => d.id + ":" + d.name).join("|");
+            const pick = $("spotifyDevice");
+            if (devSig !== S.spDevSig) {
+                S.spDevSig = devSig;
+                pick.innerHTML = "";
+                const none = document.createElement("option");
+                none.value = "";
+                none.textContent = sp.devices.length ? "Pick a device" : "No devices online";
+                pick.appendChild(none);
+                sp.devices.forEach((d, i) => {
+                    const o = document.createElement("option");
+                    o.value = d.id;
+                    o.textContent = (i + 1) + ". " + d.name + (d.type ? " (" + d.type.toLowerCase() + ")" : "");
+                    pick.appendChild(o);
+                });
+            }
+            if (document.activeElement !== pick) pick.value = sp.devices.some((d) => d.id === sp.device.id) ? sp.device.id : "";
+            pick.disabled = !ready || !sp.devices.length;
+            $("spotifyQueueInput").disabled = !ready;
+            $("spotifyQueueAdd").disabled = !ready;
+
+            if (S.spNoticeSeq !== undefined && sp.notice.seq !== S.spNoticeSeq && sp.notice.text) toast(sp.notice.text, sp.notice.bad);
+            S.spNoticeSeq = sp.notice.seq;
+
+            const lf = m.lastfm;
+            let lfText = "";
+            if (lf.link.state === "connected") {
+                lfText = lf.title
+                    ? (lf.nowPlaying ? "Scrobbling ‘" : "Last scrobbled ‘") + lf.title + "’" + (lf.artist ? " by " + lf.artist : "") +
+                    (lf.plays >= 0 ? " · " + lf.plays + (lf.plays === 1 ? " play" : " plays") : "") + (lf.loved ? " · loved" : "")
+                    : "Connected. Nothing scrobbled yet.";
+                if (lf.checkedAt) lfText += " · checked " + timeOf(lf.checkedAt);
+            }
+            setLink("lastfmBadge", "lastfmStatus", lf.link, st.modules.lastfm ? lfText : "Turn on the line to connect");
+        }
+
+        function renderSpotifySignIn(s) {
+            const box = $("spotifySignInBox");
+            const sig = s ? (s.url || "") + "|" + (s.error || "") : "";
+            if (sig === S.spSignInSig) return;
+            S.spSignInSig = sig;
+            box.hidden = !s;
+            box.innerHTML = "";
+            if (!s) return;
+            if (s.error) {
+                box.dataset.state = "error";
+                box.textContent = s.error;
+                return;
+            }
+            box.dataset.state = "waiting";
+            const label = document.createElement("div");
+            label.className = "device-label";
+            label.textContent = "Finish signing in on the Spotify page that opened, then come back here.";
+            const row = document.createElement("div");
+            row.className = "btn-row";
+            row.innerHTML = '<button class="btn small" type="button" data-act="open"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Open the sign-in page</button>' +
+                '<button class="btn small ghost" type="button" data-act="cancel">Cancel</button>';
+            row.querySelector("[data-act=open]").dataset.uri = s.url;
+            box.append(label, row);
+            if (s.url && S.spOpened !== s.url) {
+                S.spOpened = s.url;
+                openExternal(s.url);
+            }
+        }
+
+        const spSend = (action, extra) => send(Object.assign({ type: "spotify", action }, extra || {}));
+        $("spotifySignIn").addEventListener("click", () => spSend("signin"));
+        $("spotifySignOut").addEventListener("click", () => {
+            if (spSend("signout")) toast("Signed out of Spotify");
+        });
+        $("spotifyRefresh").addEventListener("click", () => {
+            if (spSend("refresh")) toast("Checking Spotify");
+        });
+        $("spotifySignInBox").addEventListener("click", (ev) => {
+            const button = ev.target.closest("button[data-act]");
+            if (!button) return;
+            if (button.dataset.act === "open") openExternal(button.dataset.uri);
+            else spSend("cancel");
+        });
+        $("spotifyPort").addEventListener("change", (ev) => {
+            const v = Math.round(Number(ev.target.value));
+            if (!Number.isFinite(v) || v < 1024 || v > 65535) {
+                toast("Pick a port from 1024 to 65535", true);
+                return;
+            }
+            pushConfigNow((c) => { c[SP].redirect_port = v; });
+        });
+        $("spotifyLike").addEventListener("click", () => spSend("toggleLike"));
+        $("spotifyShuffle").addEventListener("click", () => spSend("shuffle", { text: "toggle" }));
+        $("spotifyRepeat").addEventListener("click", () => spSend("repeat"));
+        $("spotifyVolume").addEventListener("input", (ev) => {
+            const v = Number(ev.target.value);
+            $("spotifyVolumeVal").textContent = v + "%";
+            S.spVolAt = Date.now();
+            clearTimeout(S.spVolTimer);
+            S.spVolTimer = setTimeout(() => spSend("volume", { text: String(v) }), 250);
+        });
+        $("spotifyDevice").addEventListener("change", (ev) => {
+            if (ev.target.value) spSend("device", { text: ev.target.value });
+        });
+        function queueSpotify() {
+            const text = $("spotifyQueueInput").value.trim();
+            if (!text) {
+                toast("Type a song or paste a link first", true);
+                return;
+            }
+            if (spSend("queue", { text })) $("spotifyQueueInput").value = "";
+        }
+        $("spotifyQueueAdd").addEventListener("click", queueSpotify);
+        $("spotifyQueueInput").addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") {
+                ev.preventDefault();
+                queueSpotify();
+            }
+        });
+        $("lastfmRefresh").addEventListener("click", () => {
+            if (send({ type: "lastfm", action: "refresh" })) toast("Checking Last.fm");
+        });
 
         function renderVoicemod(st) {
             const vm = st.social.voicemod;

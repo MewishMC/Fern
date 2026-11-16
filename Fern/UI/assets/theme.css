@@ -3293,3 +3293,22 @@ input[type="password"]:focus {
     gap: 8px;
     margin-top: 12px;
 }
+
+/* Spotify controls on the Media page */
+.sp-controls .btn.on {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+    color: var(--accent-light);
+}
+
+.sp-controls .btn {
+    position: relative;
+}
+
+.sp-tag {
+    position: absolute;
+    right: 3px;
+    bottom: 1px;
+    font-size: 9px;
+    font-weight: 700;
+}
