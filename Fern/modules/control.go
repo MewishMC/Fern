@@ -20,8 +20,9 @@ import (
 const SecretAPIToken = "api_token"
 
 // DefaultAPIPort is where the control API listens unless told otherwise. It
-// is outside the range the panel uses, so it stays the same between runs.
-const DefaultAPIPort = 1931
+// is outside the range the panel uses, so it stays the same between runs, and
+// is not the Spotify sign-in port (1931).
+const DefaultAPIPort = 1930
 
 // ControlAPIOptions switches the local control API on. It is kept per PC.
 type ControlAPIOptions struct {

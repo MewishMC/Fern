@@ -10,6 +10,9 @@ func TestControlAPIAndClipboardDefaults(t *testing.T) {
 	if d.ControlAPI.Enabled || d.ControlAPI.Port != DefaultAPIPort {
 		t.Errorf("control API default %+v", d.ControlAPI)
 	}
+	if d.ControlAPI.Port == d.SpotifyOptions.RedirectPort {
+		t.Errorf("control API and Spotify sign-in share default port %d", d.ControlAPI.Port)
+	}
 	if d.Clipboard.Hotkey != "" || d.Clipboard.MaxChars != 143 || d.Clipboard.TooLong != ClipCut || d.Clipboard.Seconds != 10 {
 		t.Errorf("clipboard default %+v", d.Clipboard)
 	}

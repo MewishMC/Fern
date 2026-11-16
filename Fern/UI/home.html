@@ -7630,7 +7630,7 @@
                     <div class="field">
                         <div class="field-label">
                             <b>Port</b>
-                            <span>1931 unless another app needs it. Tools use http://127.0.0.1:<i>port</i>/api</span>
+                            <span>1930 unless another app needs it. Tools use http://127.0.0.1:<i>port</i>/api</span>
                         </div>
                         <div class="field-control"><input type="number" id="apiPort" min="1024" max="65535" style="width:110px" aria-label="API port"></div>
                     </div>
@@ -16994,7 +16994,7 @@
 
         /* ---- API page ---- */
         function apiBase(st) {
-            const port = (st && st.api && st.api.port) || 1931;
+            const port = (st && st.api && st.api.port) || 1930;
             return "http://127.0.0.1:" + port;
         }
 
@@ -17113,7 +17113,7 @@
             const a = st.api || {};
             const c = st.config.ControlAPI || {};
             if (!lockForms()) $("apiEnabled").checked = !!c.enabled;
-            ctlFill("apiPort", c.port || 1931);
+            ctlFill("apiPort", c.port || 1930);
             $("apiToken").value = a.token || "";
             $("apiToken").type = CTL.showToken ? "text" : "password";
             $("apiTokenCopy").disabled = !a.token;
@@ -17141,7 +17141,7 @@
             const port = Math.round(Number(ev.target.value));
             if (!(port >= 1024 && port <= 65535)) {
                 toast("Pick a port from 1024 to 65535", true);
-                ev.target.value = (config() && config().ControlAPI.port) || 1931;
+                ev.target.value = (config() && config().ControlAPI.port) || 1930;
                 return;
             }
             if (pushConfigNow((c) => { c.ControlAPI.port = port; })) toast("API port " + port);
