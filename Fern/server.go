@@ -83,6 +83,7 @@ type uiState struct {
 
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
+	Rules    rulesState    `json:"rules"`
 }
 
 type appState struct {
@@ -314,7 +315,13 @@ func handleCommand(cmd command) {
 		if err := json.Unmarshal(cmd.Config, &next); err == nil {
 			// The panel's copy of the message history can be a send behind;
 			// Fern's own copy is the one that counts.
-			next.ChatOptions.History = modules.GetConfig().ChatOptions.History
+			cur := modules.GetConfig()
+			next.ChatOptions.History = cur.ChatOptions.History
+			// Rules and the do not disturb switch change through their own
+			// actions, and from rules and shortcuts, so a config push never
+			// carries them back.
+			next.Rules = cur.Rules
+			next.DND.On = cur.DND.On
 			modules.SetConfig(next)
 		}
 	case "send":
@@ -375,6 +382,10 @@ func handleCommand(cmd command) {
 		handleProfileCommand(cmd)
 	case "backup":
 		handleBackupCommand(cmd)
+	case "rule":
+		handleRuleCommand(cmd)
+	case "dnd":
+		handleDNDCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -570,6 +581,7 @@ func buildState() uiState {
 
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
+		Rules:    currentRules(),
 	}
 }
 
