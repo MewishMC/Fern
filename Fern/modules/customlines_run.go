@@ -26,6 +26,7 @@ import (
 const (
 	customMaxOutput = 64 << 10  // bytes read from a command's output
 	customMaxBody   = 512 << 10 // bytes read from a URL
+	customSettle    = time.Second
 )
 
 // customKey identifies the settings a polled value came from, so changing
@@ -102,7 +103,8 @@ func customTick(cfg Config) {
 		customMu.Lock()
 		v := &customPoll[i]
 		if v.key != key {
-			*v = customValue{key: key, force: v.force}
+			// New settings run after a moment, so a burst of edits runs once.
+			*v = customValue{key: key, force: v.force, next: now.Add(customSettle)}
 		}
 		ready := (l.Source == CustomSourceCommand && l.Command != "") || (l.Source == CustomSourceURL && l.URL != "")
 		due := ready && !v.busy && !now.Before(v.next) && (v.force || ModuleEnabled(id, cfg.DisplayOptions))

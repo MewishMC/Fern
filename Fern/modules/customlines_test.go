@@ -282,11 +282,18 @@ func TestCustomTickRunsOnlyWhenOnOrForced(t *testing.T) {
 		t.Errorf("ran again before its interval: %d", runs.Load())
 	}
 
-	// A new command drops the old value and runs at once.
+	// A new command drops the old value and runs once the edit settles.
 	c.CustomLines.Lines[0].Command = "other"
 	if got := customLine(c, ModuleCustom1); got != "" {
 		t.Errorf("old value shown for a new command: %q", got)
 	}
+	customTick(c)
+	time.Sleep(50 * time.Millisecond)
+	if runs.Load() != 1 {
+		t.Errorf("a just-edited command ran at once: %d", runs.Load())
+	}
+	later := time.Now().Add(2 * customSettle)
+	customNow = func() time.Time { return later }
 	customTick(c)
 	waitRun(t, done)
 	if got := customLine(c, ModuleCustom1); got != "from other" {
