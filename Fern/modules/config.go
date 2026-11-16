@@ -515,6 +515,10 @@ type LyricsOptions struct {
 	Folder       string `json:"folder"`        // .lrc files here win over LRCLIB
 	Online       bool   `json:"online"`        // look lyrics up on lrclib.net
 	MaxChars     int    `json:"max_chars"`
+	// Prefix and Suffix wrap the lyric itself, on its own line or on the
+	// media line alike, break marker included.
+	Prefix string `json:"prefix"`
+	Suffix string `json:"suffix"`
 }
 
 // WeatherOptions controls the weather line, from Open-Meteo.
@@ -938,6 +942,8 @@ func DefaultConfig() Config {
 			GapMarker:   "♪ ♪ ♪",
 			Online:      true,
 			MaxChars:    90,
+			Prefix:      "",
+			Suffix:      "",
 		},
 		WeatherOptions: WeatherOptions{
 			ShowCondition: true,

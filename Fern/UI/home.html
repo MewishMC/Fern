@@ -2534,6 +2534,27 @@
                     </div>
                     <div class="field">
                         <div class="field-label">
+                            <b>Before each lyric</b>
+                            <span>Goes right before the words, on the lyrics line or the media line, like &ldquo;🎤 &rdquo;. Spaces count.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsPrefix" maxlength="32" autocomplete="off" placeholder="none"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>After each lyric</b>
+                            <span>Goes right after the words, like &ldquo; 🎶&rdquo;. The break marker gets both too.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="lyricsSuffix" maxlength="32" autocomplete="off" placeholder="none"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Preview</b>
+                            <span>A lyric with the settings above. The length limit counts these too.</span>
+                        </div>
+                        <div class="field-control"><code class="bar-preview" id="lyricsAffixPreview"></code></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
                             <b>Length limit</b>
                             <span>Characters kept from a long line</span>
                         </div>
@@ -10066,6 +10087,8 @@
             ["mediaSeparator", ["MediaOptions", "separator"], 8],
             ["lyricsGapMarker", ["LyricsOptions", "gap_marker"], 16],
             ["lyricsLabel", ["LyricsOptions", "label"], 16],
+            ["lyricsPrefix", ["LyricsOptions", "prefix"], 16],
+            ["lyricsSuffix", ["LyricsOptions", "suffix"], 16],
             ["clockLabel2", ["TimeOptions", "label2"], 16],
             ["weatherLabel", ["WeatherOptions", "label"], 16],
             ["mediaBarFilled", ["MediaOptions", "bar_filled"], 2],
@@ -11314,6 +11337,7 @@
                 const v = Array.from(ev.target.value).slice(0, max).join("");
                 pushConfig((c) => setField(c, path, v));
                 if (id.startsWith("mediaBar")) renderBarPreview();
+                if (id === "lyricsPrefix" || id === "lyricsSuffix" || id === "lyricsLabel") renderLyricsAffixPreview();
                 if (id === "loadText" || id === "loadAnim") renderLoadingPreview();
             });
         });
@@ -12891,6 +12915,22 @@
             if (l.track && l.state !== "off" && l.state !== "idle") sub = l.track + (sub ? " · " + sub : "");
             $("lyricsNow").textContent = now;
             $("lyricsState").textContent = sub;
+            renderLyricsAffixPreview();
+        }
+        // Previews what is in the fields right now, on the line the lyric
+        // goes to: its own line with the label, or the media line after the
+        // media icon. Mirrors affixLyric in lyrics.go.
+        function renderLyricsAffixPreview() {
+            const c = config();
+            if (!c) return;
+            const o = c.LyricsOptions;
+            const prefix = $("lyricsPrefix").value, suffix = $("lyricsSuffix").value;
+            const sample = "Never gonna give you up";
+            const room = Math.max(o.max_chars - Array.from(prefix).length - Array.from(suffix).length, Math.min(10, o.max_chars));
+            const lyric = prefix + Array.from(sample).slice(0, room).join("").trim() + suffix;
+            const onMedia = o.replace_track && c.display_options.media;
+            const lead = (onMedia ? c.MediaOptions.icon : $("lyricsLabel").value).trim();
+            $("lyricsAffixPreview").textContent = (lead ? lead + " " : "") + lyric;
         }
         commitField($("lyricsFolder"), (v) => v.trim().replace(/^"|"$/g, ""),
             (c, v) => { c.LyricsOptions.folder = v; }, "");

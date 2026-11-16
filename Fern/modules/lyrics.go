@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 // LyricsStatus is what the panel shows about the lyrics lookup.
@@ -397,7 +398,23 @@ func currentLyric(cfg Config) string {
 	case lyricsInstrumental:
 		text = o.GapMarker
 	}
-	return strings.TrimSpace(RuneLimit(text, o.MaxChars))
+	return affixLyric(o, text)
+}
+
+// minLyricChars is the room a lyric keeps however long its affixes are.
+const minLyricChars = 10
+
+// affixLyric cuts a lyric to the length limit and puts the lyrics prefix and
+// suffix around it. The limit counts the affixes too, so turning them on
+// does not make the line longer than asked, but the lyric itself always
+// keeps a few characters. Nothing to show stays empty, without affixes.
+func affixLyric(o LyricsOptions, text string) string {
+	room := o.MaxChars - utf8.RuneCountInString(o.Prefix) - utf8.RuneCountInString(o.Suffix)
+	text = strings.TrimSpace(RuneLimit(text, max(room, min(minLyricChars, o.MaxChars))))
+	if text == "" {
+		return ""
+	}
+	return o.Prefix + text + o.Suffix
 }
 
 // lyricsLine is the lyrics module's own line. When lyrics replace the track,
@@ -443,4 +460,8 @@ func sanitizeLyrics(o *LyricsOptions) {
 	o.GapMarker = RuneLimit(strings.Join(strings.Fields(o.GapMarker), " "), 16)
 	o.Folder = RuneLimit(strings.Trim(strings.TrimSpace(o.Folder), `"`), 260)
 	o.MaxChars = clampInt(o.MaxChars, 10, 144)
+	// Spaces are kept, since "🎤 " needs its space.
+	// Cut between characters so an emoji is never left in pieces.
+	o.Prefix = unitLimit(affixLine(o.Prefix, 1024), 16)
+	o.Suffix = unitLimit(affixLine(o.Suffix, 1024), 16)
 }
