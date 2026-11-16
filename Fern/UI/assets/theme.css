@@ -3293,3 +3293,64 @@ input[type="password"]:focus {
     gap: 8px;
     margin-top: 12px;
 }
+
+/* ---------------- timer, counters and scheduled messages ---------------- */
+
+#tallyLive[hidden],
+#tallyLive [hidden],
+.tally-item [hidden] {
+    display: none !important;
+}
+
+.tally-big {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -.5px;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    line-height: 1.15;
+}
+
+.tally-sub {
+    margin-top: 2px;
+    font-size: .76rem;
+    color: var(--text-dim);
+    overflow-wrap: anywhere;
+}
+
+.tally-count {
+    flex: 1;
+    min-width: 120px;
+    font-size: .74rem;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+.tally-count b {
+    color: var(--text-primary);
+}
+
+.tally-item .rule-step-head .msg-input {
+    width: 150px;
+}
+
+.tally-item.off .rule-fields,
+.tally-item.off .sc-text {
+    opacity: .55;
+}
+
+input[type="time"].tally-time {
+    font: inherit;
+    font-size: .78rem;
+    background: var(--bg-body);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 3px 6px;
+    color-scheme: dark;
+}
+
+input[type="time"].tally-time:focus {
+    outline: none;
+    border-color: var(--accent-border);
+}
