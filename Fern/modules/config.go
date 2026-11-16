@@ -34,6 +34,10 @@ const (
 	ModuleNetwork  = "network"
 	ModuleGPU      = "gpu"
 	ModuleWorld    = "world"
+
+	ModuleTimer    = "timer"
+	ModuleCounter  = "counter"
+	ModuleSchedule = "schedule"
 )
 
 // DefaultOrder is the order used before the user picks one.
@@ -44,6 +48,7 @@ var DefaultOrder = []string{
 	ModuleHeart,
 	ModuleDiscord, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
 	ModuleNetwork, ModuleGPU, ModuleWorld,
+	ModuleTimer, ModuleCounter, ModuleSchedule,
 }
 
 var knownModules = func() map[string]bool {
@@ -78,6 +83,9 @@ type DisplayOptions struct {
 	Network      bool     `json:"network"`
 	GPU          bool     `json:"gpu"`
 	World        bool     `json:"world"`
+	Timer        bool     `json:"timer"`
+	Counter      bool     `json:"counter"`
+	Schedule     bool     `json:"schedule"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -628,6 +636,12 @@ type Config struct {
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
+
+	// Timer, counters and scheduled messages; see timer.go, counter.go and
+	// schedule.go.
+	TimerOptions    TimerOptions    `json:"TimerOptions"`
+	CounterOptions  CounterOptions  `json:"CounterOptions"`
+	ScheduleOptions ScheduleOptions `json:"ScheduleOptions"`
 }
 
 var (
@@ -891,6 +905,10 @@ func DefaultConfig() Config {
 		STTOptions:    defaultSTTOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
+
+		TimerOptions:    defaultTimerOptions(),
+		CounterOptions:  defaultCounterOptions(),
+		ScheduleOptions: defaultScheduleOptions(),
 	}
 }
 
@@ -915,6 +933,8 @@ func (c Config) clone() Config {
 	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	out.Rules = c.Rules.clone()
 	out.DND = c.DND.clone()
+	out.CounterOptions = c.CounterOptions.clone()
+	out.ScheduleOptions = c.ScheduleOptions.clone()
 	return out
 }
 
@@ -1111,6 +1131,12 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.GPU
 	case ModuleWorld:
 		return &d.World
+	case ModuleTimer:
+		return &d.Timer
+	case ModuleCounter:
+		return &d.Counter
+	case ModuleSchedule:
+		return &d.Schedule
 	}
 	return nil
 }
@@ -1383,6 +1409,9 @@ func (c *Config) sanitize() {
 	sanitizeTexts(c)
 	c.Rules.sanitize()
 	c.DND.sanitize()
+	c.TimerOptions.sanitize()
+	c.CounterOptions.sanitize()
+	c.ScheduleOptions.sanitize()
 }
 
 func scheduleSave() {
