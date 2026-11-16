@@ -230,6 +230,12 @@ type STTStatus struct {
 	Translated bool        `json:"translated"`
 	Error      string      `json:"error"`
 	Mics       []MicDevice `json:"mics"`
+
+	PTT     bool   `json:"ptt"`     // the last clip was recorded holding the mic button
+	Command string `json:"command"` // the voice command that kept the last clip out of the chatbox
+
+	Test   STTTestStatus   `json:"test"`
+	Server STTServerStatus `json:"server"`
 }
 
 var (
@@ -250,6 +256,8 @@ func CurrentSTT() STTStatus {
 	}
 	out := sttState
 	out.Mics = append([]MicDevice{}, sttMics...)
+	out.Test = sttTestState
+	out.Server = CurrentSTTServer()
 	return out
 }
 
@@ -271,6 +279,8 @@ func StartListening(hold bool) {
 	sttState.Level, sttState.Heard, sttState.MS, sttState.Error = 0, false, 0, ""
 	sttMu.Unlock()
 
+	// A local whisper server loads while you talk.
+	go func() { _ = StartSTTServer() }()
 	go runListening(ctx, cancel, stop)
 }
 
@@ -312,7 +322,7 @@ func sttFail(ctx context.Context, msg string) {
 	sttState.Recording, sttState.Busy, sttState.Level = false, false, 0
 	sttState.Error = msg
 	sttState.Seq++
-	sttState.Text = ""
+	sttState.Text, sttState.Command = "", ""
 }
 
 func runListening(ctx context.Context, cancel context.CancelFunc, stop chan struct{}) {
@@ -321,6 +331,7 @@ func runListening(ctx context.Context, cancel context.CancelFunc, stop chan stru
 	o := cfg.STTOptions
 	gate := newSpeechGate(o.Gate, o.SilenceMS)
 	limit := time.Duration(o.MaxSec) * time.Second
+	ptt := false
 
 	err := recordMic(ctx, micIndex(o.Device), func(samples []int16) bool {
 		level, _, silent := gate.feed(samples)
@@ -328,6 +339,7 @@ func runListening(ctx context.Context, cancel context.CancelFunc, stop chan stru
 		sttState.Level, sttState.Heard, sttState.MS = level, gate.heard(), int(gate.recorded.Milliseconds())
 		hold := sttState.Hold
 		sttMu.Unlock()
+		ptt = hold
 		select {
 		case <-stop:
 			return false
@@ -355,20 +367,14 @@ func runListening(ctx context.Context, cancel context.CancelFunc, stop chan stru
 	sttState.Recording, sttState.Busy, sttState.Level = false, true, 0
 	sttMu.Unlock()
 
-	r := transcribeRequest{BaseURL: o.BaseURL, Model: o.Model, Language: o.Language, WAV: encodeWAV(audio, sttSampleRate)}
-	if r.BaseURL == "" {
-		r.BaseURL = cfg.AssistOptions.OpenAIBaseURL
-	}
-	stored := o.Key
-	if stored == "" {
-		stored = cfg.AssistOptions.OpenAIKey
-	}
-	if r.Key, err = openSecret(stored); err != nil {
+	r, err := sttRequestFor(cfg)
+	if err != nil {
 		sttFail(ctx, err.Error())
 		return
 	}
-	if r.Key == "" && strings.Contains(r.BaseURL, "api.openai.com") {
-		sttFail(ctx, "add an OpenAI API key on the Assist page")
+	r.WAV = encodeWAV(audio, sttSampleRate)
+	if err := waitSTTServer(ctx, cfg); err != nil {
+		sttFail(ctx, err.Error())
 		return
 	}
 	timeout := time.Duration(cfg.AssistOptions.TimeoutSec)*time.Second + 15*time.Second
@@ -384,6 +390,21 @@ func runListening(ctx context.Context, cancel context.CancelFunc, stop chan stru
 	}
 	if text == "" {
 		sttFail(ctx, "nothing was recognised")
+		return
+	}
+	if ctx.Err() != nil {
+		return
+	}
+	if consumed, name := handleVoiceCommand(text, ptt); consumed {
+		sttMu.Lock()
+		defer sttMu.Unlock()
+		if ctx.Err() != nil {
+			return
+		}
+		sttState.Busy = false
+		sttState.Seq++
+		sttState.Text, sttState.Original, sttState.Translated = "", text, false
+		sttState.PTT, sttState.Command = ptt, name
 		return
 	}
 	original, translated := text, false
@@ -406,5 +427,6 @@ func runListening(ctx context.Context, cancel context.CancelFunc, stop chan stru
 	}
 	sttState.Busy = false
 	sttState.Seq++
-	sttState.Text, sttState.Original, sttState.Translated = text, original, translated
+	sttState.Text, sttState.Original, sttState.Translated = FilterText(SurfaceDictated, text), original, translated
+	sttState.PTT, sttState.Command = ptt, ""
 }

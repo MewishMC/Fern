@@ -68,6 +68,13 @@ type STTOptions struct {
 	AutoSend    bool   `json:"auto_send"`
 	Translate   bool   `json:"translate"` // translate the transcript with the AI tools
 	TranslateTo string `json:"translate_to"`
+
+	// A local whisper server Fern starts when dictation is first used; see
+	// stt_local.go. Fern ships no model: this runs the user's own program.
+	ServerLaunch  bool   `json:"server_launch"`
+	ServerExe     string `json:"server_exe"`
+	ServerArgs    string `json:"server_args"`
+	ServerWaitSec int    `json:"server_wait_sec"` // how long dictation waits for it to come up
 }
 
 func defaultAssistOptions() AssistOptions {
@@ -104,6 +111,8 @@ func defaultSTTOptions() STTOptions {
 		SilenceMS:   1500,
 		MaxSec:      30,
 		TranslateTo: "English",
+
+		ServerWaitSec: 60,
 	}
 }
 
@@ -193,6 +202,12 @@ func (c *Config) sanitizeAssist() {
 	if s.TranslateTo = oneLine(s.TranslateTo, 40); s.TranslateTo == "" {
 		s.TranslateTo = sdef.TranslateTo
 	}
+	s.ServerExe = oneLine(s.ServerExe, 400)
+	s.ServerArgs = oneLine(s.ServerArgs, 1000)
+	if s.ServerWaitSec == 0 {
+		s.ServerWaitSec = sdef.ServerWaitSec
+	}
+	s.ServerWaitSec = clampInt(s.ServerWaitSec, 5, 600)
 }
 
 // keepSecrets copies the stored keys from prev. The panel never receives the
