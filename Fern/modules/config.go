@@ -618,6 +618,8 @@ type Config struct {
 	AssistOptions  AssistOptions  `json:"AssistOptions"`
 	TTSOptions     TTSOptions     `json:"TTSOptions"`
 	STTOptions     STTOptions     `json:"STTOptions"`
+	// Word replacements and censor list; see textfilter.go.
+	TextFilter TextFilterOptions `json:"TextFilter"`
 
 	// App integrations
 	DiscordOptions  DiscordOptions  `json:"DiscordOptions"`
@@ -892,6 +894,7 @@ func DefaultConfig() Config {
 		AssistOptions: defaultAssistOptions(),
 		TTSOptions:    defaultTTSOptions(),
 		STTOptions:    defaultSTTOptions(),
+		TextFilter:    defaultTextFilterOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
 		VRInput:       defaultVRInputOptions(),
@@ -919,6 +922,7 @@ func (c Config) clone() Config {
 	out.TimeOptions.Counters = append([]TimeCounter{}, c.TimeOptions.Counters...)
 	out.Rules = c.Rules.clone()
 	out.DND = c.DND.clone()
+	out.TextFilter = c.TextFilter.clone()
 	return out
 }
 
@@ -1388,6 +1392,7 @@ func (c *Config) sanitize() {
 	c.Rules.sanitize()
 	c.DND.sanitize()
 	c.VRInput.sanitize()
+	c.TextFilter.sanitize()
 }
 
 func scheduleSave() {
