@@ -84,6 +84,9 @@ type uiState struct {
 	Profiles profilesState `json:"profiles"`
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
+
+	OBS          obsState          `json:"obs"`
+	VoicemodKeys map[string]string `json:"voicemodKeys"`
 }
 
 type appState struct {
@@ -220,6 +223,10 @@ func StartServer(listener net.Listener) {
 	mux.HandleFunc("/ws", handleSocket)
 	mux.HandleFunc("/backup/export", handleBackupExport)
 	mux.HandleFunc("/profiles/appearance", handleProfileAppearance)
+	mux.HandleFunc("/overlay", handleOverlay)
+	mux.HandleFunc("/overlay/text", handleOverlayText)
+	mux.HandleFunc("/overlay/stream", handleOverlayStream)
+	setOverlayBase(listener)
 	if assets := UI.Assets(); assets != nil {
 		mux.Handle("/assets/", http.StripPrefix("/assets/", freshAssets(http.FileServer(http.FS(assets)))))
 	}
@@ -386,6 +393,8 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "obs":
+		handleOBSCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	}
@@ -524,6 +533,7 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+			modules.ModuleOBS:      d.OBS,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -582,6 +592,9 @@ func buildState() uiState {
 		Profiles: currentProfiles(),
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
+
+		OBS:          currentOBS(),
+		VoicemodKeys: voicemodKeyErrors(),
 	}
 }
 

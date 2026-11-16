@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fern chatbox</title>
+    <!--
+        Fern's chatbox overlay for an OBS browser source. It shows exactly what
+        Fern sends to the VRChat chatbox, live. Style it with URL parameters,
+        for example /overlay?size=40&color=ffffff&bg=none&align=center, or
+        with OBS's own "Custom CSS" box: the bubble is #box and the text is
+        #text, and #box gets the class "empty" when there is nothing to show.
+
+        Parameters (all optional):
+          size       text size in px (32)          weight   font weight (600)
+          font       font family ("Segoe UI")      color    text colour (fff)
+          bg         bubble colour, or none        radius   corner radius in px (18)
+          pad        padding in px (14)            width    widest the bubble gets, px (720)
+          align      left, center or right         valign   top, center or bottom
+          side       left, center or right: where the bubble sits
+          outline    text outline width in px (0)  outlinecolor (000)
+          shadow     0 turns the text shadow off   fade     fade time in ms (250)
+          keep       1 keeps the empty bubble      css      extra CSS
+    -->
+    <style>
+        :root {
+            --size: 32px;
+            --weight: 600;
+            --font: "Segoe UI", "Segoe UI Emoji", system-ui, sans-serif;
+            --color: #ffffff;
+            --bg: rgba(18, 18, 24, 0.78);
+            --radius: 18px;
+            --pad: 14px;
+            --width: 720px;
+            --align: left;
+            --justify: flex-start;
+            --valign: flex-end;
+            --outline: 0px;
+            --outline-color: #000000;
+            --shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+            --fade: 250ms;
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            background: transparent;
+            overflow: hidden;
+        }
+
+        #wrap {
+            box-sizing: border-box;
+            height: 100%;
+            padding: 8px;
+            display: flex;
+            justify-content: var(--justify);
+            align-items: var(--valign);
+        }
+
+        #box {
+            box-sizing: border-box;
+            max-width: min(var(--width), 100%);
+            padding: var(--pad) calc(var(--pad) * 1.4);
+            border-radius: var(--radius);
+            background: var(--bg);
+            color: var(--color);
+            font-family: var(--font);
+            font-size: var(--size);
+            font-weight: var(--weight);
+            line-height: 1.3;
+            text-align: var(--align);
+            text-shadow: var(--shadow);
+            -webkit-text-stroke: var(--outline) var(--outline-color);
+            paint-order: stroke fill;
+            transition: opacity var(--fade) ease;
+        }
+
+        #text {
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        #box.empty {
+            opacity: 0;
+        }
+    </style>
+    <style id="custom"></style>
+</head>
+<body>
+    <div id="wrap"><div id="box" class="empty"><div id="text"></div></div></div>
+    <script>
+        "use strict";
+        (function () {
+            const q = new URLSearchParams(location.search);
+            const root = document.documentElement.style;
+            const num = (key, min, max) => {
+                const v = Number(q.get(key));
+                return q.has(key) && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : null;
+            };
+            // Colours may be written without the # so they fit a URL easily.
+            const color = (key) => {
+                let v = (q.get(key) || "").trim();
+                if (!v) return null;
+                if (/^[0-9a-f]{3,8}$/i.test(v)) v = "#" + v;
+                return CSS.supports("color", v) ? v : null;
+            };
+            const set = (name, value) => { if (value !== null && value !== undefined) root.setProperty(name, value); };
+
+            const size = num("size", 8, 200);
+            if (size !== null) set("--size", size + "px");
+            const weight = num("weight", 100, 900);
+            if (weight !== null) set("--weight", String(Math.round(weight / 100) * 100));
+            const font = (q.get("font") || "").replace(/[;{}<>]/g, "").trim();
+            if (font) set("--font", '"' + font.replace(/"/g, "") + '", "Segoe UI Emoji", system-ui, sans-serif');
+            set("--color", color("color"));
+            if ((q.get("bg") || "").toLowerCase() === "none") set("--bg", "transparent");
+            else set("--bg", color("bg"));
+            const radius = num("radius", 0, 200);
+            if (radius !== null) set("--radius", radius + "px");
+            const pad = num("pad", 0, 200);
+            if (pad !== null) set("--pad", pad + "px");
+            const width = num("width", 50, 8000);
+            if (width !== null) set("--width", width + "px");
+            const align = (q.get("align") || "").toLowerCase();
+            if (["left", "center", "right"].includes(align)) set("--align", align);
+            const side = (q.get("side") || align).toLowerCase();
+            const flex = { left: "flex-start", center: "center", right: "flex-end", top: "flex-start", bottom: "flex-end" };
+            if (["left", "center", "right"].includes(side)) set("--justify", flex[side]);
+            const valign = (q.get("valign") || "").toLowerCase();
+            if (["top", "center", "bottom"].includes(valign)) set("--valign", flex[valign]);
+            const outline = num("outline", 0, 20);
+            if (outline !== null) set("--outline", outline + "px");
+            set("--outline-color", color("outlinecolor"));
+            if (q.get("shadow") === "0") set("--shadow", "none");
+            const fade = num("fade", 0, 5000);
+            if (fade !== null) set("--fade", fade + "ms");
+            const keep = q.get("keep") === "1";
+            // Extra CSS is set as text, so it can only style this page.
+            document.getElementById("custom").textContent = q.get("css") || "";
+
+            const box = document.getElementById("box");
+            const text = document.getElementById("text");
+            let last = null;
+            function show(t) {
+                t = typeof t === "string" ? t : "";
+                if (t === last) return;
+                last = t;
+                if (t) text.textContent = t;
+                box.classList.toggle("empty", !t && !keep);
+                if (!t && keep) text.textContent = "";
+            }
+
+            // EventSource reconnects by itself when Fern restarts.
+            const es = new EventSource("/overlay/stream");
+            es.onmessage = (ev) => {
+                try { show(JSON.parse(ev.data).text); } catch (e) { }
+            };
+        })();
+    </script>
+</body>
+</html>
