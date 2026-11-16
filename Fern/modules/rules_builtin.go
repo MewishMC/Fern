@@ -93,6 +93,7 @@ var lineLabels = map[string]string{
 	ModuleHeart: "Heart rate", ModuleLyrics: "Lyrics", ModuleWeather: "Weather",
 	ModuleDiscord: "Discord", ModuleTwitch: "Twitch", ModuleSoundpad: "Soundpad",
 	ModuleVoicemod: "Voicemod", ModuleNetwork: "Network", ModuleGPU: "GPU", ModuleWorld: "VRChat world",
+	ModuleTimer: "Timer", ModuleCounter: "Counters", ModuleSchedule: "Scheduled messages",
 }
 
 // LineLabel is a chatbox line's display name.

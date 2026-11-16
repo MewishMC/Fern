@@ -9,8 +9,8 @@ import (
 // the clock first, your own text last.
 var DefaultDropOrder = []string{
 	ModuleTime, ModuleWeather, ModuleNetwork, ModuleCPU, ModuleGPU, ModuleMemory, ModuleVRPerf, ModuleBattery,
-	ModuleWindow, ModuleLogs, ModuleWorld, ModuleLoading, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
-	ModuleDiscord, ModuleLyrics, ModuleHeart, ModuleAFK, ModuleMedia, ModuleText,
+	ModuleWindow, ModuleLogs, ModuleWorld, ModuleCounter, ModuleLoading, ModuleTwitch, ModuleSoundpad, ModuleVoicemod,
+	ModuleDiscord, ModuleLyrics, ModuleHeart, ModuleTimer, ModuleAFK, ModuleMedia, ModuleSchedule, ModuleText,
 }
 
 // Ellipsis marks a line that had to be cut.

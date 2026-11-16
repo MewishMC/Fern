@@ -139,6 +139,31 @@
                     </div>
                 </div>
 
+                <div class="live-grid" id="tallyLive" hidden>
+                    <div class="card" id="tmLiveCard">
+                        <div class="card-head">
+                            <h3>Timer</h3>
+                            <span class="badge" id="tmLiveBadge">idle</span>
+                        </div>
+                        <div class="tally-big" id="tmLiveTime">0:00</div>
+                        <div class="tally-sub" id="tmLiveSub">Countdown</div>
+                        <div class="bar" style="margin-top:10px"><i id="tmLiveBar"></i></div>
+                        <div class="np-actions">
+                            <button class="btn small" type="button" data-timer="toggle" id="tmLiveToggle"><i class="fa fa-play" aria-hidden="true"></i> <span>Start</span></button>
+                            <button class="btn ghost small" type="button" data-timer="reset"><i class="fa fa-rotate-left" aria-hidden="true"></i> Reset</button>
+                            <button class="btn ghost small" type="button" data-timer="skip" id="tmLiveSkip" title="End this countdown or Pomodoro phase now"><i class="fa fa-forward-step" aria-hidden="true"></i> Skip</button>
+                            <button class="btn ghost small" type="button" data-open="timer" title="Timer settings"><i class="fa fa-sliders" aria-hidden="true"></i></button>
+                        </div>
+                    </div>
+                    <div class="card" id="ctLiveCard">
+                        <div class="card-head">
+                            <h3>Counters</h3>
+                            <button class="btn ghost small" type="button" data-open="counter" title="Counter settings"><i class="fa fa-sliders" aria-hidden="true"></i></button>
+                        </div>
+                        <div class="list" id="ctLiveList" style="margin-top:0"></div>
+                    </div>
+                </div>
+
                 <div class="live-grid">
                     <div class="card">
                         <div class="card-head">
@@ -2095,6 +2120,309 @@
                 <div class="list" id="counterList"></div>
                 <div class="hint">Time line now: <code class="bar-preview" id="timeNow"></code></div>
                 <div class="hint">Time since a past date, or until a future one, after its label: “together 1y 2m”, “trip in 4d 17h”. The time is optional.</div>
+            </section>
+
+            <!-- ================= TIMER ================= -->
+            <section class="page" id="page-timer">
+                <div class="page-head">
+                    <div>
+                        <h2>Timer</h2>
+                        <p>A countdown, a stopwatch or a Pomodoro timer in the chatbox</p>
+                    </div>
+                    <span class="badge" id="tmBadge">idle</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the timer line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="timer"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Right now</h3>
+                        <span class="count" id="tmNowState"></span>
+                    </div>
+                    <div class="tally-big" id="tmNowTime">0:00</div>
+                    <div class="tally-sub" id="tmNowLine">—</div>
+                    <div class="bar" style="margin-top:10px"><i id="tmNowBar"></i></div>
+                    <div class="np-actions">
+                        <button class="btn small" type="button" data-timer="toggle" id="tmToggle"><i class="fa fa-play" aria-hidden="true"></i> <span>Start</span></button>
+                        <button class="btn ghost small" type="button" data-timer="reset"><i class="fa fa-rotate-left" aria-hidden="true"></i> Reset</button>
+                        <button class="btn ghost small" type="button" data-timer="skip" id="tmSkip" title="End this countdown or Pomodoro phase now"><i class="fa fa-forward-step" aria-hidden="true"></i> Skip</button>
+                    </div>
+                    <div class="hint">The timer runs in Fern, so it keeps going with the panel closed. It stops when Fern quits.</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head"><h3>Kind</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Mode</b>
+                            <span>Changing it resets a running timer</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="tmMode" style="width:200px" aria-label="Timer mode">
+                                <option value="countdown">Countdown</option>
+                                <option value="stopwatch">Stopwatch</option>
+                                <option value="pomodoro">Pomodoro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Count down</b>
+                            <span>For a set time, or until a time of day (the next time it comes round)</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="tmCountdown" style="width:200px" aria-label="Countdown kind">
+                                <option value="duration">For a length of time</option>
+                                <option value="until">Until a time</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Length</b>
+                            <span>Like 5:00, 1:30:00 or 90s. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmDuration" placeholder="5:00" autocomplete="off" spellcheck="false" style="width:120px" aria-label="Countdown length"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Until</b>
+                            <span>Pausing pushes the end back</span>
+                        </div>
+                        <div class="field-control"><input type="time" id="tmUntil" class="tally-time" aria-label="Count down until"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>{label} in the line, like “Tea” or “Stream starts”</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmLabel" maxlength="24" placeholder="none" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Work · break · long break</b>
+                            <span>Minutes for each Pomodoro phase</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="number" id="tmWork" min="1" max="600" step="1" style="width:70px" aria-label="Work minutes">
+                            <input type="number" id="tmBreak" min="1" max="600" step="1" style="width:70px" aria-label="Break minutes">
+                            <input type="number" id="tmLong" min="1" max="600" step="1" style="width:70px" aria-label="Long break minutes">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Rounds before a long break</b>
+                            <span>{round} and {rounds} in the line</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="tmRounds" min="1" max="12" step="1" style="width:70px" aria-label="Rounds"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Phase names</b>
+                            <span>{label} while working, on a break and on the long break</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="tmWorkLabel" maxlength="24" placeholder="Focus" autocomplete="off" style="width:96px" aria-label="Work label">
+                            <input type="text" id="tmBreakLabel" maxlength="24" placeholder="Break" autocomplete="off" style="width:96px" aria-label="Break label">
+                            <input type="text" id="tmLongLabel" maxlength="24" placeholder="Long break" autocomplete="off" style="width:96px" aria-label="Long break label">
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Start the next phase by itself</b>
+                            <span>Off waits for you to press Start at each break</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="tmAuto"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head"><h3>Line</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Template</b>
+                            <span>{time} is what is left (the time so far on a stopwatch). Also {elapsed}, {remaining}, {label}, {round}, {rounds}, {end} and {paused}.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmTemplate" maxlength="100" placeholder="⏱ {label} {time}" autocomplete="off" style="width:240px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Time style</b>
+                            <span>4:05 or 4m 5s</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="tmStyle" style="width:200px" aria-label="Time style">
+                                <option value="clock">Clock (4:05)</option>
+                                <option value="short">Short (4m 5s)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Paused mark</b>
+                            <span>{paused}, or added at the end while paused</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmPaused" maxlength="8" placeholder="none" autocomplete="off" style="width:96px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Finished message</b>
+                            <span>Shown when a countdown runs out. {label} works here too. Empty hides the line.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmFinished" maxlength="100" placeholder="none" autocomplete="off" style="width:240px"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show it for</b>
+                            <span>Seconds the finished message stays</span>
+                        </div>
+                        <div class="field-control"><input type="number" id="tmFinishedSec" min="0" max="3600" step="1" style="width:90px" aria-label="Finished message seconds"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Hide when stopped</b>
+                            <span>Off shows the full time before you start</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="tmHideIdle"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head"><h3>Shortcuts and avatar</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Start / pause shortcut</b>
+                            <span id="tmToggleKeyDesc">Works from any app. Click the box and press the keys; Backspace clears it.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmToggleKey" placeholder="none" autocomplete="off" spellcheck="false" style="width:150px" aria-label="Start or pause shortcut"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Reset shortcut</b>
+                            <span id="tmResetKeyDesc">Stops the timer and puts it back to the start</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmResetKey" placeholder="none" autocomplete="off" spellcheck="false" style="width:150px" aria-label="Reset shortcut"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Start / pause parameter</b>
+                            <span>An avatar parameter that starts or pauses the timer when it turns on, like a menu toggle or a button</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmParamToggle" list="tallyParams" maxlength="128" placeholder="none" autocomplete="off" spellcheck="false" style="width:180px" aria-label="Start or pause parameter"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Reset parameter</b>
+                            <span>Resets the timer when it turns on</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmParamReset" list="tallyParams" maxlength="128" placeholder="none" autocomplete="off" spellcheck="false" style="width:180px" aria-label="Reset parameter"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Send running</b>
+                            <span>A bool parameter Fern sets while the timer counts, for an animation on your avatar</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmParamRunning" list="tallyParams" maxlength="128" placeholder="none" autocomplete="off" spellcheck="false" style="width:180px" aria-label="Running parameter"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Send progress</b>
+                            <span>A float parameter from 0 to 1, how far through the countdown or phase</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tmParamProgress" list="tallyParams" maxlength="128" placeholder="none" autocomplete="off" spellcheck="false" style="width:180px" aria-label="Progress parameter"></div>
+                    </div>
+                    <div class="hint">Rules can start, pause, reset and skip the timer too, and react when it finishes or a Pomodoro phase changes.</div>
+                </div>
+                <datalist id="tallyParams"></datalist>
+            </section>
+
+            <!-- ================= COUNTERS ================= -->
+            <section class="page" id="page-counter">
+                <div class="page-head">
+                    <div>
+                        <h2>Counters</h2>
+                        <p>Count headpats, boops or anything an avatar parameter or a shortcut can tell Fern about</p>
+                    </div>
+                    <span class="badge" id="ctBadge">0</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the counter line</b>
+                            <span>Adds it to the chatbox in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="counter"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between counters</b>
+                            <span>When more than one is on the line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ctSeparator" maxlength="8" placeholder=" | " autocomplete="off" style="width:80px" aria-label="Between counters"></div>
+                    </div>
+                </div>
+
+                <div class="window-add">
+                    <button class="btn" type="button" id="ctAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add counter</button>
+                </div>
+                <div class="list" id="ctList"></div>
+                <div class="hint">Session counts start at zero when Fern starts; totals are kept for good. Avatar parameters need OSC turned on in VRChat.</div>
+            </section>
+
+            <!-- ================= SCHEDULED ================= -->
+            <section class="page" id="page-schedule">
+                <div class="page-head">
+                    <div>
+                        <h2>Scheduled messages</h2>
+                        <p>Messages at a set time, or again and again every few minutes</p>
+                    </div>
+                    <span class="badge" id="scBadge">0</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the scheduled line</b>
+                            <span>Messages show on their own line, in the order set on Lines. Ones set to take over the chatbox show either way.</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="schedule"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between messages</b>
+                            <span>When two show at once</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="text" id="scSeparator" maxlength="8" placeholder=" · " autocomplete="off" style="width:80px" aria-label="Between messages">
+                            <button class="btn ghost small" type="button" id="scClear">Clear line</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="window-add">
+                    <button class="btn" type="button" id="scAdd"><i class="fa fa-plus" aria-hidden="true"></i> Add message</button>
+                </div>
+                <div class="list" id="scList"></div>
+                <div class="hint">{time} in a message is the clock; {world} and {profile} work as in rules. A window that ends before it starts runs past midnight.</div>
             </section>
 
             <!-- ================= WEATHER ================= -->
@@ -5029,6 +5357,9 @@
             { id: "twitch", name: "Twitch", icon: "fa-brands fa-twitch", category: "social", desc: "Live status, viewers and game", keywords: "stream live viewers followers" },
             { id: "soundpad", name: "Soundpad", icon: "fa-volume-high", category: "social", desc: "The sound you just played", keywords: "soundboard sound effect" },
             { id: "voicemod", name: "Voicemod", icon: "fa-masks-theater", category: "social", desc: "Voice changer and soundboard", keywords: "voice changer soundboard meme" },
+            { id: "timer", name: "Timer", icon: "fa-stopwatch", category: "media", desc: "Countdown, stopwatch or Pomodoro", keywords: "countdown stopwatch pomodoro focus break alarm clock" },
+            { id: "counter", name: "Counters", icon: "fa-hashtag", category: "vrchat", desc: "Headpats, boops and other counts", keywords: "count headpat boop tally avatar parameter contact" },
+            { id: "schedule", name: "Scheduled messages", icon: "fa-calendar-days", category: "media", desc: "Messages at a time or every few minutes", keywords: "schedule repeat reminder timed interval announcement" },
         ];
         const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
         const MODULE_NAME = Object.fromEntries(MODULES.map((m) => [m.id, m.name]));
@@ -5195,6 +5526,7 @@
             renderBackups(st);
             renderRules(st);
             renderVRInput(st);
+            if (typeof renderTally === "function") renderTally(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -9594,6 +9926,550 @@
         $("heroPortrait").src = $("fernAvatar").src;
 
         connect();
+    </script>
+    <script>
+        "use strict";
+        /* ---------------- timer, counters and scheduled messages ---------------- */
+        const TALLY = { cSig: "", sSig: "", counters: null, schedule: null, paramSig: "", noticeSeq: null };
+        const tallyCut = (v, n) => Array.from(String(v)).slice(0, n).join("");
+        function tallyID() {
+            const b = new Uint8Array(6);
+            crypto.getRandomValues(b);
+            return Array.from(b, (x) => x.toString(16).padStart(2, "0")).join("");
+        }
+        // "5:00", "1:30:00", "90s", "1h 30m" or a plain number of minutes, in seconds.
+        function parseLength(v) {
+            v = String(v).trim().toLowerCase();
+            if (!v) return null;
+            let secs = 0;
+            if (/^\d+(\.\d+)?$/.test(v)) secs = Math.round(Number(v) * 60);
+            else if (/^\d+(:\d{1,2}){1,2}$/.test(v)) secs = v.split(":").reduce((acc, p) => acc * 60 + Number(p), 0);
+            else {
+                const re = /(\d+(?:\.\d+)?)\s*(h|m|s)/g;
+                let m, used = "";
+                while ((m = re.exec(v))) {
+                    secs += Number(m[1]) * { h: 3600, m: 60, s: 1 }[m[2]];
+                    used += m[0];
+                }
+                if (used.replace(/\s/g, "") !== v.replace(/\s/g, "")) return null;
+                secs = Math.round(secs);
+            }
+            return secs >= 1 && secs <= 359999 ? secs : null;
+        }
+        function fmtLength(secs) {
+            const h = Math.floor(secs / 3600), m = Math.floor(secs / 60) % 60, s = secs % 60;
+            return (h ? h + ":" + String(m).padStart(2, "0") : String(m)) + ":" + String(s).padStart(2, "0");
+        }
+        // Click a shortcut box and press the keys; Backspace clears it.
+        function hotkeyFromEvent(ev) {
+            if (ev.key === "Backspace" || ev.key === "Delete") return "";
+            const mods = [ev.ctrlKey && "Ctrl", ev.altKey && "Alt", ev.shiftKey && "Shift", ev.metaKey && "Win"].filter(Boolean);
+            const code = ev.code || "";
+            let key = "";
+            if (/^Key[A-Z]$/.test(code)) key = code.slice(3);
+            else if (/^Digit\d$/.test(code)) key = code.slice(5);
+            else if (/^(F\d{1,2}|Numpad\d|Space|Insert|Home|End|PageUp|PageDown|Pause)$/.test(code)) key = code;
+            if (!key) {
+                ev.target.value = mods.length ? mods.join("+") + "+…" : "";
+                return null;
+            }
+            if (!mods.length && !HOTKEY_FREE.test(key)) {
+                toast(key + " needs Ctrl, Alt, Shift or Win with it", true);
+                return null;
+            }
+            return mods.concat(key).join("+");
+        }
+        function bindTallyHotkey(el, apply, current) {
+            el.addEventListener("keydown", (ev) => {
+                if (ev.key === "Tab") return;
+                ev.preventDefault();
+                if (ev.key === "Escape") { el.blur(); return; }
+                const value = hotkeyFromEvent(ev);
+                if (value === null) return;
+                el.value = value;
+                if (pushConfigNow((c) => apply(c, value))) toast(value ? "Shortcut: " + value : "Shortcut off");
+                el.blur();
+            });
+            el.addEventListener("blur", () => { const c = config(); if (c) el.value = current(c) || ""; });
+        }
+
+        /* timer settings */
+        const TM_TEXTS = [
+            ["tmLabel", "label", 24], ["tmTemplate", "template", 100], ["tmPaused", "paused_mark", 8],
+            ["tmFinished", "finished_text", 100], ["tmWorkLabel", "work_label", 24], ["tmBreakLabel", "break_label", 24],
+            ["tmLongLabel", "long_label", 24], ["tmParamToggle", "param_toggle", 128], ["tmParamReset", "param_reset", 128],
+            ["tmParamRunning", "param_running", 128], ["tmParamProgress", "param_progress", 128],
+        ];
+        const TM_CHECKS = [["tmAuto", "auto_advance"], ["tmHideIdle", "hide_idle"]];
+        const TM_SELECTS = [["tmMode", "mode"], ["tmCountdown", "countdown"], ["tmStyle", "time_style"]];
+        const TM_NUMS = [["tmWork", "work_min", 1, 600], ["tmBreak", "break_min", 1, 600], ["tmLong", "long_break_min", 1, 600],
+            ["tmRounds", "rounds", 1, 12], ["tmFinishedSec", "finished_sec", 0, 3600]];
+        TM_TEXTS.forEach(([id, key, max]) => {
+            $(id).addEventListener("input", (ev) => {
+                const v = tallyCut(ev.target.value, max);
+                pushConfig((c) => { c.TimerOptions[key] = v; });
+            });
+        });
+        TM_CHECKS.forEach(([id, key]) => {
+            $(id).addEventListener("change", (ev) => { pushConfigNow((c) => { c.TimerOptions[key] = ev.target.checked; }); });
+        });
+        TM_SELECTS.forEach(([id, key]) => {
+            $(id).addEventListener("change", (ev) => { pushConfigNow((c) => { c.TimerOptions[key] = ev.target.value; }); });
+        });
+        TM_NUMS.forEach(([id, key, lo, hi]) => {
+            $(id).addEventListener("change", (ev) => {
+                const n = Math.round(Number(ev.target.value));
+                if (!Number.isFinite(n)) return;
+                const v = Math.min(hi, Math.max(lo, n));
+                ev.target.value = v;
+                pushConfigNow((c) => { c.TimerOptions[key] = v; });
+            });
+        });
+        commitField($("tmDuration"), (v) => { const s = parseLength(v); return s === null ? null : fmtLength(s); },
+            (c, v) => { c.TimerOptions.duration_sec = parseLength(v); }, "Write the length like 5:00, 1:30:00, 90s or 1h 30m");
+        $("tmUntil").addEventListener("change", (ev) => {
+            if (ev.target.value) pushConfigNow((c) => { c.TimerOptions.until = ev.target.value; });
+        });
+        bindTallyHotkey($("tmToggleKey"), (c, v) => { c.TimerOptions.toggle_hotkey = v; }, (c) => c.TimerOptions.toggle_hotkey);
+        bindTallyHotkey($("tmResetKey"), (c, v) => { c.TimerOptions.reset_hotkey = v; }, (c) => c.TimerOptions.reset_hotkey);
+        $("ctSeparator").addEventListener("input", (ev) => {
+            const v = tallyCut(ev.target.value.replace(/[\r\n]/g, ""), 8);
+            pushConfig((c) => { c.CounterOptions.separator = v; });
+        });
+        $("scSeparator").addEventListener("input", (ev) => {
+            const v = tallyCut(ev.target.value.replace(/[\r\n]/g, ""), 8);
+            pushConfig((c) => { c.ScheduleOptions.separator = v; });
+        });
+        const tmMode = (c) => c.TimerOptions.mode;
+        DEPENDS.push(
+            ["tmCountdown", (c) => tmMode(c) === "countdown"],
+            ["tmDuration", (c) => tmMode(c) === "countdown" && c.TimerOptions.countdown !== "until"],
+            ["tmUntil", (c) => tmMode(c) === "countdown" && c.TimerOptions.countdown === "until"],
+            ["tmLabel", (c) => tmMode(c) !== "pomodoro"],
+            ["tmWork", (c) => tmMode(c) === "pomodoro"],
+            ["tmRounds", (c) => tmMode(c) === "pomodoro"],
+            ["tmWorkLabel", (c) => tmMode(c) === "pomodoro"],
+            ["tmAuto", (c) => tmMode(c) === "pomodoro"],
+            ["tmFinished", (c) => tmMode(c) === "countdown"],
+            ["tmFinishedSec", (c) => tmMode(c) === "countdown" && !!c.TimerOptions.finished_text],
+        );
+        document.addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-timer]");
+            if (button && !button.disabled) send({ type: "timer", action: button.dataset.timer });
+        });
+
+        const TIMER_STATE = { idle: "stopped", running: "running", paused: "paused", finished: "finished" };
+        const TIMER_PHASE = { work: "Work", break: "Break", long: "Long break" };
+        function renderTimer(st) {
+            const t = (st.tally && st.tally.timer) || { state: "idle", mode: "countdown" };
+            const o = st.config.TimerOptions;
+            const shown = t.mode === "stopwatch" ? t.elapsedMs : (t.state === "idle" && t.mode === "countdown" ? o.duration_sec * 1000 : t.remainingMs);
+            let big = fmtClock(Math.ceil((shown || 0) / 1000) * 1000);
+            if (t.state === "finished") big = "0:00";
+            const mode = { countdown: "Countdown", stopwatch: "Stopwatch", pomodoro: "Pomodoro" }[t.mode] || "Timer";
+            let sub = mode;
+            if (t.mode === "pomodoro" && t.phase) sub += " · " + (t.label || TIMER_PHASE[t.phase]) + " · round " + t.round + " of " + t.rounds;
+            else if (t.label) sub += " · " + t.label;
+            const state = TIMER_STATE[t.state] || t.state;
+            const running = t.state === "running";
+            const pct = Math.round((t.progress || 0) * 100) + "%";
+            [["tmNowTime", "tmNowBar", "tmToggle", "tmSkip"], ["tmLiveTime", "tmLiveBar", "tmLiveToggle", "tmLiveSkip"]].forEach(([time, bar, toggle, skip]) => {
+                $(time).textContent = big;
+                $(bar).style.width = t.mode === "stopwatch" ? "0%" : pct;
+                const btn = $(toggle);
+                btn.querySelector("i").className = "fa " + (running ? "fa-pause" : "fa-play");
+                btn.querySelector("span").textContent = running ? "Pause" : t.state === "paused" ? "Resume" : "Start";
+                $(skip).disabled = t.mode === "stopwatch" || !(t.state === "running" || t.state === "paused");
+            });
+            $("tmBadge").textContent = state;
+            $("tmLiveBadge").textContent = state;
+            $("tmNowState").textContent = sub;
+            $("tmLiveSub").textContent = sub;
+            $("tmNowLine").textContent = t.text || (st.modules && st.modules.timer ? "(nothing on the line right now)" : "The timer line is off");
+
+            const errs = (st.tally && st.tally.hotkeyErrs) || {};
+            [["tmToggleKeyDesc", "toggle", "Works from any app. Click the box and press the keys; Backspace clears it."],
+            ["tmResetKeyDesc", "reset", "Stops the timer and puts it back to the start"]].forEach(([id, key, text]) => {
+                $(id).textContent = errs[key] || text;
+                $(id).classList.toggle("bad", !!errs[key]);
+            });
+            if (lockForms()) return;
+            const active = document.activeElement;
+            TM_TEXTS.forEach(([id, key]) => { if (active !== $(id)) $(id).value = o[key] || ""; });
+            TM_CHECKS.forEach(([id, key]) => { $(id).checked = !!o[key]; });
+            TM_SELECTS.forEach(([id, key]) => { if (active !== $(id)) $(id).value = o[key]; });
+            TM_NUMS.forEach(([id, key]) => { if (active !== $(id)) $(id).value = o[key]; });
+            if (active !== $("tmDuration")) $("tmDuration").value = fmtLength(o.duration_sec || 300);
+            if (active !== $("tmUntil")) $("tmUntil").value = o.until || "";
+            if (active !== $("tmToggleKey")) $("tmToggleKey").value = o.toggle_hotkey || "";
+            if (active !== $("tmResetKey")) $("tmResetKey").value = o.reset_hotkey || "";
+            if (active !== $("ctSeparator")) $("ctSeparator").value = st.config.CounterOptions.separator || "";
+            if (active !== $("scSeparator")) $("scSeparator").value = st.config.ScheduleOptions.separator || "";
+        }
+
+        /* counters */
+        const CT_HINT = "Adds one from any app. Click the box and press the keys; Backspace clears it.";
+        function ctList() {
+            return (lockForms() && TALLY.counters) || (S.state && S.state.config.CounterOptions.counters) || [];
+        }
+        function editTallyList(kind, mutate, now) {
+            if (!S.state) return false;
+            const isCt = kind === "counters";
+            const current = isCt ? ctList() : scList();
+            const next = current.map((x) => JSON.parse(JSON.stringify(x)));
+            mutate(next);
+            const write = (c) => {
+                if (isCt) c.CounterOptions.counters = JSON.parse(JSON.stringify(next));
+                else c.ScheduleOptions.messages = JSON.parse(JSON.stringify(next));
+            };
+            if (!(now ? pushConfigNow : pushConfig)(write)) return false;
+            if (isCt) TALLY.counters = next; else TALLY.schedule = next;
+            if (now) { if (isCt) renderCounterList(S.state, true); else renderScheduleList(S.state, true); }
+            return true;
+        }
+        function tallyField(label, hint, control) {
+            return '<div class="field"><div class="field-label"><b>' + label + "</b><span>" + hint + '</span></div><div class="field-control">' + control + "</div></div>";
+        }
+        function buildCounterRow(c, index) {
+            const row = document.createElement("div");
+            row.className = "rule-step tally-item";
+            row.dataset.index = String(index);
+            row.dataset.id = c.id || "";
+            row.innerHTML =
+                '<div class="rule-step-head">' +
+                '<input class="msg-input ct-name" type="text" maxlength="24" placeholder="Headpats" autocomplete="off" aria-label="Counter name">' +
+                '<span class="tally-count"><b class="ct-session">0</b> this session · <b class="ct-total">0</b> total</span>' +
+                '<button class="btn ghost small" type="button" data-ct="sub" title="Take one away" aria-label="Take one away"><i class="fa fa-minus" aria-hidden="true"></i></button>' +
+                '<button class="btn ghost small" type="button" data-ct="add" title="Add one" aria-label="Add one"><i class="fa fa-plus" aria-hidden="true"></i></button>' +
+                '<label class="switch" title="Show on the counter line"><input type="checkbox" class="ct-show" aria-label="Show on the line"><span></span></label>' +
+                '<button class="mini-x" type="button" data-ct="remove" title="Remove" aria-label="Remove">✕</button>' +
+                "</div>" +
+                '<div class="rule-fields">' +
+                tallyField("Avatar parameter", "Counts when it changes as set below. Empty counts only by hand and shortcut.",
+                    '<input type="text" class="ct-param" list="tallyParams" maxlength="128" placeholder="e.g. HeadPat" autocomplete="off" spellcheck="false" style="width:170px" aria-label="Parameter">') +
+                tallyField("Counts", "Turning on counts each time it goes above the threshold (a bool turning true); changing counts every new value",
+                    '<select class="ct-mode" style="width:150px" aria-label="Counts"><option value="rising">Turning on</option><option value="change">Changing</option></select>' +
+                    '<input type="number" class="ct-threshold" min="-1" max="255" step="0.05" style="width:76px" title="Threshold" aria-label="Threshold">') +
+                tallyField("Cooldown", "Seconds after a count when the parameter is ignored, so one long headpat counts once",
+                    '<input type="number" class="ct-cooldown" min="0" max="3600" step="0.5" style="width:90px" aria-label="Cooldown seconds">') +
+                tallyField("Template", "{name}, {session} (since Fern started) and {total} (all time)",
+                    '<input type="text" class="ct-template" maxlength="80" placeholder="{name}: {session} ({total})" autocomplete="off" style="width:220px" aria-label="Template">') +
+                tallyField("Only after a change", "Shows the counter for a few seconds after it goes up, then hides it",
+                    '<label class="switch"><input type="checkbox" class="ct-only" aria-label="Only after a change"><span></span></label>' +
+                    '<input type="number" class="ct-showsec" min="1" max="3600" step="1" style="width:76px" title="Seconds" aria-label="Seconds to show">') +
+                tallyField("Shortcut", '<span class="ct-hkdesc">' + CT_HINT + "</span>",
+                    '<input type="text" class="ct-hotkey" placeholder="none" autocomplete="off" spellcheck="false" style="width:150px" aria-label="Shortcut">') +
+                tallyField("Reset", "Back to zero for this session, or for good",
+                    '<button class="btn ghost small" type="button" data-ct="reset">This session</button>' +
+                    '<button class="btn ghost small" type="button" data-ct="resetAll">Session and total</button>') +
+                "</div>";
+            row.querySelector(".ct-name").value = c.name || "";
+            row.querySelector(".ct-param").value = c.param || "";
+            row.querySelector(".ct-mode").value = c.mode === "change" ? "change" : "rising";
+            row.querySelector(".ct-threshold").value = c.threshold || 0;
+            row.querySelector(".ct-cooldown").value = c.cooldown || 0;
+            row.querySelector(".ct-template").value = c.template || "";
+            row.querySelector(".ct-show").checked = !!c.show;
+            row.querySelector(".ct-only").checked = !!c.only_after_change;
+            row.querySelector(".ct-showsec").value = c.show_sec || 15;
+            row.querySelector(".ct-hotkey").value = c.hotkey || "";
+            dimCounterRow(row);
+            return row;
+        }
+        function dimRow(el, on) {
+            const field = el.closest(".field");
+            field.classList.toggle("inactive", !on);
+            field.querySelectorAll("input, select").forEach((x) => { x.disabled = !on; });
+        }
+        function dimCounterRow(row) {
+            const param = row.querySelector(".ct-param").value.trim() !== "";
+            dimRow(row.querySelector(".ct-mode"), param);
+            dimRow(row.querySelector(".ct-cooldown"), param);
+            row.querySelector(".ct-threshold").disabled = !param || row.querySelector(".ct-mode").value === "change";
+            row.querySelector(".ct-showsec").disabled = !row.querySelector(".ct-only").checked;
+        }
+        function counterFromRow(row, old) {
+            const n = (sel, lo, hi, def) => {
+                const v = Number(row.querySelector(sel).value);
+                return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : def;
+            };
+            return Object.assign({}, old, {
+                name: tallyCut(row.querySelector(".ct-name").value, 24),
+                param: tallyCut(row.querySelector(".ct-param").value.trim(), 128),
+                mode: row.querySelector(".ct-mode").value,
+                threshold: n(".ct-threshold", -1, 255, 0),
+                cooldown: n(".ct-cooldown", 0, 3600, 0),
+                template: tallyCut(row.querySelector(".ct-template").value, 80),
+                show: row.querySelector(".ct-show").checked,
+                only_after_change: row.querySelector(".ct-only").checked,
+                show_sec: Math.round(n(".ct-showsec", 1, 3600, 15)),
+            });
+        }
+        function renderCounterList(st, force) {
+            const list = ctList();
+            $("ctBadge").textContent = list.length + (list.length === 1 ? " counter" : " counters");
+            $("ctAdd").disabled = list.length >= 10;
+            const box = $("ctList");
+            const sig = JSON.stringify(list);
+            if (force || (sig !== TALLY.cSig && !box.contains(document.activeElement))) {
+                TALLY.cSig = sig;
+                box.replaceChildren();
+                if (!list.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "log-empty";
+                    empty.textContent = "No counters yet. Add one and pick the avatar parameter it counts.";
+                    box.appendChild(empty);
+                }
+                list.forEach((c, i) => box.appendChild(buildCounterRow(c, i)));
+            }
+            const counts = Object.fromEntries(((st.tally && st.tally.counters) || []).map((c) => [c.id, c]));
+            const errs = (st.tally && st.tally.hotkeyErrs) || {};
+            box.querySelectorAll(".tally-item").forEach((row) => {
+                const c = counts[row.dataset.id] || { session: 0, total: 0 };
+                row.querySelector(".ct-session").textContent = c.session;
+                row.querySelector(".ct-total").textContent = c.total;
+                const desc = row.querySelector(".ct-hkdesc");
+                const err = errs[row.dataset.id] || "";
+                desc.textContent = err || CT_HINT;
+                desc.classList.toggle("bad", !!err);
+            });
+        }
+        $("ctAdd").addEventListener("click", () => {
+            const item = { id: tallyID(), name: "", param: "", mode: "rising", threshold: 0, cooldown: 0, template: "{name}: {session} ({total})", show: true, only_after_change: false, show_sec: 15, hotkey: "" };
+            if (editTallyList("counters", (l) => { if (l.length < 10) l.push(item); }, true)) {
+                const names = $("ctList").querySelectorAll(".ct-name");
+                if (names.length) names[names.length - 1].focus();
+            }
+        });
+        function onCounterEdit(ev, now) {
+            const row = ev.target.closest(".tally-item");
+            if (!row || ev.target.classList.contains("ct-hotkey")) return;
+            dimCounterRow(row);
+            const index = +row.dataset.index;
+            editTallyList("counters", (l) => { if (l[index]) l[index] = counterFromRow(row, l[index]); }, now);
+        }
+        $("ctList").addEventListener("input", (ev) => onCounterEdit(ev, false));
+        $("ctList").addEventListener("change", (ev) => { if (ev.target.matches("input[type=checkbox], select")) onCounterEdit(ev, true); });
+        $("ctList").addEventListener("focusout", () => { setTimeout(() => { if (S.state) renderCounterList(S.state); }, 0); });
+        $("ctList").addEventListener("keydown", (ev) => {
+            const el = ev.target;
+            if (!el.classList.contains("ct-hotkey") || ev.key === "Tab") return;
+            ev.preventDefault();
+            if (ev.key === "Escape") { el.blur(); return; }
+            const value = hotkeyFromEvent(ev);
+            if (value === null) return;
+            el.value = value;
+            const index = +el.closest(".tally-item").dataset.index;
+            if (editTallyList("counters", (l) => { if (l[index]) l[index].hotkey = value; }, true)) toast(value ? "Shortcut: " + value : "Shortcut off");
+        });
+        $("ctList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-ct]");
+            if (!button) return;
+            const row = button.closest(".tally-item");
+            const index = +row.dataset.index;
+            const action = button.dataset.ct;
+            if (action !== "remove") {
+                if (action === "resetAll" && !confirm("Reset this counter's all-time total too?")) return;
+                send({ type: "counter", action: action, module: row.dataset.id });
+                return;
+            }
+            const removed = ctList()[index];
+            if (!removed) return;
+            if (editTallyList("counters", (l) => { l.splice(index, 1); }, true)) {
+                toast("Removed " + (removed.name || "counter") + ". Its total is kept if you undo.", false, {
+                    label: "Undo",
+                    run: () => editTallyList("counters", (l) => { l.splice(Math.min(index, l.length), 0, removed); }, true),
+                });
+            }
+        });
+
+        /* scheduled messages */
+        const SC_DAYS = [["mon", "Mon"], ["tue", "Tue"], ["wed", "Wed"], ["thu", "Thu"], ["fri", "Fri"], ["sat", "Sat"], ["sun", "Sun"]];
+        function scList() {
+            return (lockForms() && TALLY.schedule) || (S.state && S.state.config.ScheduleOptions.messages) || [];
+        }
+        function buildScheduleRow(m, index) {
+            const row = document.createElement("div");
+            row.className = "rule-step tally-item";
+            row.dataset.index = String(index);
+            row.dataset.id = m.id || "";
+            row.innerHTML =
+                '<div class="rule-step-head">' +
+                '<label class="switch" title="On"><input type="checkbox" class="sc-enabled" aria-label="Enabled"><span></span></label>' +
+                '<input class="msg-input sc-text" type="text" maxlength="143" placeholder="e.g. Stretch break! 🧘" autocomplete="off" aria-label="Message" style="flex:1;min-width:160px">' +
+                '<button class="btn ghost small" type="button" data-sc="test" title="Send it now"><i class="fa fa-paper-plane" aria-hidden="true"></i> Now</button>' +
+                '<button class="mini-x" type="button" data-sc="remove" title="Remove" aria-label="Remove">✕</button>' +
+                "</div>" +
+                '<div class="rule-fields">' +
+                tallyField("When", "At a time of day, or every few minutes",
+                    '<select class="sc-kind" style="width:150px" aria-label="When"><option value="at">At a time</option><option value="every">Every few minutes</option></select>' +
+                    '<input type="time" class="sc-at tally-time" aria-label="Time">' +
+                    '<input type="number" class="sc-every" min="1" max="1440" step="1" style="width:76px" title="Minutes" aria-label="Every how many minutes">') +
+                tallyField("Between", "Repeats only in this window, counted from its start. The same time twice is all day.",
+                    '<input type="time" class="sc-from tally-time" aria-label="From">' +
+                    '<input type="time" class="sc-to tally-time" aria-label="Until">') +
+                tallyField("Days", "None picked is every day",
+                    '<div class="rule-multi">' + SC_DAYS.map(([v, l]) => '<label class="rule-chip"><input type="checkbox" class="sc-day" value="' + v + '">' + l + "</label>").join("") + "</div>") +
+                tallyField("Show for", "Seconds the message stays",
+                    '<input type="number" class="sc-show" min="3" max="3600" step="1" style="width:90px" aria-label="Seconds to show">') +
+                tallyField("Take over the chatbox", "Shows it alone, like Send on the Live page, instead of as a line. Skipped while do not disturb is on.",
+                    '<label class="switch"><input type="checkbox" class="sc-takeover" aria-label="Take over the chatbox"><span></span></label>') +
+                '<div class="hint sc-last"></div>' +
+                "</div>";
+            row.querySelector(".sc-enabled").checked = !!m.enabled;
+            row.querySelector(".sc-text").value = m.text || "";
+            row.querySelector(".sc-kind").value = m.kind === "every" ? "every" : "at";
+            row.querySelector(".sc-at").value = m.at || "12:00";
+            row.querySelector(".sc-every").value = m.every_min || 30;
+            row.querySelector(".sc-from").value = m.from || "00:00";
+            row.querySelector(".sc-to").value = m.to || "00:00";
+            row.querySelectorAll(".sc-day").forEach((d) => { d.checked = (m.days || []).includes(d.value); });
+            row.querySelector(".sc-show").value = m.show_sec || 30;
+            row.querySelector(".sc-takeover").checked = !!m.takeover;
+            dimScheduleRow(row);
+            return row;
+        }
+        function dimScheduleRow(row) {
+            const every = row.querySelector(".sc-kind").value === "every";
+            row.querySelector(".sc-at").hidden = every;
+            row.querySelector(".sc-every").hidden = !every;
+            dimRow(row.querySelector(".sc-from"), every);
+            row.classList.toggle("off", !row.querySelector(".sc-enabled").checked);
+        }
+        function scheduleFromRow(row, old) {
+            const n = (sel, lo, hi, def) => {
+                const v = Math.round(Number(row.querySelector(sel).value));
+                return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : def;
+            };
+            const time = (sel, def) => row.querySelector(sel).value || def;
+            return Object.assign({}, old, {
+                enabled: row.querySelector(".sc-enabled").checked,
+                text: tallyCut(row.querySelector(".sc-text").value.replace(/[\r\n]/g, " "), 143),
+                kind: row.querySelector(".sc-kind").value,
+                at: time(".sc-at", "12:00"),
+                every_min: n(".sc-every", 1, 1440, 30),
+                from: time(".sc-from", "00:00"),
+                to: time(".sc-to", "00:00"),
+                days: Array.from(row.querySelectorAll(".sc-day")).filter((d) => d.checked).map((d) => d.value),
+                show_sec: n(".sc-show", 3, 3600, 30),
+                takeover: row.querySelector(".sc-takeover").checked,
+            });
+        }
+        function renderScheduleList(st, force) {
+            const list = scList();
+            const on = list.filter((m) => m.enabled).length;
+            $("scBadge").textContent = list.length ? on + " of " + list.length + " on" : "none";
+            $("scAdd").disabled = list.length >= 20;
+            const box = $("scList");
+            const sig = JSON.stringify(list);
+            if (force || (sig !== TALLY.sSig && !box.contains(document.activeElement))) {
+                TALLY.sSig = sig;
+                box.replaceChildren();
+                if (!list.length) {
+                    const empty = document.createElement("div");
+                    empty.className = "log-empty";
+                    empty.textContent = "No scheduled messages yet.";
+                    box.appendChild(empty);
+                }
+                list.forEach((m, i) => box.appendChild(buildScheduleRow(m, i)));
+            }
+            const status = Object.fromEntries(((st.tally && st.tally.schedule) || []).map((s) => [s.id, s]));
+            box.querySelectorAll(".tally-item").forEach((row) => {
+                const s = status[row.dataset.id] || {};
+                row.querySelector(".sc-last").textContent = s.showing ? "Showing now" : s.last ? "Last sent at " + fmtAgo(s.last) : "Not sent yet";
+            });
+        }
+        $("scAdd").addEventListener("click", () => {
+            const item = { id: tallyID(), enabled: true, text: "", kind: "every", at: "12:00", every_min: 30, from: "00:00", to: "00:00", days: [], show_sec: 30, takeover: false };
+            if (editTallyList("schedule", (l) => { if (l.length < 20) l.push(item); }, true)) {
+                const texts = $("scList").querySelectorAll(".sc-text");
+                if (texts.length) texts[texts.length - 1].focus();
+            }
+        });
+        function onScheduleEdit(ev) {
+            const row = ev.target.closest(".tally-item");
+            if (!row) return;
+            dimScheduleRow(row);
+            const index = +row.dataset.index;
+            editTallyList("schedule", (l) => { if (l[index]) l[index] = scheduleFromRow(row, l[index]); }, false);
+        }
+        $("scList").addEventListener("input", (ev) => { if (ev.target.matches("input[type=text], input[type=number]")) onScheduleEdit(ev); });
+        $("scList").addEventListener("change", onScheduleEdit);
+        $("scList").addEventListener("focusout", () => { setTimeout(() => { if (S.state) renderScheduleList(S.state); }, 0); });
+        $("scList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-sc]");
+            if (!button) return;
+            const row = button.closest(".tally-item");
+            const index = +row.dataset.index;
+            if (button.dataset.sc === "test") {
+                send({ type: "schedule", action: "test", module: row.dataset.id });
+                return;
+            }
+            const removed = scList()[index];
+            if (!removed) return;
+            if (editTallyList("schedule", (l) => { l.splice(index, 1); }, true)) {
+                toast("Removed the message", false, {
+                    label: "Undo",
+                    run: () => editTallyList("schedule", (l) => { l.splice(Math.min(index, l.length), 0, removed); }, true),
+                });
+            }
+        });
+        $("scClear").addEventListener("click", () => { send({ type: "schedule", action: "clear" }); });
+
+        /* Live page card */
+        function renderTallyLive(st) {
+            const t = (st.tally && st.tally.timer) || {};
+            const counters = (st.tally && st.tally.counters) || [];
+            const showTimer = !!(st.modules && st.modules.timer) || (t.state && t.state !== "idle");
+            const showCounters = !!(st.modules && st.modules.counter) && counters.length > 0;
+            $("tmLiveCard").hidden = !showTimer;
+            $("ctLiveCard").hidden = !showCounters;
+            $("tallyLive").hidden = !showTimer && !showCounters;
+            $("tallyLive").classList.toggle("single", showTimer !== showCounters);
+            const box = $("ctLiveList");
+            const sig = counters.map((c) => c.id + ":" + c.name).join("|");
+            if (box.dataset.sig !== sig) {
+                box.dataset.sig = sig;
+                box.replaceChildren(...counters.map((c) => {
+                    const row = document.createElement("div");
+                    row.className = "row";
+                    row.dataset.id = c.id;
+                    row.innerHTML = '<div class="row-main"><div class="row-name"></div><span class="row-desc"></span></div>' +
+                        '<div class="row-actions">' +
+                        '<button class="btn ghost small" type="button" data-ct-live="sub" title="Take one away" aria-label="Take one away"><i class="fa fa-minus" aria-hidden="true"></i></button>' +
+                        '<button class="btn ghost small" type="button" data-ct-live="add" title="Add one" aria-label="Add one"><i class="fa fa-plus" aria-hidden="true"></i></button>' +
+                        "</div>";
+                    row.querySelector(".row-name").textContent = c.name || "Counter";
+                    return row;
+                }));
+            }
+            const byID = Object.fromEntries(counters.map((c) => [c.id, c]));
+            box.querySelectorAll(".row").forEach((row) => {
+                const c = byID[row.dataset.id];
+                if (c) row.querySelector(".row-desc").textContent = c.session + " this session · " + c.total + " total";
+            });
+        }
+        $("ctLiveList").addEventListener("click", (ev) => {
+            const button = ev.target.closest("[data-ct-live]");
+            if (button) send({ type: "counter", action: button.dataset.ctLive, module: button.closest(".row").dataset.id });
+        });
+
+        function renderTally(st) {
+            if (!st.config.TimerOptions) return;
+            const params = (st.rules && st.rules.sources && st.rules.sources.params) || [];
+            const psig = params.map((p) => p.value).join("|");
+            if (psig !== TALLY.paramSig) {
+                TALLY.paramSig = psig;
+                $("tallyParams").replaceChildren(...params.map((p) => new Option(p.label || "", p.value)));
+            }
+            const notice = (st.tally && st.tally.notice) || { seq: 0 };
+            if (TALLY.noticeSeq !== null && notice.seq !== TALLY.noticeSeq && notice.text) toast(notice.text, notice.bad);
+            TALLY.noticeSeq = notice.seq;
+            renderTimer(st);
+            renderCounterList(st);
+            renderScheduleList(st);
+            renderTallyLive(st);
+        }
     </script>
     <script>
         "use strict";

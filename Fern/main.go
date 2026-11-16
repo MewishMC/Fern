@@ -52,6 +52,7 @@ func main() {
 	UI.OnHotkey = toggleMic
 	setupProfiles()
 	setupRules()
+	setupTally()
 	cfg := modules.GetConfig()
 	UI.Apply(behaviour(cfg.AppOptions))
 	go watchAppOptions(cfg.AppOptions)
@@ -75,6 +76,7 @@ func behaviour(o modules.AppOptions) UI.Behaviour {
 		b.HotkeyMods, b.HotkeyKey = mods, key
 	}
 	b.Extra = append(profileHotkeys(), ruleHotkeys()...)
+	b.Extra = append(b.Extra, tallyHotkeys()...)
 	return b
 }
 

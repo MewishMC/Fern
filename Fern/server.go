@@ -87,6 +87,7 @@ type uiState struct {
 
 	VRInput modules.VRInputStatus `json:"vrInput"`
 	Voice   voiceState            `json:"voice"`
+	Tally   tallyState            `json:"tally"`
 }
 
 type appState struct {
@@ -390,6 +391,12 @@ func handleCommand(cmd command) {
 		handleRuleCommand(cmd)
 	case "dnd":
 		handleDNDCommand(cmd)
+	case "timer":
+		handleTimerCommand(cmd)
+	case "counter":
+		handleCounterCommand(cmd)
+	case "schedule":
+		handleScheduleCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	case "vrInput":
@@ -539,6 +546,10 @@ func buildState() uiState {
 			modules.ModuleNetwork:  d.Network,
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
+
+			modules.ModuleTimer:    d.Timer,
+			modules.ModuleCounter:  d.Counter,
+			modules.ModuleSchedule: d.Schedule,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -600,6 +611,7 @@ func buildState() uiState {
 
 		VRInput: modules.CurrentVRInput(),
 		Voice:   currentVoice(cfg),
+		Tally:   currentTally(),
 	}
 }
 
