@@ -3853,6 +3853,7 @@
                         <button class="btn small ghost" type="button" id="twitchSignOut">Sign out</button>
                     </div>
                     <div class="device-box" id="twitchDevice" hidden></div>
+                    <div class="link-status" id="twitchScopeNote" data-state="waiting" hidden></div>
                     <div class="field">
                         <div class="field-label">
                             <b>Or paste a token</b>
@@ -3950,6 +3951,447 @@
                         <div class="field-control">
                             <input type="range" id="twitchInterval" min="15" max="600" step="15">
                             <span class="val" id="twitchIntervalVal">60s</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= TWITCH CHAT ================= -->
+            <section class="page" id="page-twitchchat">
+                <div class="page-head">
+                    <div>
+                        <h2>Twitch chat</h2>
+                        <p>Your newest chat message, and alerts for follows, subs, raids, cheers and channel points</p>
+                    </div>
+                    <span class="badge link-badge" id="tcBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the Twitch chat line</b>
+                            <span>Rules with a Twitch trigger connect too, even with the line off</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="twitchchat"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="tcChatStatus"></div>
+                    <div class="link-status" id="tcEventsStatus"></div>
+                    <div class="btn-row">
+                        <button class="btn small ghost" type="button" id="tcReconnect"><i class="fa fa-rotate" aria-hidden="true"></i> Reconnect</button>
+                        <button class="btn small ghost" type="button" id="tcTest"><i class="fa fa-bell" aria-hidden="true"></i> Test alert</button>
+                        <button class="btn small ghost" type="button" id="tcClear"><i class="fa fa-eraser" aria-hidden="true"></i> Clear</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Sign-in</h3>
+                        <button class="btn small ghost" type="button" id="tcOpenTwitch"><i class="fa fa-brands fa-twitch" aria-hidden="true"></i> Twitch page</button>
+                    </div>
+                    <div class="hint" style="margin-top:0">Chat uses the channel and sign-in from the Twitch page. Without a sign-in Fern reads chat anonymously, and subs, gift subs, raids and cheers still show up from chat. Follows and channel point redeems need the sign-in on your own channel (follows also work as a moderator).</div>
+                    <div class="link-status" id="tcScopes" data-state="waiting" hidden></div>
+                    <div class="log-list" id="tcSubs"></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head"><h3>Chat</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show chat messages</b>
+                            <span>Off leaves only the alerts on the line</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="tcShowChat"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Layout</b>
+                            <span><code>{name}</code> <code>{user}</code> <code>{message}</code></span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tcChatTemplate" maxlength="120" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Before chat and alerts. Leave empty for none.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="tcLabel" maxlength="16" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Keep a message for</b>
+                            <span>Then the line hides until someone writes again</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="tcChatSec" min="0" max="120" step="5">
+                            <span class="val" id="tcChatSecVal">20s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Longest message</b>
+                            <span>Longer ones are cut with &hellip;</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="tcMaxChars" min="10" max="144" step="2">
+                            <span class="val" id="tcMaxCharsVal">100</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Who to show</b>
+                            <span>Moderators and the broadcaster count as every role</span>
+                        </div>
+                        <div class="field-control">
+                            <select id="tcOnlyRole" style="width:200px" aria-label="Who to show">
+                                <option value="all">Everyone</option>
+                                <option value="subs">Subscribers, VIPs and mods</option>
+                                <option value="vips">VIPs and mods</option>
+                                <option value="mods">Only mods</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Skip commands</b>
+                            <span>Messages starting with !</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="tcIgnoreCommands"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Skip bots</b>
+                            <span>Nightbot, StreamElements, Streamlabs, Moobot and names ending in "bot"</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="tcIgnoreBots"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Skip links</b>
+                            <span>Messages with a web address</span>
+                        </div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="tcHideLinks"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Skip these users</b>
+                            <span>One name per line</span>
+                        </div>
+                        <div class="field-control"><textarea id="tcIgnoreUsers" rows="3" spellcheck="false" placeholder="mybot"></textarea></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Skip messages with</b>
+                            <span>One word per line, or a /regex/</span>
+                        </div>
+                        <div class="field-control"><textarea id="tcBlockWords" rows="3" spellcheck="false" placeholder="spoiler"></textarea></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head"><h3>Alerts</h3></div>
+                    <div class="hint" style="margin-top:0">An alert takes over the line for a few seconds; more wait their turn. Leave a text empty to turn that alert off. <code>{name}</code> is who did it, <code>{amount}</code> the gifts, raiders, bits or points.</div>
+                    <div class="field">
+                        <div class="field-label"><b>Show each alert for</b><span>Up to five wait in line</span></div>
+                        <div class="field-control">
+                            <input type="range" id="tcAlertSec" min="2" max="60" step="1">
+                            <span class="val" id="tcAlertSecVal">8s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Follow</b><span><code>{name}</code></span></div>
+                        <div class="field-control"><input type="text" id="tcFollowText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Sub and resub</b><span><code>{name}</code> <code>{months}</code> <code>{tier}</code> <code>{message}</code></span></div>
+                        <div class="field-control"><input type="text" id="tcSubText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Gift subs</b><span><code>{name}</code> <code>{amount}</code> <code>{tier}</code></span></div>
+                        <div class="field-control"><input type="text" id="tcGiftText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Raid</b><span><code>{name}</code> <code>{amount}</code></span></div>
+                        <div class="field-control"><input type="text" id="tcRaidText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Smallest raid</b><span>Viewers; smaller raids get no alert</span></div>
+                        <div class="field-control"><input type="number" id="tcMinRaid" min="0" max="1000000" step="1" style="width:110px" aria-label="Smallest raid"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Cheer</b><span><code>{name}</code> <code>{amount}</code> <code>{message}</code></span></div>
+                        <div class="field-control"><input type="text" id="tcCheerText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Smallest cheer</b><span>Bits; smaller cheers get no alert</span></div>
+                        <div class="field-control"><input type="number" id="tcMinBits" min="0" max="1000000" step="1" style="width:110px" aria-label="Smallest cheer"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Channel points</b><span><code>{name}</code> <code>{reward}</code> <code>{message}</code> <code>{amount}</code></span></div>
+                        <div class="field-control"><input type="text" id="tcRedeemText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head"><h3>Recent</h3><span class="count" id="tcRecentCount">0</span></div>
+                    <div class="log-list" id="tcRecent"></div>
+                </div>
+            </section>
+
+            <!-- ================= TIKTOK ================= -->
+            <section class="page" id="page-tiktok">
+                <div class="page-head">
+                    <div>
+                        <h2>TikTok Live</h2>
+                        <p>Follows, gifts, likes and viewers, read from TikFinity or a TikTok-Live-Connector server you run</p>
+                    </div>
+                    <span class="badge link-badge" id="ttBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the TikTok line</b>
+                            <span>Rules with a TikTok trigger connect too, even with the line off</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="tiktok"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="ttStatus"></div>
+                    <div class="stat-grid">
+                        <div class="stat"><b id="ttViewers">—</b><span>Viewers</span></div>
+                        <div class="stat"><b id="ttLikes">—</b><span>Likes</span></div>
+                        <div class="stat"><b id="ttFollows">—</b><span>New followers</span></div>
+                        <div class="stat"><b id="ttDiamonds">—</b><span>Diamonds</span></div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn small ghost" type="button" id="ttReconnect"><i class="fa fa-rotate" aria-hidden="true"></i> Reconnect</button>
+                        <button class="btn small ghost" type="button" id="ttTest"><i class="fa fa-bell" aria-hidden="true"></i> Test alert</button>
+                        <button class="btn small ghost" type="button" id="ttReset"><i class="fa fa-eraser" aria-hidden="true"></i> Start the counts over</button>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Set up</h3>
+                        <button class="btn small ghost" type="button" data-external="https://tikfinity.zerody.one/"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> TikFinity</button>
+                    </div>
+                    <ol class="howto">
+                        <li>TikTok has no API for live events, so Fern listens to an app that reads them. Install and open <b>TikFinity</b>, sign in with your TikTok account and go live.</li>
+                        <li>Leave the address below as it is: TikFinity's websocket is <code>ws://localhost:21213/</code>.</li>
+                        <li>Using a TikTok-Live-Connector server instead? Put its websocket address here. It must send one JSON event per message.</li>
+                    </ol>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Bridge address</b>
+                            <span>Starts with ws:// or wss://. Applies when you leave the field.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ttUrl" maxlength="300" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head"><h3>What to show</h3></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Layout</b>
+                            <span><code>{viewers}</code> <code>{likes}</code> <code>{follows}</code> <code>{shares}</code> <code>{gifts}</code> <code>{diamonds}</code>. Empty shows only alerts.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="ttTemplate" placeholder="alerts only" maxlength="120" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Short numbers</b><span>1.2k instead of 1234</span></div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="ttCompact"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Show each alert for</b><span>Up to five wait in line</span></div>
+                        <div class="field-control">
+                            <input type="range" id="ttAlertSec" min="2" max="60" step="1">
+                            <span class="val" id="ttAlertSecVal">8s</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Follow alert</b><span><code>{name}</code>. Leave empty for none.</span></div>
+                        <div class="field-control"><input type="text" id="ttFollowText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Gift alert</b><span><code>{name}</code> <code>{gift}</code> <code>{amount}</code> <code>{diamonds}</code></span></div>
+                        <div class="field-control"><input type="text" id="ttGiftText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Smallest gift</b><span>Diamonds; smaller gifts get no alert</span></div>
+                        <div class="field-control"><input type="number" id="ttMinDiamonds" min="0" max="1000000" step="1" style="width:110px" aria-label="Smallest gift"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Share alert</b><span><code>{name}</code></span></div>
+                        <div class="field-control"><input type="text" id="ttShareText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Follower milestone every</b><span>New followers in this live; 0 turns milestones off</span></div>
+                        <div class="field-control"><input type="number" id="ttMilestoneEvery" min="0" max="100000" step="1" style="width:110px" aria-label="Milestone every"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Milestone alert</b><span><code>{amount}</code> is the count</span></div>
+                        <div class="field-control"><input type="text" id="ttMilestoneText" placeholder="off" maxlength="100" autocomplete="off"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head"><h3>Recent</h3><span class="count" id="ttRecentCount">0</span></div>
+                    <div class="log-list" id="ttRecent"></div>
+                </div>
+            </section>
+
+            <!-- ================= KICK ================= -->
+            <section class="page" id="page-kick">
+                <div class="page-head">
+                    <div>
+                        <h2>Kick</h2>
+                        <p>Live status and viewers from Kick's public channel page</p>
+                    </div>
+                    <span class="badge link-badge" id="kickBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the Kick line</b>
+                            <span>Asks Kick for new numbers on the interval below</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="kick"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="kickStatus"></div>
+                    <div class="btn-row"><button class="btn small ghost" type="button" id="kickRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Check now</button></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Channel</b>
+                            <span>Your Kick name or channel link. Applies when you leave the field.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="kickChannel" placeholder="kick.com/yourname" maxlength="80" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head"><h3>What to show</h3></div>
+                    <div class="field">
+                        <div class="field-label"><b>Live marker</b><span>Fills <code>{live}</code></span></div>
+                        <div class="field-control"><input type="text" id="kickLiveText" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Word after the viewers</b><span>Fills <code>{viewers}</code> with the count and this</span></div>
+                        <div class="field-control"><input type="text" id="kickViewerLabel" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Layout</b>
+                            <span><code>{live}</code> <code>{viewers}</code> <code>{viewerCount}</code> <code>{title}</code> <code>{category}</code> <code>{followers}</code> <code>{channel}</code></span>
+                        </div>
+                        <div class="field-control"><input type="text" id="kickTemplate" maxlength="200" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>While offline</b><span>Leave empty to hide the line</span></div>
+                        <div class="field-control"><input type="text" id="kickOffline" placeholder="hidden" maxlength="60" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Short numbers</b><span>1.2k instead of 1234</span></div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="kickCompact"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Check every</b><span>How often Fern asks Kick</span></div>
+                        <div class="field-control">
+                            <input type="range" id="kickInterval" min="30" max="900" step="30">
+                            <span class="val" id="kickIntervalVal">60s</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= YOUTUBE ================= -->
+            <section class="page" id="page-youtube">
+                <div class="page-head">
+                    <div>
+                        <h2>YouTube</h2>
+                        <p>Live status, viewers and subscribers from the YouTube Data API</p>
+                    </div>
+                    <span class="badge link-badge" id="youtubeBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the YouTube line</b>
+                            <span>Asks YouTube for new numbers on the interval below</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="youtube"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="link-status" id="youtubeStatus"></div>
+                    <div class="btn-row"><button class="btn small ghost" type="button" id="youtubeRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Check now</button></div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Set up</h3>
+                        <button class="btn small ghost" type="button" data-external="https://console.cloud.google.com/apis/credentials"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Google Cloud credentials</button>
+                    </div>
+                    <ol class="howto">
+                        <li>In Google Cloud, make a project and turn on <b>YouTube Data API v3</b> for it.</li>
+                        <li>Under <b>Credentials</b> press <b>Create credentials</b> &rarr; <b>API key</b>, and paste the key below.</li>
+                        <li>Type your channel's @handle. Each check uses 3 of the key's 10,000 free daily units, so every 2 minutes is well inside the limit.</li>
+                    </ol>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>API key</b>
+                            <span>Stored encrypted, never shown again</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="youtubeKey" data-secret="youtube_key" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="youtubeKey">Save</button>
+                            <button class="btn small ghost" type="button" data-secret-clear="youtubeKey">Clear</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Channel</b>
+                            <span>@handle, channel link or UC… channel ID. Applies when you leave the field.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="youtubeChannel" placeholder="@yourname" maxlength="120" autocomplete="off" spellcheck="false"></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-head"><h3>What to show</h3></div>
+                    <div class="field">
+                        <div class="field-label"><b>Live marker</b><span>Fills <code>{live}</code></span></div>
+                        <div class="field-control"><input type="text" id="youtubeLiveText" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Word after the viewers</b><span>Fills <code>{viewers}</code> with the count and this</span></div>
+                        <div class="field-control"><input type="text" id="youtubeViewerLabel" maxlength="24" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Layout</b>
+                            <span><code>{live}</code> <code>{viewers}</code> <code>{viewerCount}</code> <code>{title}</code> <code>{subscribers}</code> <code>{channel}</code></span>
+                        </div>
+                        <div class="field-control"><input type="text" id="youtubeTemplate" maxlength="200" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>While offline</b><span>Leave empty to hide the line</span></div>
+                        <div class="field-control"><input type="text" id="youtubeOffline" placeholder="hidden" maxlength="60" autocomplete="off"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Short numbers</b><span>1.2k instead of 1234</span></div>
+                        <div class="field-control"><label class="switch"><input type="checkbox" id="youtubeCompact"><span></span></label></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label"><b>Check every</b><span>Each check uses 3 quota units</span></div>
+                        <div class="field-control">
+                            <input type="range" id="youtubeInterval" min="60" max="900" step="30">
+                            <span class="val" id="youtubeIntervalVal">60s</span>
                         </div>
                     </div>
                 </div>
@@ -5973,6 +6415,10 @@
             { id: "vrperf", name: "VR performance", icon: "fa-gauge-high", category: "steamvr", desc: "Frame rate, reprojection and GPU time", keywords: "steamvr vr fps frames reprojection gpu performance" },
             { id: "discord", name: "Discord", icon: "fa-brands fa-discord", category: "social", desc: "Voice channel, speakers and Rich Presence", keywords: "voice call vc rich presence rpc" },
             { id: "twitch", name: "Twitch", icon: "fa-brands fa-twitch", category: "social", desc: "Live status, viewers and game", keywords: "stream live viewers followers" },
+            { id: "twitchchat", name: "Twitch chat", icon: "fa-comments", category: "social", desc: "Chat messages and stream alerts", keywords: "twitch chat irc follow sub raid cheer bits channel points redeem alerts eventsub" },
+            { id: "tiktok", name: "TikTok Live", icon: "fa-brands fa-tiktok", category: "social", desc: "Viewers, likes, follows and gifts", keywords: "tiktok live tikfinity gifts likes followers milestone stream" },
+            { id: "kick", name: "Kick", icon: "fa-k", category: "social", desc: "Live status and viewers", keywords: "kick stream live viewers followers" },
+            { id: "youtube", name: "YouTube", icon: "fa-brands fa-youtube", category: "social", desc: "Live status, viewers and subscribers", keywords: "youtube stream live viewers subscribers" },
             { id: "soundpad", name: "Soundpad", icon: "fa-volume-high", category: "social", desc: "The sound you just played", keywords: "soundboard sound effect" },
             { id: "voicemod", name: "Voicemod", icon: "fa-masks-theater", category: "social", desc: "Voice changer and soundboard", keywords: "voice changer soundboard meme" },
             { id: "timer", name: "Timer", icon: "fa-stopwatch", category: "media", desc: "Countdown, stopwatch or Pomodoro", keywords: "countdown stopwatch pomodoro focus break alarm clock" },
@@ -6147,6 +6593,7 @@
             renderRules(st);
             renderVRInput(st);
             if (typeof renderTally === "function") renderTally(st);
+            renderStreaming(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -8714,6 +9161,217 @@
                 c[DSK].drives = list;
             });
         });
+
+        // Streaming lines: Twitch chat and alerts, TikTok Live, Kick and YouTube.
+        const TC = "TwitchChatOptions", TT = "TikTokOptions";
+        CHECKS.push(
+            ["tcShowChat", [TC, "show_chat"]],
+            ["tcIgnoreCommands", [TC, "ignore_commands"]],
+            ["tcIgnoreBots", [TC, "ignore_bots"]],
+            ["tcHideLinks", [TC, "hide_links"]],
+            ["ttCompact", [TT, "compact"]],
+            ["kickCompact", ["KickOptions", "compact"]],
+            ["youtubeCompact", ["YouTubeOptions", "compact"]],
+        );
+        RANGES.push(
+            ["tcChatSec", [TC, "chat_sec"], "tcChatSecVal", (v) => (v ? v + "s" : "until the next")],
+            ["tcMaxChars", [TC, "max_chars"], "tcMaxCharsVal", asIs],
+            ["tcAlertSec", [TC, "alert_sec"], "tcAlertSecVal", asSec],
+            ["ttAlertSec", [TT, "alert_sec"], "ttAlertSecVal", asSec],
+            ["kickInterval", ["KickOptions", "interval_sec"], "kickIntervalVal", asSec],
+            ["youtubeInterval", ["YouTubeOptions", "interval_sec"], "youtubeIntervalVal", asSec],
+        );
+        TEXTS.push(
+            ["tcChatTemplate", [TC, "chat_template"], 120],
+            ["tcLabel", [TC, "label"], 16],
+            ["tcFollowText", [TC, "follow_text"], 100],
+            ["tcSubText", [TC, "sub_text"], 100],
+            ["tcGiftText", [TC, "gift_text"], 100],
+            ["tcRaidText", [TC, "raid_text"], 100],
+            ["tcCheerText", [TC, "cheer_text"], 100],
+            ["tcRedeemText", [TC, "redeem_text"], 100],
+            ["ttTemplate", [TT, "template"], 120],
+            ["ttFollowText", [TT, "follow_text"], 100],
+            ["ttGiftText", [TT, "gift_text"], 100],
+            ["ttShareText", [TT, "share_text"], 100],
+            ["ttMilestoneText", [TT, "milestone_text"], 100],
+        );
+        ["kick", "youtube"].forEach((p) => {
+            const sec = p === "kick" ? "KickOptions" : "YouTubeOptions";
+            TEXTS.push(
+                [p + "LiveText", [sec, "live_text"], 24],
+                [p + "ViewerLabel", [sec, "viewer_label"], 24],
+                [p + "Template", [sec, "template"], 200],
+                [p + "Offline", [sec, "offline_text"], 60],
+            );
+        });
+        DEPENDS.push(
+            ["tcChatTemplate", (c) => c[TC].show_chat],
+            ["tcChatSec", (c) => c[TC].show_chat],
+            ["tcMaxChars", (c) => c[TC].show_chat],
+            ["tcOnlyRole", (c) => c[TC].show_chat],
+            ["tcIgnoreCommands", (c) => c[TC].show_chat],
+            ["tcIgnoreBots", (c) => c[TC].show_chat],
+            ["tcHideLinks", (c) => c[TC].show_chat],
+            ["tcIgnoreUsers", (c) => c[TC].show_chat],
+            ["tcBlockWords", (c) => c[TC].show_chat],
+            ["tcMinRaid", (c) => !!c[TC].raid_text],
+            ["tcMinBits", (c) => !!c[TC].cheer_text],
+            ["ttMinDiamonds", (c) => !!c[TT].gift_text],
+            ["ttMilestoneText", (c) => c[TT].milestone_every > 0],
+            ["ttCompact", (c) => !!c[TT].template],
+        );
+        // Whole numbers and addresses apply when the field is left.
+        const wholeNumber = (lo, hi) => (v) => {
+            const n = Number(v);
+            return Number.isInteger(n) && n >= lo && n <= hi ? n : null;
+        };
+        commitField($("tcMinRaid"), wholeNumber(0, 1000000), (c, v) => { c[TC].min_raid = v; }, "Use a whole number of viewers");
+        commitField($("tcMinBits"), wholeNumber(0, 1000000), (c, v) => { c[TC].min_bits = v; }, "Use a whole number of bits");
+        commitField($("ttMinDiamonds"), wholeNumber(0, 1000000), (c, v) => { c[TT].min_diamonds = v; }, "Use a whole number of diamonds");
+        commitField($("ttMilestoneEvery"), wholeNumber(0, 100000), (c, v) => { c[TT].milestone_every = v; }, "Use a whole number, or 0 for no milestones");
+        commitField($("ttUrl"), (v) => {
+            const url = v.trim() || "ws://localhost:21213/";
+            return /^wss?:\/\/\S+$/i.test(url) ? url : null;
+        }, (c, v) => { c[TT].url = v; }, "The address must start with ws:// or wss://");
+        commitField($("kickChannel"), (v) => v.trim(), (c, v) => { c.KickOptions.channel = v; }, "");
+        commitField($("youtubeChannel"), (v) => v.trim(), (c, v) => { c.YouTubeOptions.channel = v; }, "");
+        $("tcOnlyRole").addEventListener("change", (ev) => {
+            const v = ev.target.value;
+            pushConfigNow((c) => { c[TC].only_role = v; });
+        });
+        [["tcIgnoreUsers", "ignore_users", "Skipped users saved"], ["tcBlockWords", "block_words", "Word filters saved"]].forEach(([id, key, done]) => {
+            $(id).addEventListener("change", (ev) => {
+                const entries = ev.target.value.split("\n").map((t) => t.trim()).filter(Boolean);
+                const bad = entries.filter((t) => {
+                    if (!(t.length > 2 && t.startsWith("/") && t.endsWith("/"))) return false;
+                    try { new RegExp(t.slice(1, -1)); return false; } catch (e) { return true; }
+                });
+                if (bad.length) toast("Not a valid pattern, skipped: " + bad.join(", "), true);
+                if (pushConfigNow((c) => { c[TC][key] = entries.filter((t) => !bad.includes(t)); })) toast(done);
+            });
+        });
+        const streamSend = (module, action, note) => {
+            if (send({ type: "stream", module, action }) && note) toast(note);
+        };
+        $("tcReconnect").addEventListener("click", () => streamSend("twitchchat", "reconnect", "Reconnecting to Twitch"));
+        $("tcTest").addEventListener("click", () => streamSend("twitchchat", "test", "Showing a test alert"));
+        $("tcClear").addEventListener("click", () => streamSend("twitchchat", "clear", "Cleared"));
+        $("tcOpenTwitch").addEventListener("click", () => showPage("twitch"));
+        $("ttReconnect").addEventListener("click", () => streamSend("tiktok", "reconnect", "Reconnecting to the bridge"));
+        $("ttTest").addEventListener("click", () => streamSend("tiktok", "test", "Showing a test alert"));
+        $("ttReset").addEventListener("click", () => streamSend("tiktok", "clear", "Counts start over"));
+        $("kickRefresh").addEventListener("click", () => streamSend("kick", "refresh", "Checking Kick"));
+        $("youtubeRefresh").addEventListener("click", () => streamSend("youtube", "refresh", "Checking YouTube"));
+
+        const ES_KINDS = {
+            follow: "Follows", sub: "New subs", resub: "Resubs", gift: "Gift subs", cheer: "Cheers",
+            raid: "Raids", redeem: "Channel points", online: "Going live", offline: "Going offline",
+        };
+        function paintStreamEvents(container, list, countId) {
+            const events = list || [];
+            const sig = events.length + ":" + (events.length ? events[0].at + events[0].text : "");
+            if (countId) $(countId).textContent = events.length;
+            if (container.dataset.sig === sig) return;
+            container.dataset.sig = sig;
+            container.replaceChildren(...(events.length ? events : [null]).map((e) => {
+                const line = document.createElement("div");
+                if (!e) {
+                    line.className = "log-empty";
+                    line.textContent = "Nothing yet";
+                    return line;
+                }
+                line.className = "log-line";
+                const time = document.createElement("span");
+                time.className = "log-time";
+                time.textContent = fmtAgo(e.at);
+                const text = document.createElement("span");
+                text.textContent = e.text;
+                if (e.kind === "error") text.style.color = "var(--red)";
+                line.append(time, text);
+                return line;
+            }));
+        }
+        const fmtCount = (n) => (n || 0).toLocaleString();
+        function setStreamValue(id, value) {
+            const el = $(id);
+            if (document.activeElement !== el && el.value !== String(value)) el.value = value;
+        }
+        function renderStreaming(st) {
+            const s = st.streaming;
+            if (!s) return;
+            const c = st.config;
+            const tc = s.twitchChat;
+            setLink("tcBadge", "tcChatStatus", tc.chat, st.modules.twitchchat ? "" : "Turn on the line to connect");
+            const ev = tc.events || {};
+            const evEl = $("tcEventsStatus");
+            const evText = ev.state === "off" ? "" : "Alerts: " + (ev.detail || ev.state);
+            if (evEl.textContent !== evText) evEl.textContent = evText;
+            evEl.dataset.state = ev.state || "off";
+            evEl.hidden = !evText;
+            const missing = tc.missing || [];
+            const signedIn = !!(st.social && st.social.secrets && st.social.secrets.twitch_token);
+            const scopeText = signedIn && missing.length
+                ? "Your Twitch sign-in is from before chat and alerts. Press Sign in again on the Twitch page to allow: " + missing.join(", ")
+                : "";
+            ["tcScopes", "twitchScopeNote"].forEach((id) => {
+                const el = $(id);
+                if (el.textContent !== scopeText) el.textContent = scopeText;
+                el.hidden = !scopeText;
+            });
+            const subs = tc.subs || [];
+            const subSig = JSON.stringify(subs);
+            const subBox = $("tcSubs");
+            if (subBox.dataset.sig !== subSig) {
+                subBox.dataset.sig = subSig;
+                subBox.hidden = !subs.length;
+                subBox.replaceChildren(...subs.map((x) => {
+                    const line = document.createElement("div");
+                    line.className = "log-line";
+                    const mark = document.createElement("span");
+                    mark.className = "log-time";
+                    mark.textContent = x.ok ? "✓" : "—";
+                    const text = document.createElement("span");
+                    text.textContent = (ES_KINDS[x.kind] || x.kind) + (x.ok ? "" : ": " + (x.error || "off"));
+                    line.append(mark, text);
+                    return line;
+                }));
+            }
+            paintStreamEvents($("tcRecent"), tc.recent, "tcRecentCount");
+
+            const tt = s.tiktok;
+            setLink("ttBadge", "ttStatus", tt.link, st.modules.tiktok ? "" : "Turn on the line to connect");
+            const ttOn = tt.link.state === "connected";
+            $("ttViewers").textContent = ttOn ? fmtCount(tt.viewers) : "—";
+            $("ttLikes").textContent = ttOn || tt.likes ? fmtCount(tt.likes) : "—";
+            $("ttFollows").textContent = ttOn || tt.follows ? fmtCount(tt.follows) : "—";
+            $("ttDiamonds").textContent = ttOn || tt.diamonds ? fmtCount(tt.diamonds) : "—";
+            paintStreamEvents($("ttRecent"), tt.recent, "ttRecentCount");
+
+            [["kick", s.kick, "followers"], ["youtube", s.youtube, "subscribers"]].forEach(([p, d, word]) => {
+                let text = "";
+                if (d.link.state === "connected") {
+                    text = (d.channel ? d.channel + " · " : "") +
+                        (d.live ? "Live · " + fmtCount(d.viewers) + " watching" + (d.category ? " · " + d.category : "") : "Offline") +
+                        " · " + fmtCount(d.followers) + " " + word +
+                        (d.checkedAt ? " · checked " + timeOf(d.checkedAt) : "");
+                }
+                setLink(p + "Badge", p + "Status", d.link, text || (st.modules[p] ? "" : "Turn on the line to check"));
+            });
+
+            if (!lockForms()) {
+                if (document.activeElement !== $("tcOnlyRole")) $("tcOnlyRole").value = c[TC].only_role || "all";
+                setStreamValue("tcMinRaid", c[TC].min_raid);
+                setStreamValue("tcMinBits", c[TC].min_bits);
+                setStreamValue("ttMinDiamonds", c[TT].min_diamonds);
+                setStreamValue("ttMilestoneEvery", c[TT].milestone_every);
+                setStreamValue("ttUrl", c[TT].url || "");
+                setStreamValue("kickChannel", c.KickOptions.channel || "");
+                setStreamValue("youtubeChannel", c.YouTubeOptions.channel || "");
+                setStreamValue("tcIgnoreUsers", (c[TC].ignore_users || []).join("\n"));
+                setStreamValue("tcBlockWords", (c[TC].block_words || []).join("\n"));
+            }
+        }
 
         function applyDepends(c) {
             if (!c) return;

@@ -85,11 +85,12 @@ type uiState struct {
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
 
-	VRInput modules.VRInputStatus `json:"vrInput"`
-	Voice   voiceState            `json:"voice"`
-	Tally   tallyState            `json:"tally"`
-	Sensors sensorsState          `json:"sensors"`
-	System  systemState           `json:"system"`
+	VRInput   modules.VRInputStatus `json:"vrInput"`
+	Voice     voiceState            `json:"voice"`
+	Tally     tallyState            `json:"tally"`
+	Sensors   sensorsState          `json:"sensors"`
+	System    systemState           `json:"system"`
+	Streaming modules.StreamingInfo `json:"streaming"`
 }
 
 type appState struct {
@@ -381,6 +382,8 @@ func handleCommand(cmd command) {
 		case "refresh":
 			modules.TwitchRefreshNow()
 		}
+	case "stream":
+		modules.StreamCommand(cmd.Module, cmd.Action)
 	case "voicemod":
 		modules.VoicemodCommand(cmd.Action, cmd.Text)
 	case "heartReset":
@@ -551,14 +554,18 @@ func buildState() uiState {
 			modules.ModuleGPU:      d.GPU,
 			modules.ModuleWorld:    d.World,
 
-			modules.ModuleTimer:     d.Timer,
-			modules.ModuleCounter:   d.Counter,
-			modules.ModuleSchedule:  d.Schedule,
-			modules.ModuleSensors:   d.Sensors,
-			modules.ModuleUptime:    d.Uptime,
-			modules.ModulePing:      d.Ping,
-			modules.ModuleDisk:      d.Disk,
-			modules.ModulePCBattery: d.PCBattery,
+			modules.ModuleTimer:      d.Timer,
+			modules.ModuleCounter:    d.Counter,
+			modules.ModuleSchedule:   d.Schedule,
+			modules.ModuleSensors:    d.Sensors,
+			modules.ModuleUptime:     d.Uptime,
+			modules.ModulePing:       d.Ping,
+			modules.ModuleDisk:       d.Disk,
+			modules.ModulePCBattery:  d.PCBattery,
+			modules.ModuleTwitchChat: d.TwitchChat,
+			modules.ModuleTikTok:     d.TikTok,
+			modules.ModuleKick:       d.Kick,
+			modules.ModuleYouTube:    d.YouTube,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -618,11 +625,12 @@ func buildState() uiState {
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
 
-		VRInput: modules.CurrentVRInput(),
-		Voice:   currentVoice(cfg),
-		Tally:   currentTally(),
-		Sensors: currentSensors(cfg),
-		System:  currentSystem(),
+		VRInput:   modules.CurrentVRInput(),
+		Voice:     currentVoice(cfg),
+		Tally:     currentTally(),
+		Sensors:   currentSensors(cfg),
+		System:    currentSystem(),
+		Streaming: modules.CurrentStreaming(),
 	}
 }
 

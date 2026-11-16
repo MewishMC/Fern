@@ -75,6 +75,9 @@ var integrationPages = []string{
 	"https://www.twitch.tv/activate",
 	"https://dev.twitch.tv/console/apps",
 	"https://discord.com/developers/applications",
+	"https://console.cloud.google.com/apis/library/youtube.googleapis.com",
+	"https://console.cloud.google.com/apis/credentials",
+	"https://tikfinity.zerody.one",
 }
 
 func allowedExternal(link string) bool {

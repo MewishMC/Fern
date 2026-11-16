@@ -55,6 +55,7 @@ var DefaultOrder = []string{
 	ModuleNetwork, ModuleGPU, ModuleWorld,
 	ModuleTimer, ModuleCounter, ModuleSchedule,
 	ModuleSensors, ModulePing, ModuleDisk, ModuleUptime, ModulePCBattery,
+	ModuleTwitchChat, ModuleTikTok, ModuleKick, ModuleYouTube,
 }
 
 var knownModules = func() map[string]bool {
@@ -97,6 +98,10 @@ type DisplayOptions struct {
 	Ping         bool     `json:"ping"`
 	Disk         bool     `json:"disk"`
 	PCBattery    bool     `json:"pc_battery"`
+	TwitchChat   bool     `json:"twitch_chat"`
+	TikTok       bool     `json:"tiktok"`
+	Kick         bool     `json:"kick"`
+	YouTube      bool     `json:"youtube"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -658,6 +663,12 @@ type Config struct {
 	SoundpadOptions SoundpadOptions `json:"SoundpadOptions"`
 	VoicemodOptions VoicemodOptions `json:"VoicemodOptions"`
 
+	// Streaming platforms; see streaming.go.
+	TwitchChatOptions TwitchChatOptions `json:"TwitchChatOptions"`
+	TikTokOptions     TikTokOptions     `json:"TikTokOptions"`
+	KickOptions       LiveStatusOptions `json:"KickOptions"`
+	YouTubeOptions    LiveStatusOptions `json:"YouTubeOptions"`
+
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
@@ -950,6 +961,11 @@ func DefaultConfig() Config {
 		TimerOptions:    defaultTimerOptions(),
 		CounterOptions:  defaultCounterOptions(),
 		ScheduleOptions: defaultScheduleOptions(),
+
+		TwitchChatOptions: defaultTwitchChatOptions(),
+		TikTokOptions:     defaultTikTokOptions(),
+		KickOptions:       defaultKickOptions(),
+		YouTubeOptions:    defaultYouTubeOptions(),
 	}
 }
 
@@ -979,6 +995,7 @@ func (c Config) clone() Config {
 	out.ScheduleOptions = c.ScheduleOptions.clone()
 	out.SensorOptions.Picks = append([]SensorPick{}, c.SensorOptions.Picks...)
 	out.DiskOptions.Drives = append([]string{}, c.DiskOptions.Drives...)
+	out.TwitchChatOptions = c.TwitchChatOptions.clone()
 	return out
 }
 
@@ -1191,6 +1208,14 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.Disk
 	case ModulePCBattery:
 		return &d.PCBattery
+	case ModuleTwitchChat:
+		return &d.TwitchChat
+	case ModuleTikTok:
+		return &d.TikTok
+	case ModuleKick:
+		return &d.Kick
+	case ModuleYouTube:
+		return &d.YouTube
 	}
 	return nil
 }
@@ -1432,6 +1457,7 @@ func (c *Config) sanitize() {
 	c.sanitizeAssist()
 
 	c.sanitizeSocial()
+	c.sanitizeStreaming()
 
 	// VRChat drops chatbox messages sent faster than about one a second.
 	c.ChatOptions.LiveRateMS = clampInt(c.ChatOptions.LiveRateMS, 1000, 3000)
