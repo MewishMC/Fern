@@ -70,7 +70,7 @@ func RefreshCustomLine(id string) error {
 	if i < 0 {
 		return errors.New("unknown custom line")
 	}
-	l := GetConfig().CustomLines.Lines[i]
+	l := GetConfig().CustomLines.Line(i)
 	switch {
 	case l.Source == CustomSourceCommand && l.Command == "":
 		return errors.New("enter a command first")
@@ -94,7 +94,7 @@ func RefreshCustomLine(id string) error {
 func customTick(cfg Config) {
 	now := customNow()
 	for i, id := range CustomLineIDs {
-		l := cfg.CustomLines.Lines[i]
+		l := cfg.CustomLines.Line(i)
 		key := customKey(l)
 		if key == "" {
 			continue

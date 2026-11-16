@@ -85,6 +85,14 @@ func defaultCustomLines() CustomLinesOptions {
 	return o
 }
 
+// Line is slot i's settings, or its defaults when the config has none.
+func (o CustomLinesOptions) Line(i int) CustomLine {
+	if i >= 0 && i < len(o.Lines) {
+		return o.Lines[i]
+	}
+	return defaultCustomLine(i)
+}
+
 func (o CustomLinesOptions) clone() CustomLinesOptions {
 	o.Lines = append([]CustomLine{}, o.Lines...)
 	return o
@@ -225,10 +233,10 @@ func (v customValue) current(now time.Time) string {
 // customText is the text of slot i before its label and limit: the source's
 // value, or the fallback when the source has none.
 func customText(cfg Config, i int) string {
-	if i < 0 || i >= len(cfg.CustomLines.Lines) {
+	if i < 0 || i >= MaxCustomLines {
 		return ""
 	}
-	l := cfg.CustomLines.Lines[i]
+	l := cfg.CustomLines.Line(i)
 	now := customNow()
 	customMu.Lock()
 	text := ""
@@ -254,7 +262,7 @@ func customLine(cfg Config, id string) string {
 	if text == "" {
 		return ""
 	}
-	l := cfg.CustomLines.Lines[i]
+	l := cfg.CustomLines.Line(i)
 	if l.MaxChars > 0 {
 		text = ellipsize(text, l.MaxChars)
 	}
@@ -297,7 +305,7 @@ func CustomLineStatuses() []CustomLineStatus {
 	out := make([]CustomLineStatus, 0, MaxCustomLines)
 	for i, id := range CustomLineIDs {
 		s := CustomLineStatus{ID: id}
-		l := cfg.CustomLines.Lines[i]
+		l := cfg.CustomLines.Line(i)
 		if l.Source == CustomSourceAPI {
 			v := customAPI[i]
 			s.Text = v.current(now)
