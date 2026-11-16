@@ -10,9 +10,26 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+### Added
+- The Avatar page can show any avatar, not just the one you wear: search every avatar VRChat
+  has an OSC config for, and change its name, profile and saved parameters.
+- This avatar lists the avatar's parameters with their types, marks the read-only ones, and
+  lets you change values: sent right away for the avatar you wear, or saved so they're put
+  back when you change into it.
+- Loading can type out your own text instead of the dots ("test" shows t, te, tes, test),
+  with an optional blank fill such as the braille blank to keep the line the same width, a
+  choice to start over or erase back, and a hold on the whole text.
+- Lyrics can have a prefix and suffix around each lyric, like "🎤 " and " 🎶", on the lyrics
+  line or the media line. The break marker gets them too.
+
 ### Changed
+- Loading's "Show dots" is now "Animate", since it also turns the typed-out text on and off.
 - The Update button keeps `update.exe` in `%LOCALAPPDATA%\Fern` with your settings instead of
   putting it next to `Fern.exe`. An `update.exe` you placed yourself still works as before.
+
+### Fixed
+- Avatars show their names instead of their avtr_ ID when VRChat's log is off or the avatar
+  was worn before Fern started; Fern now reads the names from VRChat's OSC configs.
 
 ## v2.4 - Automation
 
