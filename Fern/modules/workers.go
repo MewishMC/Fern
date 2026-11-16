@@ -11,6 +11,7 @@ func StartWorkers() {
 	startLogWorker()
 	startSpecsWorker()
 	startSteamVRWorker()
+	startHaptics()
 	startHeartWorker()
 	startDiscordWorker()
 	startTwitchWorker()

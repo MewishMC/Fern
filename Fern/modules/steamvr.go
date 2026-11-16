@@ -54,16 +54,40 @@ func publishSteamVR(st SteamVRStatus) {
 }
 
 // startSteamVRWorker polls SteamVR once a second on its own OS thread, so a
-// slow call into OpenVR can never hold up the chatbox sender.
+// slow call into OpenVR can never hold up the chatbox sender. Haptics and
+// controller input (vrinput_worker.go) run on the same thread in between,
+// as often as they need.
 func startSteamVRWorker() {
 	go func() {
 		// OpenVR is not thread safe; keep every call on one thread.
 		runtime.LockOSThread()
 		w := &vrWorker{}
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for now := range ticker.C {
-			w.step(now)
+		next := time.Now().Add(time.Second)
+		timer := time.NewTimer(time.Second)
+		defer timer.Stop()
+		for {
+			now := time.Now()
+			if !now.Before(next) {
+				w.step(now)
+				next = now.Add(time.Second)
+			}
+			wait := time.Until(next)
+			if w.s != nil {
+				wait = min(wait, w.in.tick(w.s, time.Now(), w.inOpts, w.devices))
+			} else {
+				dropHaptics()
+			}
+			timer.Reset(max(wait, time.Millisecond))
+			select {
+			case <-timer.C:
+			case <-vrWake:
+				if !timer.Stop() {
+					select {
+					case <-timer.C:
+					default:
+					}
+				}
+			}
 		}
 	}()
 }
@@ -74,6 +98,9 @@ type vrWorker struct {
 	nextTry  time.Time
 	backoff  time.Duration
 	quitSeen bool // SteamVR asked its apps to quit; wait for it to go away
+
+	in     vrInputRun     // haptics and controller input
+	inOpts VRInputOptions // as of the last step
 
 	devices        []VRDevice
 	devicesAt      time.Time
@@ -95,6 +122,11 @@ func (w *vrWorker) disconnect() {
 		w.s = nil
 	}
 	w.devices, w.havePrev, w.deltas, w.perf, w.gate, w.hz = nil, false, nil, VRPerf{}, perfGate{}, 0
+	w.in = vrInputRun{}
+	updateVRInput(func(s *VRInputStatus) {
+		s.Connected, s.Mode, s.Live, s.Left, s.Right, s.Curl, s.Interface = false, "", false, false, false, false, ""
+		s.Params = []VRInputParam{}
+	})
 }
 
 func (w *vrWorker) connect(now time.Time) {
@@ -121,11 +153,13 @@ func (w *vrWorker) connect(now time.Time) {
 	sys, comp := s.Versions()
 	fmt.Println("steamvr: connected using", sys, comp)
 	w.s, w.lastErr, w.backoff, w.refreshDevices = s, "", 0, true
+	updateVRInput(func(st *VRInputStatus) { st.Connected, st.Interface = true, s.InputVersion() })
 }
 
 func (w *vrWorker) step(now time.Time) {
 	cfg := GetConfig()
-	wanted := cfg.DisplayOptions.Battery || cfg.DisplayOptions.VRPerf
+	wanted := cfg.DisplayOptions.Battery || cfg.DisplayOptions.VRPerf || vrInputWanted(cfg)
+	w.inOpts = cfg.VRInput
 	running := inVR(false)
 	if !running {
 		w.quitSeen, w.backoff, w.nextTry, w.lastErr = false, 0, time.Time{}, ""
@@ -163,6 +197,7 @@ func (w *vrWorker) step(now time.Time) {
 	if w.refreshDevices || now.Sub(w.devicesAt) >= 5*time.Second {
 		w.devices = readVRDevices(w.s)
 		w.devicesAt, w.refreshDevices = now, false
+		w.in.axes = nil
 		if cfg.DisplayOptions.Battery {
 			if next, changed := rememberDevices(append([]BatteryDevice{}, cfg.BatteryOptions.Devices...), w.devices); changed {
 				UpdateConfig(func(c *Config) { c.BatteryOptions.Devices = next })

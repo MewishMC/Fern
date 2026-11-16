@@ -628,6 +628,9 @@ type Config struct {
 	// Rules and do not disturb; see rules.go and dnd.go.
 	Rules RulesOptions `json:"Rules"`
 	DND   DNDOptions   `json:"DND"`
+
+	// SteamVR controller haptics and input; see vrinput_config.go.
+	VRInput VRInputOptions `json:"SteamVRInput"`
 }
 
 var (
@@ -891,6 +894,7 @@ func DefaultConfig() Config {
 		STTOptions:    defaultSTTOptions(),
 		Rules:         defaultRulesOptions(),
 		DND:           defaultDNDOptions(),
+		VRInput:       defaultVRInputOptions(),
 	}
 }
 
@@ -1383,6 +1387,7 @@ func (c *Config) sanitize() {
 	sanitizeTexts(c)
 	c.Rules.sanitize()
 	c.DND.sanitize()
+	c.VRInput.sanitize()
 }
 
 func scheduleSave() {

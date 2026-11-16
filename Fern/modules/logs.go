@@ -162,6 +162,7 @@ func parseLogLine(line string) {
 		act.Again = ev.Again
 		if liveLogLine(at) {
 			FireTrigger(TriggerPlayerJoined, playerEvent(name))
+			hapticPlayerJoined(playerEvent(name))
 		}
 	case strings.Contains(line, "] OnPlayerLeft ") && strings.Contains(line, "[Behaviour]"):
 		name := playerName(line, "OnPlayerLeft ")

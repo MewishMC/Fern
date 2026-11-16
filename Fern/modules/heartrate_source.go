@@ -88,7 +88,7 @@ func heartManager() {
 	for {
 		cfg := GetConfig()
 		o := cfg.HeartRate
-		wanted := cfg.DisplayOptions.HeartRate || o.SendOSC
+		wanted := cfg.DisplayOptions.HeartRate || o.SendOSC || heartHapticsWanted(cfg)
 		key := ""
 		if wanted && heartConfigured(o) {
 			key = heartKey(o)
