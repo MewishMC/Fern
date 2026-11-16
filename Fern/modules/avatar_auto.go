@@ -90,7 +90,12 @@ func currentAvatarOpts() AvatarOptions {
 // starts its once-a-second loop.
 func startAvatarWorker() {
 	avatarOnce.Do(func() {
-		OnAvatarChange(func(id string) { go handleAvatarChange(id) })
+		OnAvatarChange(func(id string) {
+			// Mark the change before VRChat's burst of the new avatar's
+			// values arrives on this goroutine; the rest can wait.
+			markAvatarChange(id, avatarNow(), currentAvatarOpts())
+			go handleAvatarChange(id)
+		})
 		SubscribeOSCPrefix(AvatarParamPrefix, onAvatarParamMsg)
 		go func() {
 			tick := time.NewTicker(time.Second)
@@ -163,16 +168,13 @@ func handleAvatarChange(id string) {
 	noteAvatarWorn(id)
 	entry, _ := AvatarInfo(id)
 
+	markAvatarChange(id, now, o)
 	avMu.Lock()
-	avChangedAt, avChangeID, avNameAtSwap = now, id, CurrentAvatarName()
-	avSettleTill = now.Add(time.Duration(o.Sync.DelayMS)*time.Millisecond + avatarSettle)
-	avMediaOn = nil
-	avState = nil // the new avatar starts from its defaults: send everything again
+	avAutoSave = autoSaveSet(entry)
 	if avRestore != nil {
 		avRestore.Stop()
 		avRestore = nil
 	}
-	avAutoSave = autoSaveSet(entry)
 	if o.Sync.Restore && entry.Restore && len(entry.Values) > 0 {
 		values := avatarParamValues(entry)
 		avRestore = time.AfterFunc(time.Duration(o.Sync.DelayMS)*time.Millisecond, func() {
@@ -205,6 +207,22 @@ func handleAvatarChange(id string) {
 			avMu.Unlock()
 		}
 	}
+}
+
+// markAvatarChange resets what belongs to the previous avatar: media
+// buttons, auto-saving and the state parameters sent to it.
+func markAvatarChange(id string, now time.Time, o AvatarOptions) {
+	name := CurrentAvatarName()
+	avMu.Lock()
+	defer avMu.Unlock()
+	if avChangeID == id && now.Sub(avChangedAt) < time.Second {
+		return // already marked for this change
+	}
+	avChangedAt, avChangeID, avNameAtSwap = now, id, name
+	avSettleTill = now.Add(time.Duration(o.Sync.DelayMS)*time.Millisecond + avatarSettle)
+	avMediaOn = nil
+	avAutoSave = nil
+	avState = nil // the new avatar starts from its defaults: send everything again
 }
 
 func autoSaveSet(e AvatarEntry) map[string]bool {

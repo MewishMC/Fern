@@ -443,6 +443,29 @@ func TestTickAvatarSendsChanges(t *testing.T) {
 	}
 }
 
+func TestMarkedChangeIgnoresMediaBurst(t *testing.T) {
+	useTempAvatars(t)
+	c := DefaultConfig()
+	c.Avatar.Media.Enabled = true
+	avatarOpts.Store(&c.Avatar)
+	var mu sync.Mutex
+	presses := 0
+	old := avatarMediaFn
+	avatarMediaFn = func(string) { mu.Lock(); presses++; mu.Unlock() }
+	t.Cleanup(func() { avatarMediaFn = old })
+
+	// The new avatar's defaults arrive right after /avatar/change, before
+	// the rest of the change handling has run.
+	markAvatarChange("avtr_b", avatarNow(), c.Avatar)
+	onAvatarParamMsg(osc.NewMessage(AvatarParamPrefix+"FernMediaNext", true))
+	time.Sleep(30 * time.Millisecond)
+	mu.Lock()
+	defer mu.Unlock()
+	if presses != 0 {
+		t.Fatal("a value in the burst after an avatar change is not a press")
+	}
+}
+
 func TestVRChatEventPulses(t *testing.T) {
 	useTempAvatars(t)
 	sent := captureSent(t)
