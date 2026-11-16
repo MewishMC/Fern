@@ -10,6 +10,10 @@ release title, and Fern shows both in the panel before updating. Keep upcoming c
 
 ## Unreleased
 
+### Changed
+- The Update button keeps `update.exe` in `%LOCALAPPDATA%\Fern` with your settings instead of
+  putting it next to `Fern.exe`. An `update.exe` you placed yourself still works as before.
+
 ## v2.4 - Automation
 
 ### Added

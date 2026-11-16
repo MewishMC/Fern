@@ -110,7 +110,8 @@ Fern needs Windows 10 or 11 (x64) and the WebView2 runtime, which ships with Win
 current Windows 10 installs.
 
 Fern checks for new releases while it runs. When one is out, an **Update** button appears at
-the bottom of the sidebar; it downloads the new version and restarts Fern on it. You can also
+the bottom of the sidebar; it downloads the new version and restarts Fern on it. The updater
+it uses is kept in `%LOCALAPPDATA%\Fern` with your settings, not next to `Fern.exe`. You can also
 keep `update.exe` next to `Fern.exe` and start that instead, which updates Fern before
 launching it.
 
