@@ -48,3 +48,25 @@ func TestMigrateConfigCopiesLegacyFile(t *testing.T) {
 		t.Errorf("existing config overwritten: %q", data)
 	}
 }
+
+func TestSaveNowBeforeLoadWritesNothing(t *testing.T) {
+	oldPath := cfgPath
+	cfgPath = ""
+	t.Cleanup(func() { cfgPath = oldPath })
+	dir := t.TempDir()
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(wd) })
+
+	if err := SaveNow(); err == nil {
+		t.Error("SaveNow with no config path: want an error")
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 0 {
+		t.Errorf("SaveNow left files behind: %v", entries)
+	}
+}

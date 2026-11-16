@@ -1624,7 +1624,13 @@ func scheduleSave() {
 func SaveNow() error {
 	cfgMu.RLock()
 	out := cfg.clone()
+	path := cfgPath
 	cfgMu.RUnlock()
+	// Before LoadConfig there is nowhere to save to; writing anyway would
+	// leave a stray ".tmp" in the working directory.
+	if path == "" {
+		return fmt.Errorf("config: not loaded yet")
+	}
 
 	data, err := json.MarshalIndent(out, "", " ")
 	if err != nil {
