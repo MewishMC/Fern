@@ -85,15 +85,18 @@ type uiState struct {
 	Backups  backupsState  `json:"backups"`
 	Rules    rulesState    `json:"rules"`
 
-	VRInput    modules.VRInputStatus `json:"vrInput"`
-	Voice      voiceState            `json:"voice"`
-	Tally      tallyState            `json:"tally"`
-	Sensors    sensorsState          `json:"sensors"`
-	System     systemState           `json:"system"`
-	Streaming  modules.StreamingInfo `json:"streaming"`
-	Avatar     avatarState           `json:"avatar"`
-	WorldBlock worldBlockState       `json:"worldBlock"`
-	Music      musicState            `json:"music"`
+	VRInput     modules.VRInputStatus `json:"vrInput"`
+	Voice       voiceState            `json:"voice"`
+	Tally       tallyState            `json:"tally"`
+	Sensors     sensorsState          `json:"sensors"`
+	System      systemState           `json:"system"`
+	Streaming   modules.StreamingInfo `json:"streaming"`
+	Avatar      avatarState           `json:"avatar"`
+	WorldBlock  worldBlockState       `json:"worldBlock"`
+	Music       musicState            `json:"music"`
+	API         apiPanelState         `json:"api"`
+	CustomLines customLinesState      `json:"customLines"`
+	Clipboard   clipboardState        `json:"clipboard"`
 }
 
 type appState struct {
@@ -417,6 +420,12 @@ func handleCommand(cmd command) {
 		handlePageCommand(cmd)
 	case "worldblock":
 		handleWorldBlockCommand(cmd)
+	case "api":
+		handleAPICommand(cmd)
+	case "customLine":
+		handleCustomLineCommand(cmd)
+	case "clipboard":
+		handleClipboardCommand(cmd)
 	case "assist", "assistCancel", "assistKey", "tts", "stt":
 		handleAssistCommand(cmd)
 	case "vrInput":
@@ -580,6 +589,9 @@ func buildState() uiState {
 			modules.ModuleKick:       d.Kick,
 			modules.ModuleYouTube:    d.YouTube,
 			modules.ModuleLastFM:     d.LastFM,
+			modules.ModuleCustom1:    d.Custom1,
+			modules.ModuleCustom2:    d.Custom2,
+			modules.ModuleCustom3:    d.Custom3,
 		},
 		Order:   d.Order,
 		Config:  cfg.Public(),
@@ -639,15 +651,18 @@ func buildState() uiState {
 		Backups:  currentBackups(),
 		Rules:    currentRules(),
 
-		VRInput:    modules.CurrentVRInput(),
-		Voice:      currentVoice(cfg),
-		Tally:      currentTally(),
-		Sensors:    currentSensors(cfg),
-		System:     currentSystem(),
-		Streaming:  modules.CurrentStreaming(),
-		Avatar:     currentAvatar(),
-		WorldBlock: currentWorldBlock(cfg),
-		Music:      currentMusic(cfg),
+		VRInput:     modules.CurrentVRInput(),
+		Voice:       currentVoice(cfg),
+		Tally:       currentTally(),
+		Sensors:     currentSensors(cfg),
+		System:      currentSystem(),
+		Streaming:   modules.CurrentStreaming(),
+		Avatar:      currentAvatar(),
+		WorldBlock:  currentWorldBlock(cfg),
+		Music:       currentMusic(cfg),
+		API:         currentAPI(),
+		CustomLines: currentCustomLines(),
+		Clipboard:   currentClipboard(),
 	}
 }
 

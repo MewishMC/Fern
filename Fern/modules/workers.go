@@ -28,5 +28,6 @@ func StartWorkers() {
 	startStreamingWorkers()
 	startAvatarWorker()
 	startWorldBlockWorker()
+	startCustomLinesWorker()
 	go watchVRChatProcess()
 }

@@ -57,6 +57,7 @@ var DefaultOrder = []string{
 	ModuleTimer, ModuleCounter, ModuleSchedule,
 	ModuleSensors, ModulePing, ModuleDisk, ModuleUptime, ModulePCBattery,
 	ModuleTwitchChat, ModuleTikTok, ModuleKick, ModuleYouTube,
+	ModuleCustom1, ModuleCustom2, ModuleCustom3,
 }
 
 var knownModules = func() map[string]bool {
@@ -104,6 +105,9 @@ type DisplayOptions struct {
 	Kick         bool     `json:"kick"`
 	YouTube      bool     `json:"youtube"`
 	LastFM       bool     `json:"lastfm"`
+	Custom1      bool     `json:"custom1"`
+	Custom2      bool     `json:"custom2"`
+	Custom3      bool     `json:"custom3"`
 	Order        []string `json:"order"`
 	Separator    string   `json:"separator"`
 	MaxChars     int      `json:"max_chars"`
@@ -697,6 +701,11 @@ type Config struct {
 	// Chatbox animation and blocked worlds; see motion.go and worldblock.go.
 	Motion     MotionOptions     `json:"Motion"`
 	WorldBlock WorldBlockOptions `json:"WorldBlock"`
+	// The local control API, custom lines and the clipboard shortcut; see
+	// control.go, customlines.go and clipboard.go. All three are per PC.
+	ControlAPI  ControlAPIOptions  `json:"ControlAPI"`
+	CustomLines CustomLinesOptions `json:"CustomLines"`
+	Clipboard   ClipboardOptions   `json:"Clipboard"`
 }
 
 var (
@@ -982,6 +991,9 @@ func DefaultConfig() Config {
 
 		SpotifyOptions: defaultSpotifyOptions(),
 		LastFMOptions:  defaultLastFMOptions(),
+		ControlAPI:     defaultControlAPI(),
+		CustomLines:    defaultCustomLines(),
+		Clipboard:      defaultClipboard(),
 	}
 }
 
@@ -1014,6 +1026,7 @@ func (c Config) clone() Config {
 	out.TwitchChatOptions = c.TwitchChatOptions.clone()
 	out.Motion = c.Motion.clone()
 	out.WorldBlock = c.WorldBlock.clone()
+	out.CustomLines = c.CustomLines.clone()
 	return out
 }
 
@@ -1236,6 +1249,12 @@ func moduleFlag(d *DisplayOptions, id string) *bool {
 		return &d.YouTube
 	case ModuleLastFM:
 		return &d.LastFM
+	case ModuleCustom1:
+		return &d.Custom1
+	case ModuleCustom2:
+		return &d.Custom2
+	case ModuleCustom3:
+		return &d.Custom3
 	}
 	return nil
 }
@@ -1523,6 +1542,9 @@ func (c *Config) sanitize() {
 	c.Avatar.sanitize()
 	c.Motion.sanitize()
 	c.WorldBlock.sanitize()
+	c.ControlAPI.sanitize()
+	c.CustomLines.sanitize()
+	c.Clipboard.sanitize()
 }
 
 func scheduleSave() {
