@@ -2234,6 +2234,328 @@
                 </div>
             </section>
 
+            <!-- ================= CALENDAR ================= -->
+            <section class="page" id="page-calendar">
+                <div class="page-head">
+                    <div>
+                        <h2>Calendar</h2>
+                        <p>Your next event from calendar links or .ics files</p>
+                    </div>
+                    <span class="badge" id="calBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the calendar</b>
+                            <span>Adds your next event to the chatbox, in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="calendar"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="lyrics-now" id="calNow">Calendar is off</div>
+                    <div class="np-sub" id="calState">Turn it on and add a calendar</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Calendars</h3>
+                        <button class="btn small ghost" type="button" id="calRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Refresh</button>
+                    </div>
+                    <div id="calSources"></div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Add a calendar link</b>
+                            <span>An iCal / .ics address, like Google Calendar's “secret address in iCal format” or an Outlook published calendar. webcal:// works too. Stored encrypted and only shown by its site, since these links work without a password.</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="calLink" placeholder="https://…/basic.ics" autocomplete="off" spellcheck="false" aria-label="Calendar link">
+                            <button class="btn small" type="button" id="calLinkAdd">Add</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Calendar files</b>
+                            <span>Full paths to .ics files on this PC, one per line, up to 5. Read again whenever they change. Saved when you click away.</span>
+                        </div>
+                        <div class="field-control">
+                            <textarea id="calFiles" rows="2" spellcheck="false" placeholder="C:\Users\you\Documents\calendar.ics"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Next event</b>
+                            <span>{title}, {in}, {when}, {time}, {end}, {date}, {location}</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="calTemplate" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Next: {title} in {in}"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show events in progress</b>
+                            <span>An event that has started shows instead of the next one</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="calShowCurrent"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Event in progress</b>
+                            <span>The same placeholders, plus {left} for the time until it ends</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="calNowTemplate" maxlength="120" autocomplete="off" spellcheck="false" placeholder="Now: {title}, {left} left"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>All-day events</b>
+                            <span>Birthdays and holidays; one in progress shows only when nothing else is due</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="calAllDay"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Look ahead</b>
+                            <span>The line is hidden when nothing starts this soon</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="calWithin" min="1" max="168" step="1">
+                            <span class="val" id="calWithinVal">12 h</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Skip events</b>
+                            <span>Titles containing this are left out; wrap in slashes for a regular expression</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="calSkip" maxlength="200" autocomplete="off" spellcheck="false" placeholder="none"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Longest title</b>
+                            <span>Longer titles are cut with …</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="calMaxTitle" min="8" max="144" step="1">
+                            <span class="val" id="calMaxTitleVal">40</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Download links every</b>
+                            <span>Files are read again as soon as they change</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="calInterval" min="5" max="240" step="5">
+                            <span class="val" id="calIntervalVal">15 min</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix on the calendar line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="calLabel" maxlength="16" autocomplete="off" placeholder="none"></div>
+                    </div>
+                </div>
+
+                <div class="section-title">Coming up</div>
+                <div class="card" id="calUpcoming"></div>
+                <div class="hint">Repeating events follow daily, weekly, monthly and yearly rules; rarer rules show only their first date. Times use the clock's 12 or 24 hour setting.</div>
+            </section>
+
+            <!-- ================= PRICES ================= -->
+            <section class="page" id="page-prices">
+                <div class="page-head">
+                    <div>
+                        <h2>Prices</h2>
+                        <p>Exchange rates from Frankfurter and crypto from CoinGecko, no account needed</p>
+                    </div>
+                    <span class="badge" id="priceBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show prices</b>
+                            <span>Adds the pairs below to the chatbox, in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="prices"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="card-head">
+                        <h3>Latest</h3>
+                        <button class="btn small ghost" type="button" id="priceRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Refresh</button>
+                    </div>
+                    <div class="lyrics-now" id="priceNow">Prices are off</div>
+                    <div class="np-sub" id="priceState">Turn it on and pick some pairs</div>
+                    <div id="priceList"></div>
+                </div>
+
+                <div class="card">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Pairs</b>
+                            <span>One per line, up to 8. Two currencies like USD/EUR are an exchange rate; a coin like BTC/USD, ETH/EUR or a CoinGecko id like shiba-inu/USD is a crypto price. Saved when you click away.</span>
+                        </div>
+                        <div class="field-control">
+                            <textarea id="pricePairs" rows="3" spellcheck="false" placeholder="BTC/USD"></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Change</b>
+                            <span>Since yesterday for exchange rates, over 24 hours for crypto</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="priceChange"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Arrows</b>
+                            <span>▲2.1% and ▼0.3% instead of +2.1% and -0.3%</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="priceArrow"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Currency symbols</b>
+                            <span>$67,123 instead of 67,123 USD where there is a symbol</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" id="priceSymbol"><span></span></label>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Between pairs</b>
+                            <span>Spaces count</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="priceSeparator" maxlength="8" autocomplete="off" placeholder=" · "></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Refresh crypto every</b>
+                            <span>Exchange rates are published once a working day, so they refresh hourly. Fern waits longer after errors.</span>
+                        </div>
+                        <div class="field-control">
+                            <input type="range" id="priceInterval" min="2" max="120" step="1">
+                            <span class="val" id="priceIntervalVal">10 min</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix on the price line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="priceLabel" maxlength="16" autocomplete="off" placeholder="none"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ================= STEAM ================= -->
+            <section class="page" id="page-steam">
+                <div class="page-head">
+                    <div>
+                        <h2>Steam</h2>
+                        <p>The game Steam is running and how long you've played, read from Steam on this PC</p>
+                    </div>
+                    <span class="badge" id="steamBadge">off</span>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Show the Steam game</b>
+                            <span>Adds it to the chatbox, in the order set on Lines</span>
+                        </div>
+                        <div class="field-control">
+                            <label class="switch"><input type="checkbox" data-module-toggle="steam"><span></span></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="lyrics-now" id="steamNow">Steam is off</div>
+                    <div class="np-sub" id="steamState">Turn it on and start a game</div>
+                </div>
+
+                <div class="card" style="margin-bottom:12px">
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Line</b>
+                            <span>{game}, {session} (since Fern saw it start), {total} (needs the Web API key below)</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="steamTemplate" maxlength="120" autocomplete="off" spellcheck="false" placeholder="🎮 {game} · {session}"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>When no game runs</b>
+                            <span>Empty hides the line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="steamIdle" maxlength="60" autocomplete="off" placeholder="hide the line"></div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Leave out</b>
+                            <span>Game names or app ids, one per line; wrap in slashes for a regular expression. VRChat and SteamVR are Steam apps too. Saved when you click away.</span>
+                        </div>
+                        <div class="field-control">
+                            <textarea id="steamIgnore" rows="2" spellcheck="false" placeholder="VRChat"></textarea>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Label</b>
+                            <span>Optional prefix on the Steam line</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="steamLabel" maxlength="16" autocomplete="off" placeholder="none"></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-head">
+                        <h3>Steam Web API (optional)</h3>
+                        <button class="btn small ghost" type="button" data-external="https://steamcommunity.com/dev/apikey"><i class="fa fa-arrow-up-right-from-square" aria-hidden="true"></i> Get a key</button>
+                        <button class="btn small ghost" type="button" id="steamRefresh"><i class="fa fa-rotate" aria-hidden="true"></i> Refresh</button>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>Web API key</b>
+                            <span>Adds names for games Steam's files don't name and your total playtime. Get one with the button above; your game details must be public. Stored encrypted, never shown again.</span>
+                        </div>
+                        <div class="field-control secret-control">
+                            <input type="password" id="steamKey" data-secret="steam_key" autocomplete="off" spellcheck="false">
+                            <button class="btn small" type="button" data-secret-save="steamKey">Save</button>
+                            <button class="btn small ghost" type="button" data-secret-clear="steamKey">Clear</button>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="field-label">
+                            <b>SteamID64</b>
+                            <span>Empty uses the account signed in to Steam on this PC. Applies when you click away.</span>
+                        </div>
+                        <div class="field-control"><input type="text" id="steamId" maxlength="17" autocomplete="off" spellcheck="false" placeholder="signed-in account"></div>
+                    </div>
+                    <div class="link-status" id="steamWebStatus"></div>
+                </div>
+            </section>
+
             <!-- ================= LOADING ================= -->
             <section class="page" id="page-loading">
                 <div class="page-head">
@@ -4366,6 +4688,8 @@
             { id: "text", name: "Text", icon: "fa-pen", category: "media", desc: "Your rotating messages", keywords: "custom message status" },
             { id: "loading", name: "Loading", icon: "fa-ellipsis", category: "media", desc: "Your text with growing dots", keywords: "dots animation" },
             { id: "weather", name: "Weather", icon: "fa-cloud-sun", category: "system", desc: "Conditions and temperature from Open-Meteo", keywords: "temperature forecast rain wind humidity" },
+            { id: "calendar", name: "Calendar", icon: "fa-calendar-days", category: "system", desc: "Your next event from iCal links or .ics files", keywords: "ics ical google outlook event meeting schedule agenda" },
+            { id: "prices", name: "Prices", icon: "fa-chart-line", category: "system", desc: "Exchange rates and crypto prices", keywords: "currency exchange rate crypto bitcoin btc eth stock price coingecko frankfurter" },
             { id: "time", name: "Time", icon: "fa-clock", category: "system", desc: "Current clock", keywords: "clock hour" },
             { id: "memory", name: "Memory", icon: "fa-memory", category: "system", desc: "RAM usage", keywords: "ram" },
             { id: "cpu", name: "CPU", icon: "fa-microchip", category: "system", desc: "CPU name and load", keywords: "processor usage" },
@@ -4377,6 +4701,7 @@
             { id: "discord", name: "Discord", icon: "fa-brands fa-discord", category: "social", desc: "Voice channel, speakers and Rich Presence", keywords: "voice call vc rich presence rpc" },
             { id: "twitch", name: "Twitch", icon: "fa-brands fa-twitch", category: "social", desc: "Live status, viewers and game", keywords: "stream live viewers followers" },
             { id: "soundpad", name: "Soundpad", icon: "fa-volume-high", category: "social", desc: "The sound you just played", keywords: "soundboard sound effect" },
+            { id: "steam", name: "Steam", icon: "fa-brands fa-steam", category: "social", desc: "The game you're playing and for how long", keywords: "game playing playtime session steam" },
             { id: "voicemod", name: "Voicemod", icon: "fa-masks-theater", category: "social", desc: "Voice changer and soundboard", keywords: "voice changer soundboard meme" },
         ];
         const MODULE_BY_ID = Object.fromEntries(MODULES.map((m) => [m.id, m]));
@@ -4542,6 +4867,9 @@
             renderProfiles(st);
             renderBackups(st);
             renderRules(st);
+            renderCalendar(st);
+            renderPrices(st);
+            renderSteam(st);
         }
 
         /* ---------------- receiving OSC ---------------- */
@@ -6432,6 +6760,35 @@
             ["hrParamBeat", hrOsc],
             ["hrParamConnected", hrOsc],
         );
+        // Calendar, price and Steam lines.
+        CHECKS.push(
+            ["calShowCurrent", ["CalendarOptions", "show_current"]],
+            ["calAllDay", ["CalendarOptions", "all_day"]],
+            ["priceChange", ["PriceOptions", "show_change"]],
+            ["priceArrow", ["PriceOptions", "show_arrow"]],
+            ["priceSymbol", ["PriceOptions", "show_symbol"]],
+        );
+        RANGES.push(
+            ["calWithin", ["CalendarOptions", "within_hours"], "calWithinVal", (v) => (v < 48 ? v + " h" : Math.round(v / 24 * 10) / 10 + " days")],
+            ["calMaxTitle", ["CalendarOptions", "max_title"], "calMaxTitleVal", asIs],
+            ["calInterval", ["CalendarOptions", "interval_min"], "calIntervalVal", (v) => (v < 60 ? v + " min" : Math.round(v / 6) / 10 + " h")],
+            ["priceInterval", ["PriceOptions", "interval_min"], "priceIntervalVal", (v) => v + " min"],
+        );
+        TEXTS.push(
+            ["calTemplate", ["CalendarOptions", "template"], 120],
+            ["calNowTemplate", ["CalendarOptions", "now_template"], 120],
+            ["calSkip", ["CalendarOptions", "skip"], 200],
+            ["calLabel", ["CalendarOptions", "label"], 16],
+            ["priceSeparator", ["PriceOptions", "separator"], 8],
+            ["priceLabel", ["PriceOptions", "label"], 16],
+            ["steamTemplate", ["SteamOptions", "template"], 120],
+            ["steamIdle", ["SteamOptions", "idle_text"], 60],
+            ["steamLabel", ["SteamOptions", "label"], 16],
+        );
+        DEPENDS.push(
+            ["calNowTemplate", (c) => c.CalendarOptions.show_current],
+            ["priceArrow", (c) => c.PriceOptions.show_change],
+        );
         function applyDepends(c) {
             if (!c) return;
             DEPENDS.forEach(([id, active]) => {
@@ -7749,6 +8106,214 @@
             }
         }
         commitField($("weatherCity"), (v) => v.trim(), (c, v) => { c.WeatherOptions.city = v; }, "");
+
+        /* ---------------- calendar, prices and Steam pages ---------------- */
+        // A settings row built from text only, for lists filled from the state.
+        function infoRow(title, sub, bad, button) {
+            const row = document.createElement("div");
+            row.className = "field";
+            const label = document.createElement("div");
+            label.className = "field-label";
+            const b = document.createElement("b");
+            b.textContent = title;
+            const span = document.createElement("span");
+            span.textContent = sub;
+            if (bad) span.style.color = "var(--red)";
+            label.append(b, span);
+            row.appendChild(label);
+            if (button) {
+                const ctl = document.createElement("div");
+                ctl.className = "field-control";
+                ctl.appendChild(button);
+                row.appendChild(ctl);
+            }
+            return row;
+        }
+        // Fills a list only when its content changed, so buttons keep focus.
+        function fillList(el, sig, rows) {
+            if (el.dataset.sig === sig) return;
+            el.dataset.sig = sig;
+            el.replaceChildren(...rows);
+        }
+        // Keeps a one-per-line textarea in step with a config list while it is not being edited.
+        function syncLines(id, list) {
+            const box = $(id);
+            if (document.activeElement === box) return;
+            const text = (list || []).join("\n");
+            if (box.value !== text) box.value = text;
+        }
+        const linesOf = (text) => text.split(/[\n,]/).map((t) => t.trim()).filter(Boolean);
+
+        const CAL_STATES = {
+            off: ["off", "Calendar is off", "Turn it on and add a calendar"],
+            nosource: ["no calendar", "Add a calendar", "Paste a calendar link or add an .ics file below"],
+            loading: ["loading", "Reading your calendars…", ""],
+            error: ["error", "Couldn't read your calendars", "See the calendars below"],
+            ok: ["live", "", ""],
+        };
+        function fmtEventTime(e) {
+            const d = new Date(e.startMs);
+            const day = d.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+            if (e.allDay) return day + " · all day";
+            const h24 = !!(S.state && S.state.config.TimeOptions.use_24h);
+            return day + " · " + d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit", hour12: !h24 });
+        }
+        function renderCalendar(st) {
+            const cal = st.calendar || { state: "off", sources: [], upcoming: [] };
+            const info = CAL_STATES[cal.state] || CAL_STATES.off;
+            $("calBadge").textContent = info[0];
+            let now = info[1], sub = info[2];
+            if (cal.state === "ok") {
+                now = cal.line || "Nothing coming up";
+                sub = cal.line ? "" : "Nothing starts within the look-ahead time";
+            }
+            $("calNow").textContent = now;
+            $("calState").textContent = sub;
+            const sources = cal.sources || [];
+            fillList($("calSources"), JSON.stringify(sources), sources.map((s) => {
+                let text = s.error ? "Error: " + s.error : s.updatedMs ? s.events + " event" + (s.events === 1 ? "" : "s") + " · read " + fmtAgo(s.updatedMs) : "Reading…";
+                if (!st.modules.calendar && !s.updatedMs && !s.error) text = "Read when the line is on";
+                let button = null;
+                if (s.kind === "link") {
+                    button = document.createElement("button");
+                    button.type = "button";
+                    button.className = "btn small ghost";
+                    button.textContent = "Remove";
+                    button.addEventListener("click", () => {
+                        send({ type: "calendar", action: "remove", text: String(s.index) });
+                    });
+                }
+                return infoRow((s.kind === "link" ? "🔗 " : "📄 ") + s.name, text, !!s.error, button);
+            }));
+            const up = cal.upcoming || [];
+            const upRows = up.length ? up.map((e) => infoRow(e.title || "(no title)", fmtEventTime(e))) :
+                [infoRow("Nothing coming up", cal.state === "ok" ? "No events in the next week" : "Events appear here once a calendar is read")];
+            fillList($("calUpcoming"), JSON.stringify(up) + cal.state, upRows);
+            if (cal.notice && cal.notice.seq && cal.notice.seq !== S.calNoticeSeq) {
+                if (S.calNoticeSeq !== undefined) toast(cal.notice.text, cal.notice.bad);
+                S.calNoticeSeq = cal.notice.seq;
+            } else if (S.calNoticeSeq === undefined) {
+                S.calNoticeSeq = (cal.notice && cal.notice.seq) || 0;
+            }
+            if (!lockForms()) syncLines("calFiles", st.config.CalendarOptions.files);
+        }
+        function addCalendarLink() {
+            const input = $("calLink");
+            const value = input.value.trim();
+            if (!/^(https?|webcals?):\/\/\S+$/i.test(value)) {
+                toast("Paste a link that starts with https:// or webcal://", true);
+                return;
+            }
+            if (send({ type: "calendar", action: "add", text: value })) input.value = "";
+        }
+        $("calLinkAdd").addEventListener("click", addCalendarLink);
+        $("calLink").addEventListener("keydown", (ev) => {
+            if (ev.key === "Enter") {
+                ev.preventDefault();
+                addCalendarLink();
+            }
+        });
+        $("calRefresh").addEventListener("click", () => {
+            if (send({ type: "calendar", action: "refresh" })) toast("Reading your calendars again");
+        });
+        $("calFiles").addEventListener("change", (ev) => {
+            const files = ev.target.value.split("\n").map((t) => t.trim().replace(/^"|"$/g, "")).filter(Boolean);
+            if (files.length > 5) toast("Up to 5 files; the rest were left out", true);
+            if (pushConfigNow((c) => { c.CalendarOptions.files = files.slice(0, 5); })) toast("Calendar files saved");
+        });
+
+        const PRICE_STATES = {
+            off: ["off", "Prices are off", "Turn it on and pick some pairs"],
+            nopairs: ["no pairs", "Pick some pairs", "Add pairs like BTC/USD or USD/EUR below"],
+            loading: ["loading", "Getting prices…", ""],
+            offline: ["offline", "Couldn't reach the price services", "Trying again in a little while"],
+            limited: ["paused", "CoinGecko asked Fern to slow down", "Trying again in a few minutes"],
+            ok: ["live", "", ""],
+        };
+        function renderPrices(st) {
+            const p = st.prices || { state: "off", pairs: [] };
+            const info = PRICE_STATES[p.state] || PRICE_STATES.off;
+            $("priceBadge").textContent = info[0];
+            let now = info[1], sub = info[2];
+            if (p.line && p.state !== "off") {
+                now = p.line;
+                if (p.state === "ok") sub = "";
+            }
+            $("priceNow").textContent = now;
+            $("priceState").textContent = sub;
+            const pairs = p.pairs || [];
+            fillList($("priceList"), JSON.stringify(pairs), pairs.map((q) => {
+                const kind = q.kind === "fx" ? "exchange rate, ECB" : "crypto, CoinGecko";
+                const text = q.error ? "Not found (" + kind + ")" : q.updatedMs ? kind + " · updated " + fmtAgo(q.updatedMs) : kind + " · waiting";
+                return infoRow(q.text || q.pair, text, !!q.error);
+            }));
+            if (!lockForms()) syncLines("pricePairs", st.config.PriceOptions.pairs);
+        }
+        $("pricePairs").addEventListener("change", (ev) => {
+            const pairs = linesOf(ev.target.value);
+            const bad = pairs.filter((t) => !/^[A-Za-z0-9-]{2,40}\s*[\/ :-]\s*[A-Za-z0-9]{2,5}$/.test(t));
+            if (bad.length) toast("Not a pair, skipped: " + bad.join(", "), true);
+            const good = pairs.filter((t) => !bad.includes(t));
+            if (good.length > 8) toast("Up to 8 pairs; the rest were left out", true);
+            if (pushConfigNow((c) => { c.PriceOptions.pairs = good.slice(0, 8); })) toast("Pairs saved");
+        });
+        $("priceRefresh").addEventListener("click", () => {
+            if (send({ type: "prices", action: "refresh" })) toast("Getting prices again");
+        });
+
+        const STEAM_STATES = {
+            off: ["off", "Steam is off", "Turn it on and start a game"],
+            nosteam: ["no Steam", "Steam isn't installed for this Windows user", "Fern reads the Steam client on this PC"],
+            idle: ["idle", "No game running", ""],
+            ignored: ["left out", "", "This game is on the leave-out list"],
+            playing: ["playing", "", ""],
+        };
+        function renderSteam(st) {
+            const s = st.steam || { state: "off" };
+            const info = STEAM_STATES[s.state] || STEAM_STATES.off;
+            $("steamBadge").textContent = info[0];
+            let now = info[1], sub = info[2];
+            if (s.state === "idle" && s.line) now = s.line;
+            if (s.state === "playing" || s.state === "ignored") {
+                now = s.state === "playing" ? (s.line || s.game) : s.game;
+                sub = (sub ? sub + " · " : "") + "app " + s.appId + " · since " + fmtAgo(s.startedMs);
+                if (s.totalMin >= 0) sub += " · " + Math.floor(s.totalMin / 60) + "h total";
+            }
+            $("steamNow").textContent = now;
+            $("steamState").textContent = sub;
+            const web = $("steamWebStatus");
+            let text = "No key: names come from Steam's own files, and {total} stays empty.", state = "";
+            if (s.hasKey) {
+                if (s.webError) {
+                    text = s.webError;
+                    state = "error";
+                } else if (!s.steamId) {
+                    text = "Sign in to Steam, or enter your SteamID64, to use the key.";
+                    state = "waiting";
+                } else {
+                    text = "Key saved, used for " + s.steamId + " while a game runs.";
+                    state = "connected";
+                }
+            }
+            web.textContent = text;
+            web.dataset.state = state;
+            const c = st.config.SteamOptions;
+            if (!lockForms()) {
+                syncLines("steamIgnore", c.ignore);
+                if (document.activeElement !== $("steamId")) $("steamId").value = c.steam_id || "";
+            }
+        }
+        $("steamIgnore").addEventListener("change", (ev) => {
+            const entries = ev.target.value.split("\n").map((t) => t.trim()).filter(Boolean);
+            if (pushConfigNow((c) => { c.SteamOptions.ignore = entries; })) toast("Leave-out list saved");
+        });
+        $("steamRefresh").addEventListener("click", () => {
+            if (send({ type: "steam", action: "refresh" })) toast("Asking Steam again");
+        });
+        commitField($("steamId"), (v) => {
+            v = v.trim();
+            return v === "" || /^7656119\d{10}$/.test(v) ? v : null;
+        }, (c, v) => { c.SteamOptions.steam_id = v; }, "A SteamID64 is 17 digits starting with 7656119");
 
         /* ---------------- per module options ---------------- */
         $("afkTimerStyle").addEventListener("change", (ev) => {
