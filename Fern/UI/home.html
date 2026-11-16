@@ -6904,7 +6904,7 @@
             searching: ["searching", "Looking for lyrics…", ""],
             found: ["found", "", ""],
             notfound: ["not found", "No synced lyrics for this track", "Add an .lrc file to your folder to fill the gap"],
-            unsynced: ["no timing", "Only unsynced lyrics exist for this track", "Lines need timestamps to follow the music"],
+            unsynced: ["no timing", "Only plain lyrics exist for this track", "The player isn't reporting the track's length, so the lines can't be timed"],
             instrumental: ["instrumental", "Instrumental", "The break marker shows while it plays"],
             offline: ["offline", "Couldn't reach lrclib.net", "Trying again in a little while; your .lrc folder still works"],
             limited: ["paused", "lrclib.net asked Fern to slow down", "Trying again in a few minutes"],
@@ -6917,6 +6917,7 @@
             if (l.state === "found") {
                 now = l.line || "…";
                 sub = (l.source === "LRCLIB" ? "From LRCLIB" : "From " + l.source) + " · " + l.lines + " lines";
+                if (l.estimated) sub += " · timed from the track length, so nudge the offset if they run early or late";
             }
             if (l.track && l.state !== "off" && l.state !== "idle") sub = l.track + (sub ? " · " + sub : "");
             $("lyricsNow").textContent = now;

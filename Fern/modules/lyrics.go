@@ -17,6 +17,9 @@ type LyricsStatus struct {
 	Track  string `json:"track"`
 	Line   string `json:"line"` // what the chatbox shows right now
 	Lines  int    `json:"lines"`
+	// Estimated is set when the lyrics had no timestamps and Fern spread the
+	// lines over the track's length.
+	Estimated bool `json:"estimated"`
 }
 
 // Lyrics lookup states.
@@ -36,9 +39,10 @@ const (
 var lrclibBase = "https://lrclib.net/api/"
 
 type lyricsResult struct {
-	state  string
-	source string
-	lines  []LyricLine
+	state     string
+	source    string
+	lines     []LyricLine
+	estimated bool
 }
 
 // lyricsQuery is the track to look up, already tidied.
@@ -189,7 +193,8 @@ type lrclibTrack struct {
 // lrclibLookup asks LRCLIB with at most two requests: an exact match when the
 // album and length are known, then a search.
 func lrclibLookup(q lyricsQuery) (lyricsResult, time.Duration) {
-	var plain, instrumental bool
+	var plain *lrclibTrack
+	instrumental := false
 	if q.album != "" && q.seconds > 0 && q.artist != "" {
 		v := url.Values{}
 		v.Set("artist_name", q.artist)
@@ -202,10 +207,15 @@ func lrclibLookup(q lyricsQuery) (lyricsResult, time.Duration) {
 			return res, wait
 		}
 		if status == 200 {
-			if res := lrclibResult(t); res.state == lyricsFound {
-				return res, 0
+			if t.Instrumental {
+				return lyricsResult{state: lyricsInstrumental, source: "LRCLIB"}, 0
 			}
-			plain, instrumental = t.PlainLyrics != "", t.Instrumental
+			if hasWords(ParseLRC(t.SyncedLyrics)) {
+				return lrclibResult(t, q), 0
+			}
+			if t.PlainLyrics != "" {
+				plain = &t // an exact match; still worth a search for timings
+			}
 		}
 	}
 
@@ -220,17 +230,21 @@ func lrclibLookup(q lyricsQuery) (lyricsResult, time.Duration) {
 		return res, wait
 	}
 	if t, ok := pickLrclib(found, q); ok {
-		return lrclibResult(t), 0
+		return lrclibResult(t, q), 0
 	}
 	for _, t := range found {
-		plain = plain || t.PlainLyrics != ""
 		instrumental = instrumental || (t.Instrumental && len(found) == 1)
+	}
+	if plain == nil {
+		if t, ok := pickLrclibBy(found, q, func(t lrclibTrack) bool { return t.PlainLyrics != "" }); ok {
+			plain = &t
+		}
 	}
 	switch {
 	case instrumental:
 		return lyricsResult{state: lyricsInstrumental, source: "LRCLIB"}, 0
-	case plain:
-		return lyricsResult{state: lyricsUnsynced, source: "LRCLIB"}, 0
+	case plain != nil:
+		return lrclibResult(*plain, q), 0
 	}
 	return lyricsResult{state: lyricsNotFound}, 0
 }
@@ -246,23 +260,37 @@ func lyricsFailure(err error) (lyricsResult, bool) {
 	return lyricsResult{state: lyricsOffline}, true
 }
 
-func lrclibResult(t lrclibTrack) lyricsResult {
+// lrclibResult turns a record into lyrics. Plain lyrics without timestamps
+// are timed from the track's length; only when that is unknown too are they
+// left as unsynced.
+func lrclibResult(t lrclibTrack, q lyricsQuery) lyricsResult {
 	if t.Instrumental {
 		return lyricsResult{state: lyricsInstrumental, source: "LRCLIB"}
 	}
-	lines := ParseLRC(t.SyncedLyrics)
-	if !hasWords(lines) {
-		if t.PlainLyrics != "" {
-			return lyricsResult{state: lyricsUnsynced, source: "LRCLIB"}
-		}
+	if lines := ParseLRC(t.SyncedLyrics); hasWords(lines) {
+		return lyricsResult{state: lyricsFound, source: "LRCLIB", lines: lines}
+	}
+	if t.PlainLyrics == "" {
 		return lyricsResult{state: lyricsNotFound}
 	}
-	return lyricsResult{state: lyricsFound, source: "LRCLIB", lines: lines}
+	length := time.Duration(q.seconds) * time.Second
+	if length <= 0 {
+		length = time.Duration(t.Duration * float64(time.Second))
+	}
+	if lines := EstimateLRC(t.PlainLyrics, length); len(lines) > 0 {
+		return lyricsResult{state: lyricsFound, source: "LRCLIB", lines: lines, estimated: true}
+	}
+	return lyricsResult{state: lyricsUnsynced, source: "LRCLIB"}
 }
 
 // pickLrclib chooses the search result that best fits the track: synced, by
 // the same artist and within a few seconds of the same length.
 func pickLrclib(found []lrclibTrack, q lyricsQuery) (lrclibTrack, bool) {
+	return pickLrclibBy(found, q, func(t lrclibTrack) bool { return t.SyncedLyrics != "" })
+}
+
+// pickLrclibBy is pickLrclib for results that pass has.
+func pickLrclibBy(found []lrclibTrack, q lyricsQuery, has func(lrclibTrack) bool) (lrclibTrack, bool) {
 	artist := squashName(q.artist)
 	near := func(t lrclibTrack) bool {
 		if q.seconds <= 0 || t.Duration <= 0 {
@@ -277,7 +305,7 @@ func pickLrclib(found []lrclibTrack, q lyricsQuery) (lrclibTrack, bool) {
 	}
 	var fallback *lrclibTrack
 	for i, t := range found {
-		if t.SyncedLyrics == "" || !near(t) {
+		if !has(t) || !near(t) {
 			continue
 		}
 		if sameArtist(t) {
@@ -321,6 +349,9 @@ func localLyrics(folder string, q lyricsQuery) (lyricsResult, bool) {
 			}
 			if lines := ParseLRC(string(data)); hasWords(lines) {
 				return lyricsResult{state: lyricsFound, source: name, lines: lines}, true
+			}
+			if lines := EstimateLRC(string(data), time.Duration(q.seconds)*time.Second); len(lines) > 0 {
+				return lyricsResult{state: lyricsFound, source: name, lines: lines, estimated: true}, true
 			}
 		}
 	}
@@ -394,7 +425,7 @@ func CurrentLyricsStatus() LyricsStatus {
 		return LyricsStatus{State: lyricsOff}
 	}
 	lyricsMu.RLock()
-	st := LyricsStatus{State: lyricsCur.state, Source: lyricsCur.source, Track: lyricsTrack, Lines: len(lyricsCur.lines)}
+	st := LyricsStatus{State: lyricsCur.state, Source: lyricsCur.source, Track: lyricsTrack, Lines: len(lyricsCur.lines), Estimated: lyricsCur.estimated}
 	lyricsMu.RUnlock()
 	if st.State == "" {
 		st.State = lyricsIdle

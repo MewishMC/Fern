@@ -121,3 +121,70 @@ func lyricAt(lines []LyricLine, pos, hold, gap time.Duration, marker string) str
 	}
 	return line.Text
 }
+
+// lrcAnyTag matches metadata tags like [ar:Artist], which plain lyrics from
+// a tag-only .lrc file can still carry.
+var lrcAnyTag = regexp.MustCompile(`^\[[a-zA-Z#]+:[^\]]*\]$`)
+
+// EstimateLRC times plain lyrics by spreading the lines over the track.
+// Singing rarely starts or stops right at the ends, so a short intro and
+// outro are left out, and each line gets time in proportion to its length,
+// plus a pause between lines and a longer one where a blank line ends a
+// verse. The result is empty when there are no words or no length.
+func EstimateLRC(text string, length time.Duration) []LyricLine {
+	if length <= 0 {
+		return nil
+	}
+	type item struct {
+		text  string
+		pause int // blank lines just before it
+	}
+	var items []item
+	pause := 0
+	for _, raw := range strings.Split(strings.ReplaceAll(strings.TrimPrefix(text, string(rune(0xFEFF))), "\r\n", "\n"), "\n") {
+		raw = strings.TrimSpace(raw)
+		if lrcAnyTag.MatchString(raw) {
+			continue
+		}
+		words := strings.Join(strings.Fields(raw), " ")
+		if words == "" {
+			pause++
+			continue
+		}
+		items = append(items, item{words, pause})
+		pause = 0
+	}
+	if len(items) == 0 {
+		return nil
+	}
+	const (
+		lineGap  = 6  // weight of the breath between two lines
+		verseGap = 18 // extra weight where a verse ends
+	)
+	// Each line's share: the verse pause before it, then its own words and
+	// the breath after them.
+	before := func(i int) int {
+		if i > 0 && items[i].pause > 0 {
+			return verseGap
+		}
+		return 0
+	}
+	total := 0
+	for i, it := range items {
+		total += before(i) + len([]rune(it.text)) + lineGap
+	}
+	intro := min(max(length*7/100, 3*time.Second), 15*time.Second)
+	outro := min(max(length*7/100, 3*time.Second), 20*time.Second)
+	span := length - intro - outro
+	if span < length/2 {
+		intro, span = length/8, length*3/4
+	}
+	lines := make([]LyricLine, len(items))
+	done := 0
+	for i, it := range items {
+		done += before(i)
+		lines[i] = LyricLine{At: intro + time.Duration(int64(span)*int64(done)/int64(total)), Text: it.text}
+		done += len([]rune(it.text)) + lineGap
+	}
+	return lines
+}

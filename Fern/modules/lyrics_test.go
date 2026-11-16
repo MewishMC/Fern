@@ -109,6 +109,11 @@ func TestLocalLyrics(t *testing.T) {
 	if _, ok := localLyrics(dir, q); ok {
 		t.Error("a file without timings counted as lyrics")
 	}
+	// Once the track's length is known, the plain file is timed from it.
+	q.seconds = 120
+	if res, ok := localLyrics(dir, q); !ok || !res.estimated || len(res.lines) != 1 {
+		t.Errorf("plain file with a length: %+v, %v", res, ok)
+	}
 }
 
 func TestPickLrclib(t *testing.T) {
@@ -278,5 +283,57 @@ func TestSanitizeLyrics(t *testing.T) {
 	o := c.LyricsOptions
 	if o.OffsetMS != 10000 || o.HoldSeconds != 1 || o.Folder != `C:\Music\Lyrics` {
 		t.Errorf("got %+v", o)
+	}
+}
+
+func TestEstimateLRC(t *testing.T) {
+	plain := "[ar:Band]\nFirst line here\nSecond line here\n\n\nNew verse starts\nLast"
+	length := 200 * time.Second
+	lines := EstimateLRC(plain, length)
+	if len(lines) != 4 {
+		t.Fatalf("got %d lines: %+v", len(lines), lines)
+	}
+	if lines[0].Text != "First line here" || lines[3].Text != "Last" {
+		t.Errorf("texts: %+v", lines)
+	}
+	// Singing starts after an intro and the last line leaves room for an outro.
+	if lines[0].At != 14*time.Second || lines[3].At >= length-14*time.Second {
+		t.Errorf("intro or outro missing: %+v", lines)
+	}
+	for i := 1; i < len(lines); i++ {
+		if lines[i].At <= lines[i-1].At {
+			t.Fatalf("not in order: %+v", lines)
+		}
+	}
+	// The verse break gives the line after it more room than a line change.
+	if lines[2].At-lines[1].At <= lines[1].At-lines[0].At {
+		t.Errorf("verse pause not longer: %+v", lines)
+	}
+	if EstimateLRC(plain, 0) != nil || EstimateLRC("\n[ti:x]\n", length) != nil {
+		t.Error("estimated without a length or words")
+	}
+	// A very short track still gets every line inside it.
+	short := EstimateLRC(plain, 4*time.Second)
+	if len(short) != 4 || short[3].At >= 4*time.Second {
+		t.Errorf("short track: %+v", short)
+	}
+}
+
+func TestLookupLyricsPlainOnly(t *testing.T) {
+	fakeLrclib(t, func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode([]lrclibTrack{
+			{ArtistName: "Someone Else", Duration: 300, PlainLyrics: "wrong song"},
+			{ArtistName: "Alana Markel", Duration: 181, PlainLyrics: "Line one\nLine two"},
+		})
+	})
+	q, _ := lyricsQueryFor(MediaInfo{Available: true, Title: "Restart", Artist: "Alana Markel", DurationMS: 180000})
+	res, _ := lookupLyrics(q, DefaultConfig().LyricsOptions)
+	if res.state != lyricsFound || !res.estimated || len(res.lines) != 2 || res.lines[0].Text != "Line one" {
+		t.Fatalf("got %+v", res)
+	}
+	// Without a length from the player, LRCLIB's own length is used.
+	q.key, q.seconds = "nolength", 0
+	if res, _ := lookupLyrics(q, DefaultConfig().LyricsOptions); res.state != lyricsFound || !res.estimated {
+		t.Errorf("no player length: %+v", res)
 	}
 }
